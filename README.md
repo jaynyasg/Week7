@@ -2,7 +2,7 @@
 
 Career Quest Campus is a Week7 Unity multiplayer game about kid-friendly career discovery. Players choose avatars, explore a bright campus, play career-themed mini-games, earn degree/practice stamps, build a Career DNA profile, and unlock a celebratory Career Reveal.
 
-This repo is currently in the implementation-planning stage. The Unity project will live at the repo root.
+This repo is now bootstrapped as a Unity project at the repo root.
 
 ## Locked Scope
 
@@ -90,17 +90,15 @@ Replay is allowed. Only the best result per mini-game counts, ranked by completi
 - [QA evidence template](docs/qa/README.md)
 - [Backlog](TODOS.md)
 
-## Planned Setup
-
-After Unity bootstrap:
+## Local Setup
 
 1. Open Unity Hub.
 2. Add this repo root as the Unity project.
 3. Use Unity `6000.4.10f1`.
 4. Let Unity restore packages from `Packages/manifest.json`.
-5. Open the main gameplay scene under `Assets/_CareerQuest/Scenes/`.
+5. Open the main gameplay scene under `Assets/_CareerQuest/Scenes/` once gameplay scaffolding exists.
 
-The first implementation commit should prove Unity opens cleanly with Netcode/Transport installed and docs updated.
+Bootstrap verification completed on 2026-06-09: Unity opened this project in batchmode with Netcode for GameObjects `2.11.2` and Unity Transport `2.7.2`, then exited with code `0`.
 
 ## Verification Targets
 
