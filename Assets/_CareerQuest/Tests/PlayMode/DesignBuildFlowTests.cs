@@ -20,7 +20,7 @@ namespace CareerQuest.Tests
 
             session.RecordResult(controller.CreateResult(ResultSource.SoloFallback));
 
-            Assert.That(session.RevealReady, Is.True);
+            Assert.That(session.RevealReady, Is.False);
             Assert.That(session.GetBestResult(CareerConfig.DesignBuildId), Is.Not.Null);
 
             Object.DestroyImmediate(gameObject);

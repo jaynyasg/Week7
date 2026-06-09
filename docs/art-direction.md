@@ -1,0 +1,35 @@
+# Career Quest Campus Art Direction
+
+## Creative Target
+
+Career Quest Campus should read as a playable pop-up campus: bright 2.5D spaces, flat character shapes, clear career buildings, and celebratory feedback when players complete activities. The visual promise is not realism. It is a kid-friendly world where every building quietly explains what kind of future path it represents.
+
+## First Visual Layer
+
+The first pass uses procedural Unity scene sprites so the game has characters and environment without waiting on imported art packs:
+
+- Campus paths, plaza, lawns, clouds, and themed buildings.
+- Flat student characters for player presence and Showcase beats.
+- Avatar selection with four readable character silhouettes and color identities.
+- A Future City build table with skyline lots.
+- Themed backdrops for Health Hero Clinic, Logic Court, Gallery, and Career Reveal.
+- A runtime sprite fallback for the network player avatar so it is visible even when the prefab has no assigned sprite.
+- Translucent UI panels so menus behave like a HUD over the game world instead of hiding it.
+
+## Next Art Upgrade
+
+Replace the procedural shapes gradually with a reusable sprite kit:
+
+- Four student avatar variants with shared body proportions and color-swappable shirts.
+- One building sprite per activity: Design Build Studio, Health Hero Clinic, Logic Court, AI Lab, and future campus doors.
+- Environment props: signs, benches, badge banners, trees, lamps, path tiles, and activity tables.
+- Three animation cues: avatar idle bob, accepted-placement pulse, and reveal-stage light sweep.
+
+## Visual Rules
+
+- Keep the campus colorful, but avoid one-color themes. Use green ground, warm paths, blue science spaces, coral creative spaces, gold logic/court spaces, and teal health/helping spaces.
+- Treat buttons as entrances or controls, not as the whole world.
+- Put character presence on every major screen where the player is supposed to feel "in" the campus.
+- Preserve the selected avatar color in campus and activity scenes so the choice feels meaningful.
+- Make the first screen prove the premise immediately: campus, students, career buildings, and a clear Play/Showcase choice.
+- Keep copy short. The visuals should carry the idea before the text explains it.

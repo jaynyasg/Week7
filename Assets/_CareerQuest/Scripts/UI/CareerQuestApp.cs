@@ -9,6 +9,7 @@ namespace CareerQuest
 {
     [RequireComponent(typeof(NetworkBootstrap))]
     [RequireComponent(typeof(EntryScreenController))]
+    [RequireComponent(typeof(AvatarSelectionController))]
     [RequireComponent(typeof(ShowcaseDisclaimerController))]
     [RequireComponent(typeof(AchievementGalleryController))]
     [RequireComponent(typeof(CareerRevealController))]
@@ -24,11 +25,14 @@ namespace CareerQuest
         private GameSession _session;
         private NetworkBootstrap _networkBootstrap;
         private EntryScreenController _entry;
+        private AvatarSelectionController _avatarSelection;
         private ShowcaseDisclaimerController _disclaimer;
         private AchievementGalleryController _gallery;
         private CareerRevealController _reveal;
         private DemoDebugOverlay _debugOverlay;
         private ShowcasePresenter _showcasePresenter;
+        private CampusWorldController _world;
+        private AppMode _avatarSelectionTarget = AppMode.Play;
 
         public GameSession Session => _session;
 
@@ -37,9 +41,11 @@ namespace CareerQuest
             _session = new GameSession();
             _canvas = UiBuilder.EnsureCanvas();
             _root = _canvas.GetComponent<RectTransform>();
+            _world = CampusWorldController.Ensure();
 
             _networkBootstrap = GetComponent<NetworkBootstrap>();
             _entry = GetComponent<EntryScreenController>();
+            _avatarSelection = GetComponent<AvatarSelectionController>();
             _disclaimer = GetComponent<ShowcaseDisclaimerController>();
             _gallery = GetComponent<AchievementGalleryController>();
             _reveal = GetComponent<CareerRevealController>();
@@ -75,6 +81,7 @@ namespace CareerQuest
         {
             _showcasePresenter.Stop();
             _session.StartMode(AppMode.Entry);
+            _world.ShowEntry(_session);
             ResetRoot();
             _entry.Render(_root, this);
             AttachDebug();
@@ -87,8 +94,32 @@ namespace CareerQuest
             ShowConnection();
         }
 
+        public void ShowAvatarSelectionForPlay()
+        {
+            ShowAvatarSelection(AppMode.Play);
+        }
+
+        public void ShowAvatarSelectionForShowcase()
+        {
+            ShowAvatarSelection(AppMode.Showcase);
+        }
+
+        public void ChooseAvatar(string avatarId)
+        {
+            _session.SelectAvatar(avatarId);
+
+            if (_avatarSelectionTarget == AppMode.Showcase)
+            {
+                BeginShowcase();
+                return;
+            }
+
+            BeginPlay();
+        }
+
         public void ShowShowcaseDisclaimer()
         {
+            _world.ShowEntry(_session);
             ResetRoot();
             _disclaimer.Render(_root, this);
             AttachDebug();
@@ -103,6 +134,7 @@ namespace CareerQuest
 
         public void ShowConnection()
         {
+            _world.ShowConnection(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ConnectionPanel", new Color(0.88f, 0.94f, 0.96f));
 
@@ -156,6 +188,7 @@ namespace CareerQuest
 
         public void ShowCampus()
         {
+            _world.ShowCampus(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "CampusPanel", new Color(0.85f, 0.97f, 0.9f));
 
@@ -175,7 +208,8 @@ namespace CareerQuest
             var gallery = UiBuilder.Button(panel, "CampusGalleryButton", "Achievement Gallery", ShowGallery);
             UiBuilder.Place(gallery.GetComponent<RectTransform>(), -150f, -155f, 280f, 64f);
 
-            var reveal = UiBuilder.Button(panel, "CampusRevealButton", "Career Reveal", ShowReveal);
+            var revealLabel = _session.RevealReady ? "Career Reveal" : $"Reveal {_session.UniqueCompletedGames}/3";
+            var reveal = UiBuilder.Button(panel, "CampusRevealButton", revealLabel, ShowReveal);
             UiBuilder.Place(reveal.GetComponent<RectTransform>(), 160f, -155f, 250f, 64f);
 
             var entry = UiBuilder.Button(panel, "CampusEntryButton", "Entry", ShowEntry);
@@ -186,6 +220,7 @@ namespace CareerQuest
 
         public void ShowShowcaseProofBeat()
         {
+            _world.ShowProof(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ShowcaseProofPanel", new Color(0.86f, 0.91f, 1f));
             var title = UiBuilder.Text(panel, "ProofTitle", "Two-Client Proof", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f));
@@ -207,6 +242,7 @@ namespace CareerQuest
 
         public void ShowDesignBuild(bool showcaseAutoComplete)
         {
+            _world.ShowDesignBuild(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<DesignBuildController>() ?? gameObject.AddComponent<DesignBuildController>();
             controller.Render(_root, _session, this, CurrentResultSource());
@@ -226,6 +262,7 @@ namespace CareerQuest
 
         public void ShowHealthHero()
         {
+            _world.ShowClinic(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<HealthHeroController>() ?? gameObject.AddComponent<HealthHeroController>();
             controller.Render(_root, _session, this, CurrentResultSource());
@@ -234,6 +271,7 @@ namespace CareerQuest
 
         public void ShowLogicCourt()
         {
+            _world.ShowCourt(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<LogicCourtController>() ?? gameObject.AddComponent<LogicCourtController>();
             controller.Render(_root, _session, this, CurrentResultSource());
@@ -242,6 +280,7 @@ namespace CareerQuest
 
         public void ShowGallery()
         {
+            _world.ShowGallery(_session);
             ResetRoot();
             _gallery.Render(_root, _session, this);
             AttachDebug();
@@ -249,9 +288,20 @@ namespace CareerQuest
 
         public void ShowReveal()
         {
+            _world.ShowReveal(_session);
             ResetRoot();
             _reveal.Render(_root, _session, this);
             AttachDebug();
+        }
+
+        public void QuitGame()
+        {
+            if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
+            {
+                networkManager.Shutdown();
+            }
+
+            Application.Quit(0);
         }
 
         private ResultSource CurrentResultSource()
@@ -280,8 +330,19 @@ namespace CareerQuest
             UiBuilder.Clear(_root);
         }
 
+        private void ShowAvatarSelection(AppMode target)
+        {
+            _avatarSelectionTarget = target;
+            _world.ShowEntry(_session);
+            ResetRoot();
+            _avatarSelection.Render(_root, this);
+            AttachDebug();
+        }
+
         private void AttachDebug()
         {
+            var exit = UiBuilder.SmallButton(_root, "ExitGameButton", "Exit Game", QuitGame);
+            UiBuilder.Place(exit.GetComponent<RectTransform>(), 535f, 316f, 150f, 42f);
             _debugOverlay.AttachTo(_root);
         }
 

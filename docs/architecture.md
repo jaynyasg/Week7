@@ -225,7 +225,7 @@ Source badge:
 - `Solo`
 - `Solo Fallback`
 
-Reveal unlocks after any one completed mini-game or Showcase-equivalent result. One result starts at lower confidence; additional unique best results improve confidence and make the recommendation feel more earned.
+Reveal unlocks after three unique completed mini-games or Showcase-equivalent results. One or two results build Career DNA and Gallery progress, but the final recommendation stays locked until the player has tried the full themed set.
 
 Confidence phrases:
 

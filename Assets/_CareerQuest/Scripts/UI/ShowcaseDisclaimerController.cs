@@ -16,7 +16,7 @@ namespace CareerQuest
             var body = UiBuilder.Text(panel, "DisclaimerBody", DisclaimerText, 26, TextAnchor.MiddleCenter, new Color(0.12f, 0.16f, 0.2f));
             UiBuilder.Place(body.rectTransform, 0f, 45f, 820f, 120f);
 
-            var start = UiBuilder.Button(panel, "StartShowcaseButton", "Start Tour", app.BeginShowcase);
+            var start = UiBuilder.Button(panel, "StartShowcaseButton", "Start Tour", app.ShowAvatarSelectionForShowcase);
             UiBuilder.Place(start.GetComponent<RectTransform>(), -140f, -100f, 230f, 66f);
 
             var back = UiBuilder.Button(panel, "BackToEntryButton", "Back", app.ShowEntry);

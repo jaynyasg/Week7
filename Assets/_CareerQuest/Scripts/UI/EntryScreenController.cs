@@ -14,7 +14,7 @@ namespace CareerQuest
             var subtitle = UiBuilder.Text(panel, "Subtitle", "Build, explore, earn badges, and reveal future paths.", 24, TextAnchor.MiddleCenter, new Color(0.08f, 0.18f, 0.24f));
             UiBuilder.Place(subtitle.rectTransform, 0f, 150f, 900f, 50f);
 
-            var play = UiBuilder.Button(panel, "PlayButton", "Play", app.BeginPlay);
+            var play = UiBuilder.Button(panel, "PlayButton", "Play", app.ShowAvatarSelectionForPlay);
             UiBuilder.Place(play.GetComponent<RectTransform>(), -150f, 45f, 240f, 72f);
 
             var showcase = UiBuilder.Button(panel, "ShowcaseButton", "Showcase", app.ShowShowcaseDisclaimer);

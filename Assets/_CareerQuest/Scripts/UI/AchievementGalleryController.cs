@@ -33,6 +33,9 @@ namespace CareerQuest
             var traitText = UiBuilder.Text(panel, "TraitSummary", traits, 22, TextAnchor.MiddleCenter, new Color(0.1f, 0.16f, 0.18f));
             UiBuilder.Place(traitText.rectTransform, 0f, -70f, 980f, 56f);
 
+            var revealProgress = UiBuilder.Text(panel, "RevealProgress", $"Career Reveal unlock: {session.UniqueCompletedGames}/3 games complete", 20, TextAnchor.MiddleCenter, new Color(0.12f, 0.12f, 0.1f));
+            UiBuilder.Place(revealProgress.rectTransform, 0f, -122f, 700f, 40f);
+
             var reveal = UiBuilder.Button(panel, "RevealButton", "Reveal Careers", app.ShowReveal);
             UiBuilder.Place(reveal.GetComponent<RectTransform>(), -140f, -185f, 260f, 66f);
 

@@ -51,8 +51,8 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 | Health Hero Clinic completes | PASS/FAIL | |
 | Logic Court completes | PASS/FAIL | |
 | Achievement Gallery badge tier/source | PASS/FAIL | |
-| Career Reveal unlock after one game | PASS/FAIL | |
-| Reveal confidence improves after more unique games | PASS/FAIL | |
+| Career Reveal locked before three games | PASS/FAIL | |
+| Career Reveal unlock after three games | PASS/FAIL | |
 | Reveal confidence phrase | PASS/FAIL | |
 | Debug overlay toggle | PASS/FAIL | |
 | No account/profile persistence/analytics/chat added | PASS/FAIL | |
@@ -87,6 +87,6 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 - `Play` must enter unseeded free campus without Showcase presenter auto-advance.
 - `Showcase` may seed results only after a friendly guided-tour disclaimer.
 - Career Reveal stays celebratory; source metadata belongs in Achievement Gallery/debug.
-- Career Reveal unlocks after one completed mini-game or Showcase-equivalent result; more unique best results should improve confidence.
+- Career Reveal unlocks after three unique completed mini-games or Showcase-equivalent results.
 - Do not add accounts, saved profiles, persistent child data, analytics, telemetry, or chat.
 - Failed or partial results should produce `Practice` stamps, not harsh failure copy.

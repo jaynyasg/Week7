@@ -18,10 +18,10 @@ This repo is now bootstrapped as a Unity project at the repo root.
 
 1. Open the entry screen.
 2. Choose `Play` for free campus or `Showcase` for the guided evaluator route.
-3. In `Play`, choose `Host P1`, `Join Localhost as P2`, `Join LAN by IP`, or `Solo Fallback`.
-4. Enter Free Campus and choose mini-games in any order.
-5. Complete one mini-game or Showcase-equivalent result to unlock Career Reveal.
-6. Play more unique mini-games to improve reveal confidence.
+3. Choose an avatar.
+4. In `Play`, choose `Host P1`, `Join Localhost as P2`, `Join LAN by IP`, or `Solo Fallback`.
+5. Enter Free Campus and choose mini-games in any order.
+6. Complete all three themed mini-games to unlock Career Reveal.
 7. View Achievement Gallery badges, top Career DNA traits, top career match, co-leads if tied, and runner-up paths.
 
 ## Mini-Games
@@ -78,7 +78,7 @@ Replay is allowed. Only the best result per mini-game counts, ranked by completi
 - Stamp tiers: `Degree` for success, `Practice` for partial/soft failure.
 - Source badges: `Multiplayer`, `Solo`, or `Solo Fallback`.
 - Practice counts toward reveal unlock but lowers confidence.
-- Reveal unlocks after any one unique mini-game or Showcase-equivalent result.
+- Reveal unlocks after three unique mini-games or Showcase-equivalent results.
 - Reveal confidence is phrase-only: `Good match`, `Strong match`, or `Very strong match`.
 - Close career ties are shown as co-leads.
 - Reveal language is strength-based, not deterministic.
@@ -86,6 +86,7 @@ Replay is allowed. Only the best result per mini-game counts, ranked by completi
 ## Project Docs
 
 - [Architecture snapshot](docs/architecture.md)
+- [Art direction](docs/art-direction.md)
 - [Demo checklist](docs/demo-checklist.md)
 - [QA evidence template](docs/qa/README.md)
 - [Backlog](TODOS.md)

@@ -62,8 +62,30 @@ namespace CareerQuest
             rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
-            panel.GetComponent<Image>().color = color;
+            panel.GetComponent<Image>().color = new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.22f));
             return rect;
+        }
+
+        public static RectTransform Panel(Transform parent, string name, Color color)
+        {
+            var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(parent, false);
+            panel.GetComponent<Image>().color = color;
+            return panel.GetComponent<RectTransform>();
+        }
+
+        public static RectTransform Shape(Transform parent, string name, Color color, float x, float y, float width, float height)
+        {
+            var shape = Panel(parent, name, color);
+            Place(shape, x, y, width, height);
+            return shape;
+        }
+
+        public static RectTransform Circle(Transform parent, string name, Color color, float x, float y, float width, float height)
+        {
+            var circle = Shape(parent, name, color, x, y, width, height);
+            circle.GetComponent<Image>().sprite = CircleSprite;
+            return circle;
         }
 
         public static Text Text(Transform parent, string name, string value, int fontSize, TextAnchor anchor, Color color)
@@ -93,6 +115,18 @@ namespace CareerQuest
 
             var labelText = Text(buttonObject.transform, $"{name}Label", label, 24, TextAnchor.MiddleCenter, Color.white);
             Stretch(labelText.rectTransform);
+            return button;
+        }
+
+        public static Button SmallButton(Transform parent, string name, string label, Action onClick)
+        {
+            var button = Button(parent, name, label, onClick);
+            var labelText = button.GetComponentInChildren<Text>();
+            if (labelText != null)
+            {
+                labelText.fontSize = 16;
+            }
+
             return button;
         }
 
@@ -133,6 +167,43 @@ namespace CareerQuest
             for (var i = parent.childCount - 1; i >= 0; i--)
             {
                 UnityEngine.Object.Destroy(parent.GetChild(i).gameObject);
+            }
+        }
+
+        private static Sprite _circleSprite;
+
+        private static Sprite CircleSprite
+        {
+            get
+            {
+                if (_circleSprite != null)
+                {
+                    return _circleSprite;
+                }
+
+                const int size = 96;
+                var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+                {
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                var center = (size - 1) * 0.5f;
+                var radius = center;
+
+                for (var y = 0; y < size; y++)
+                {
+                    for (var x = 0; x < size; x++)
+                    {
+                        var dx = x - center;
+                        var dy = y - center;
+                        var alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 1f);
+                        texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                    }
+                }
+
+                texture.Apply();
+                _circleSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
+                return _circleSprite;
             }
         }
     }

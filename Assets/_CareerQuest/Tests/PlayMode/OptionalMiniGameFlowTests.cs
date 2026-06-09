@@ -20,7 +20,8 @@ namespace CareerQuest.Tests
 
             Assert.That(session.GetBestResult(CareerConfig.HealthHeroId), Is.Not.Null);
             Assert.That(session.GetBestResult(CareerConfig.LogicCourtId), Is.Not.Null);
-            Assert.That(session.ConfidencePhrase(), Is.EqualTo("Strong match"));
+            Assert.That(session.RevealReady, Is.False);
+            Assert.That(session.ConfidencePhrase(), Is.EqualTo("One more game"));
 
             Object.DestroyImmediate(healthObject);
             Object.DestroyImmediate(courtObject);

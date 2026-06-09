@@ -14,10 +14,13 @@ namespace CareerQuest
         public string DebugSourceSummary { get; private set; } = "Live";
         public string CurrentShowcaseStep { get; set; } = "None";
         public int PlayerCount { get; set; }
+        public AvatarDefinition SelectedAvatar { get; private set; } = AvatarConfig.DefaultAvatar;
 
         public IReadOnlyCollection<MiniGameResult> BestResults => _bestResults.Values;
         public bool HasSeededResults => _bestResults.Values.Any(result => result.IsSeeded || result.Source == ResultSource.ShowcaseSeed);
-        public bool RevealReady => _bestResults.Count >= 1;
+        public int UniqueCompletedGames => _bestResults.Count;
+        public int GamesNeededForReveal => Math.Max(0, 3 - UniqueCompletedGames);
+        public bool RevealReady => UniqueCompletedGames >= 3;
         public string LastResultId { get; private set; } = "None";
 
         public event Action Changed;
@@ -37,6 +40,12 @@ namespace CareerQuest
             ConnectionMode = mode;
             Mode = mode == ConnectionMode.SoloFallback ? AppMode.SoloFallback : AppMode.Play;
             DebugSourceSummary = mode == ConnectionMode.SoloFallback ? "Solo Fallback" : "Live";
+            NotifyChanged();
+        }
+
+        public void SelectAvatar(string avatarId)
+        {
+            SelectedAvatar = AvatarConfig.GetAvatar(avatarId);
             NotifyChanged();
         }
 
@@ -69,7 +78,7 @@ namespace CareerQuest
         {
             if (!RevealReady)
             {
-                return "Keep exploring";
+                return GamesNeededForReveal == 1 ? "One more game" : $"{GamesNeededForReveal} games to go";
             }
 
             var degreeCount = _bestResults.Values.Count(result => result.Tier == CompletionTier.Degree);

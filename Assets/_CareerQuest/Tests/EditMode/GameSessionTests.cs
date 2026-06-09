@@ -13,18 +13,19 @@ namespace CareerQuest.Tests
 
             Assert.That(session.Mode, Is.EqualTo(AppMode.Entry));
             Assert.That(session.RevealReady, Is.False);
-            Assert.That(session.ConfidencePhrase(), Is.EqualTo("Keep exploring"));
+            Assert.That(session.ConfidencePhrase(), Is.EqualTo("3 games to go"));
         }
 
         [Test]
-        public void OneResultUnlocksRevealWithGoodMatch()
+        public void OneResultKeepsRevealLocked()
         {
             var session = new GameSession();
 
             session.RecordResult(Result(CompletionTier.Degree, 40f, 0.8f));
 
-            Assert.That(session.RevealReady, Is.True);
-            Assert.That(session.ConfidencePhrase(), Is.EqualTo("Good match"));
+            Assert.That(session.RevealReady, Is.False);
+            Assert.That(session.UniqueCompletedGames, Is.EqualTo(1));
+            Assert.That(session.ConfidencePhrase(), Is.EqualTo("2 games to go"));
         }
 
         [Test]
@@ -39,7 +40,7 @@ namespace CareerQuest.Tests
         }
 
         [Test]
-        public void AdditionalUniqueResultsImproveConfidence()
+        public void ThreeUniqueResultsUnlockReveal()
         {
             var session = new GameSession();
 
@@ -53,8 +54,18 @@ namespace CareerQuest.Tests
                 30f,
                 0.9f,
                 "Sorted evidence."));
+            session.RecordResult(new MiniGameResult(
+                CareerConfig.HealthHeroId,
+                "Health Hero Clinic",
+                CompletionTier.Degree,
+                ResultSource.Solo,
+                new[] { new TraitDelta("Helping", 4) },
+                32f,
+                0.88f,
+                "Helped a patient."));
 
-            Assert.That(session.ConfidencePhrase(), Is.EqualTo("Strong match"));
+            Assert.That(session.RevealReady, Is.True);
+            Assert.That(session.ConfidencePhrase(), Is.EqualTo("Very strong match"));
         }
 
         [Test]

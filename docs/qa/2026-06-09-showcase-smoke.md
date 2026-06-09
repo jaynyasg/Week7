@@ -41,8 +41,8 @@
 | Health Hero Clinic completes | PASS | EditMode rules and PlayMode optional activity flow pass. |
 | Logic Court completes | PASS | EditMode rules and PlayMode optional activity flow pass. |
 | Achievement Gallery badge/source | PASS | Session/reveal tests and Showcase flow cover the path. |
-| Career Reveal unlock after one game | PASS | EditMode scoring test covers one-result unlock. |
-| Reveal confidence improves after more unique games | PASS | EditMode scoring test covers additional unique results. |
+| Career Reveal locked before three games | PASS | `Logs/avatar-solo-smoke.log` reports `revealReady=False`; scoring tests were updated for the 3-game gate. |
+| Career Reveal unlock after three games | PASS | `Logs/avatar-showcase-smoke.log` reports `revealReady=True` after seeded three-game Showcase route. |
 | Reveal confidence phrase | PASS | Career reveal scoring tests cover phrase behavior. |
 | Debug overlay toggle | PASS | PlayMode debug overlay test passes. |
 | No account/profile persistence/analytics/chat added | PASS | No persistence, account, telemetry, analytics, or chat code was added. |
@@ -59,6 +59,9 @@
 - EditMode results: `Logs/ce-work-editmode-results.xml`
 - PlayMode results: `Logs/ce-work-playmode-results.xml`
 - Build log: `Logs/ce-work-build.log`
+- Current visual/gameplay build log: `Logs/avatar-build.log`
+- Current solo smoke: `Logs/avatar-solo-smoke.log`
+- Current Showcase smoke: `Logs/avatar-showcase-smoke.log`
 - Host smoke: `Logs/ce-work-host-smoke.log`
 - Client smoke: `Logs/ce-work-client-smoke.log`
 - Showcase smoke: `Logs/ce-work-showcase-smoke.log`

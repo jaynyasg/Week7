@@ -37,8 +37,8 @@ Use this checklist for the five-minute evaluator path and for local smoke testin
 11. Attempt simultaneous or duplicate placement and confirm the second action gets gentle rejection feedback.
 12. Complete the activity and verify one shared result appears on both clients.
 13. Open Achievement Gallery and verify badge tier, source, and trait updates.
-14. Confirm Career Reveal unlocks after one completed mini-game with a lower-confidence phrase.
-15. Complete at least one more mini-game if available and confirm confidence improves from additional unique results.
+14. Confirm Career Reveal remains locked after one completed mini-game and shows `1/3` progress.
+15. Complete the remaining themed mini-games and confirm the reveal unlocks at `3/3`.
 16. Trigger Career Reveal and verify strength-based language, co-lead handling if applicable, and confidence phrase.
 17. Toggle debug overlay and confirm network + game facts are visible.
 

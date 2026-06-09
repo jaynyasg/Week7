@@ -14,8 +14,8 @@ namespace CareerQuest
 
             if (!session.RevealReady)
             {
-                var locked = UiBuilder.Text(panel, "RevealLocked", "Finish one activity to reveal your first career clue.", 28, TextAnchor.MiddleCenter, new Color(0.1f, 0.15f, 0.14f));
-                UiBuilder.Place(locked.rectTransform, 0f, 80f, 880f, 90f);
+                var locked = UiBuilder.Text(panel, "RevealLocked", $"Play all 3 themed games to unlock your career reveal.\nCompleted: {session.UniqueCompletedGames}/3. {session.ConfidencePhrase()}.", 28, TextAnchor.MiddleCenter, new Color(0.1f, 0.15f, 0.14f));
+                UiBuilder.Place(locked.rectTransform, 0f, 68f, 920f, 120f);
             }
             else
             {
@@ -29,7 +29,7 @@ namespace CareerQuest
 
                 var top = session.CareerMatches().FirstOrDefault();
                 var tagline = top?.Career.Tagline ?? "A path worth exploring.";
-                var body = UiBuilder.Text(panel, "RevealBody", $"{tagline}\nThis is a strength-based clue, not a life assignment. More games make the result sharper.", 24, TextAnchor.MiddleCenter, new Color(0.1f, 0.16f, 0.14f));
+                var body = UiBuilder.Text(panel, "RevealBody", $"{tagline}\nThis is a strength-based clue, not a life assignment. You earned it by completing all three games.", 24, TextAnchor.MiddleCenter, new Color(0.1f, 0.16f, 0.14f));
                 UiBuilder.Place(body.rectTransform, 0f, -45f, 960f, 110f);
             }
 
