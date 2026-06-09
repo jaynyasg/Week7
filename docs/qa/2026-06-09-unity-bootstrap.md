@@ -23,7 +23,7 @@
 
 | Check | Result | Notes |
 |---|---|---|
-| Unity opens cleanly | PASS | Batchmode open exited with code `0`. |
+| Unity opens cleanly | PASS | Batchmode open wrapper reported `UNITY_EXIT=0`; Unity log ends with return code `0`. |
 | Packages restore | PASS | `Packages/packages-lock.json` resolved Netcode for GameObjects `2.11.2` and Unity Transport `2.7.2`. |
 | Ads/Analytics/Purchasing absent | PASS | These template extras are not direct dependencies in `Packages/manifest.json` or the generated lock. |
 | Host P1 starts | NOT TESTED | Gameplay connection screen not implemented yet. |
@@ -35,10 +35,16 @@
 
 ## Evidence
 
-Command:
+Command wrapper:
 
 ```powershell
-& "C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe" -batchmode -nographics -quit -disable-assembly-updater -projectPath "C:\Users\jaynyasg\OneDrive\Documents\GitLab\Week7" -logFile "$env:TEMP\week7-unity-open-verify.log"
+$unity = "C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe"
+$project = "C:\Users\jaynyasg\OneDrive\Documents\GitLab\Week7"
+$log = "$env:TEMP\week7-unity-open-verify.log"
+$args = @("-batchmode", "-nographics", "-quit", "-disable-assembly-updater", "-projectPath", $project, "-logFile", $log)
+$process = Start-Process -FilePath $unity -ArgumentList $args -PassThru -WindowStyle Hidden
+$process.WaitForExit(600000)
+"UNITY_EXIT=$($process.ExitCode)"
 ```
 
 Result:
@@ -49,6 +55,11 @@ Batchmode quit successfully invoked - shutting down!
 Exiting batchmode successfully now!
 Exiting without the bug reporter. Application will terminate with return code 0
 ```
+
+Log notes:
+
+- The log includes a transient startup licensing handshake/access-token retry, followed by successful license initialization and entitlement resolution.
+- The log includes `Curl error 42: Callback aborted` during shutdown, after `Batchmode quit successfully invoked`; Unity still terminated with return code `0`.
 
 ## Known Issues
 
