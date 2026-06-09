@@ -1,93 +1,113 @@
-# Week7
+# Career Quest Campus
 
+Career Quest Campus is a Week7 Unity multiplayer game about kid-friendly career discovery. Players choose avatars, explore a bright campus, play career-themed mini-games, earn degree/practice stamps, build a Career DNA profile, and unlock a celebratory Career Reveal.
 
+This repo is currently in the implementation-planning stage. The Unity project will live at the repo root.
 
-## Getting started
+## Locked Scope
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Engine: Unity `6000.4.10f1`.
+- Networking: Unity Netcode for GameObjects with Unity Transport.
+- Project shape: Unity project at repo root with `Assets/`, `Packages/`, and `ProjectSettings/` tracked.
+- Core architecture: one persistent gameplay scene for P0. Mini-games are implemented as activity states inside that scene, not separate Netcode-loaded scenes.
+- Multiplayer proof: same-computer host/client testing is required. LAN support should be implemented if practical, but LAN is not a blocker unless tested and documented.
+- Distribution: itch.io page with a downloadable Windows build, screenshots, fallback notes, and optional WebGL preview.
+- Privacy: no accounts, chat, saved child profiles, child-identifying analytics, or persisted display names.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Game Loop
 
-## Add your files
+1. Open connection screen.
+2. Choose `Host P1`, `Join Localhost as P2`, `Join LAN by IP`, or `Solo Fallback`.
+3. Pick avatar and optional session-only display name.
+4. Enter campus and choose mini-games in any order.
+5. Complete at least two mini-games to unlock Career Reveal.
+6. Play more mini-games to improve reveal confidence.
+7. View Passport stamps, top Career DNA traits, top career match, co-leads if tied, and runner-up paths.
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Mini-Games
 
-```
-cd existing_repo
-git remote add origin https://labs.gauntletai.com/jaygodfrey/week7.git
-git branch -M main
-git push -uf origin main
-```
+All three mini-games are Week7 targets with distinct mechanics and one polished challenge each:
 
-## Integrate with your tools
+- Design Build Studio: collaborative spatial placement. Players place the right shapes/colors into blueprint slots before time ends.
+- Health Hero Clinic: timed diagnosis and tool/treatment matching.
+- Logic Court: evidence sorting and strongest closing-argument selection.
 
-* [Set up project integrations](https://labs.gauntletai.com/jaygodfrey/week7/-/settings/integrations)
+Only Design Build Studio must be deep multiplayer. All mini-games must also be playable solo. Solo players can use mouse controls in mini-games.
 
-## Collaborate with your team
+## Multiplayer And Controls
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Same-computer testing must be possible from one machine:
 
-## Test and Deploy
+- `Host P1`: WASD-style control preset.
+- `Join Localhost as P2`: arrow/IJKL-style split control preset.
+- Split controls apply to campus movement and multiplayer mini-game actions.
+- Solo/Fallback mode uses normal keyboard plus mouse.
+- LAN multiplayer may use normal controls per machine, with manual IP join as the required UI path.
 
-Use the built-in continuous integration in GitLab.
+Solo Fallback is available from the start and clearly labeled. It may show a local demo buddy where multiplayer matters, but debug/passport metadata must label the source as `Solo Fallback`.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## Career DNA
 
-***
+The first build uses these traits:
 
-# Editing this README
+- Helping
+- Science
+- Focus
+- Reasoning
+- Communication
+- Leadership
+- Creativity
+- Building
+- Spatial Thinking
+- Collaboration
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+First careers:
 
-## Suggestions for a good README
+- Doctor
+- Lawyer
+- AI Engineer
+- Artist
+- Architect
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Mini-games emit degree/practice stamps and trait deltas only. `CareerConfig` computes career rankings from configured trait weights.
 
-## Name
-Choose a self-explaining name for your project.
+Replay is allowed. Only the best result per mini-game counts, ranked by completion tier, then time remaining, then accuracy. Career DNA totals are recomputed from each mini-game's best result.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Stamps And Reveal
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+- Stamp tiers: `Degree` for success, `Practice` for partial/soft failure.
+- Source badges: `Multiplayer`, `Solo`, or `Solo Fallback`.
+- Practice counts toward reveal unlock but lowers confidence.
+- Reveal unlocks after any two unique mini-games.
+- Reveal confidence is phrase-only: `Good match`, `Strong match`, or `Very strong match`.
+- Close career ties are shown as co-leads.
+- Reveal language is strength-based, not deterministic.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Project Docs
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+- [Architecture snapshot](docs/architecture.md)
+- [Demo checklist](docs/demo-checklist.md)
+- [QA evidence template](docs/qa/README.md)
+- [Backlog](TODOS.md)
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Planned Setup
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+After Unity bootstrap:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+1. Open Unity Hub.
+2. Add this repo root as the Unity project.
+3. Use Unity `6000.4.10f1`.
+4. Let Unity restore packages from `Packages/manifest.json`.
+5. Open the main gameplay scene under `Assets/_CareerQuest/Scenes/`.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+The first implementation commit should prove Unity opens cleanly with Netcode/Transport installed and docs updated.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Verification Targets
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- Unity project opens cleanly in `6000.4.10f1`.
+- Same-computer host/client can run from one machine.
+- Two clients can see each other move in the campus.
+- Design Build Studio shared placement is visible on both clients.
+- Career DNA, Passport, and Reveal update from mini-game results.
+- Forced failures show retry/return paths.
+- Windows build path and QA evidence are recorded under `docs/qa/`.
