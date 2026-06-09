@@ -8,32 +8,46 @@ namespace CareerQuest
     {
         [SerializeField] private float moveSpeed = 4f;
         [SerializeField] private PlayerInputRouter inputRouter;
-        [SerializeField] private Color localColor = new(0.2f, 0.65f, 1f);
-        [SerializeField] private Color remoteColor = new(1f, 0.75f, 0.2f);
+        [SerializeField] private string avatarId = AvatarConfig.DefaultAvatarId;
 
-        private static Sprite _avatarSprite;
         private readonly NetworkVariable<Vector3> _networkPosition = new(
             Vector3.zero,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<int> _networkAvatarIndex = new(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server);
 
+        private AvatarRuntimeView _avatarView;
         private SpriteRenderer _spriteRenderer;
+        public string AvatarId => avatarId;
 
         private void Awake()
         {
             inputRouter = inputRouter != null ? inputRouter : GetComponent<PlayerInputRouter>();
             _spriteRenderer = GetComponent<SpriteRenderer>() ?? gameObject.AddComponent<SpriteRenderer>();
+            _avatarView = GetComponent<AvatarRuntimeView>() ?? gameObject.AddComponent<AvatarRuntimeView>();
             EnsureVisibleAvatar();
         }
 
         public override void OnNetworkSpawn()
         {
+            _networkAvatarIndex.OnValueChanged += HandleAvatarChanged;
+
             if (IsServer)
             {
                 _networkPosition.Value = transform.position;
+                _networkAvatarIndex.Value = AvatarConfig.IndexForAvatar(avatarId);
             }
 
             ApplyColor();
+            ApplyAvatar(AvatarConfig.GetAvatarAt(_networkAvatarIndex.Value).Id);
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            _networkAvatarIndex.OnValueChanged -= HandleAvatarChanged;
         }
 
         private void Update()
@@ -64,6 +78,19 @@ namespace CareerQuest
             transform.position = ClampCampus(next);
         }
 
+        public void SetAvatar(string selectedAvatarId)
+        {
+            avatarId = AvatarConfig.GetAvatar(selectedAvatarId).Id;
+
+            if (IsSpawned)
+            {
+                SubmitAvatarRpc(AvatarConfig.IndexForAvatar(avatarId));
+                return;
+            }
+
+            ApplyAvatar(avatarId);
+        }
+
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void SubmitMoveRpc(Vector2 move, float deltaTime)
         {
@@ -87,97 +114,34 @@ namespace CareerQuest
                 return;
             }
 
-            _spriteRenderer.color = IsOwner ? localColor : remoteColor;
+            _spriteRenderer.color = Color.white;
         }
 
         private void EnsureVisibleAvatar()
         {
-            if (_spriteRenderer == null)
+            if (_spriteRenderer == null || _avatarView == null)
             {
                 return;
             }
 
-            if (_spriteRenderer.sprite == null)
-            {
-                _spriteRenderer.sprite = AvatarSprite;
-            }
-
-            _spriteRenderer.sortingOrder = 10;
-
-            if (transform.localScale == Vector3.one)
-            {
-                transform.localScale = new Vector3(0.75f, 0.75f, 1f);
-            }
+            _avatarView.ApplyAvatar(avatarId);
         }
 
-        private static Sprite AvatarSprite
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void SubmitAvatarRpc(int selectedAvatarIndex)
         {
-            get
-            {
-                if (_avatarSprite != null)
-                {
-                    return _avatarSprite;
-                }
-
-                const int width = 64;
-                const int height = 88;
-                var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
-                {
-                    filterMode = FilterMode.Point,
-                    wrapMode = TextureWrapMode.Clamp
-                };
-
-                for (var y = 0; y < height; y++)
-                {
-                    for (var x = 0; x < width; x++)
-                    {
-                        texture.SetPixel(x, y, Color.clear);
-                    }
-                }
-
-                FillCircle(texture, 32, 65, 15, Color.white);
-                FillRect(texture, 20, 26, 24, 36, Color.white);
-                FillRect(texture, 15, 30, 8, 24, Color.white);
-                FillRect(texture, 41, 30, 8, 24, Color.white);
-                FillRect(texture, 21, 6, 8, 24, Color.white);
-                FillRect(texture, 35, 6, 8, 24, Color.white);
-                FillCircle(texture, 32, 17, 24, new Color(1f, 1f, 1f, 0.22f));
-
-                texture.Apply();
-                _avatarSprite = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.18f), 64f);
-                return _avatarSprite;
-            }
+            _networkAvatarIndex.Value = Mathf.Clamp(selectedAvatarIndex, 0, AvatarConfig.Avatars.Length - 1);
         }
 
-        private static void FillRect(Texture2D texture, int left, int bottom, int width, int height, Color color)
+        private void HandleAvatarChanged(int previousValue, int newValue)
         {
-            for (var y = bottom; y < bottom + height; y++)
-            {
-                for (var x = left; x < left + width; x++)
-                {
-                    if (x >= 0 && x < texture.width && y >= 0 && y < texture.height)
-                    {
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-            }
+            ApplyAvatar(AvatarConfig.GetAvatarAt(newValue).Id);
         }
 
-        private static void FillCircle(Texture2D texture, int centerX, int centerY, int radius, Color color)
+        private void ApplyAvatar(string selectedAvatarId)
         {
-            var radiusSquared = radius * radius;
-            for (var y = centerY - radius; y <= centerY + radius; y++)
-            {
-                for (var x = centerX - radius; x <= centerX + radius; x++)
-                {
-                    var dx = x - centerX;
-                    var dy = y - centerY;
-                    if (dx * dx + dy * dy <= radiusSquared && x >= 0 && x < texture.width && y >= 0 && y < texture.height)
-                    {
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-            }
+            avatarId = AvatarConfig.GetAvatar(selectedAvatarId).Id;
+            _avatarView?.ApplyAvatar(avatarId);
         }
     }
 }
