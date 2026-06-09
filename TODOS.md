@@ -14,4 +14,16 @@
 **Priority:** P3
 **Depends on:** Week7 P0 demo loop shipped and reviewed.
 
+### Evaluate Netcode Scene Split After P0
+
+**What:** Revisit whether mini-games should move from one persistent gameplay scene into separate Unity scenes loaded through Netcode `NetworkSceneManager`.
+
+**Why:** P0 intentionally keeps mini-games as states/UI panels inside one gameplay scene to avoid scene synchronization risk during the sprint. After the core loop ships, separate scenes may improve long-term organization for a larger campus.
+
+**Context:** The engineering review chose a persistent-scene architecture for Week7 because the repo is starting from docs/assets only and Netcode scene transitions add late-join and synchronization edge cases. If Career Quest Campus expands beyond the first three activities, evaluate whether each building should become a separate Netcode-managed scene, and only migrate after the current host/client, Career DNA, passport, reveal, and recovery paths have stable tests.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** Week7 P0 demo loop shipped and reviewed.
+
 ## Completed
