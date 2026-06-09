@@ -32,13 +32,15 @@ namespace CareerQuest
         private DemoDebugOverlay _debugOverlay;
         private ShowcasePresenter _showcasePresenter;
         private CampusWorldController _world;
-        private AppMode _avatarSelectionTarget = AppMode.Play;
+        private SceneFlowRouter _router;
 
         public GameSession Session => _session;
+        public ActivityRoute CurrentRoute => _router.CurrentRoute;
 
         private void Awake()
         {
             _session = new GameSession();
+            _router = new SceneFlowRouter();
             _canvas = UiBuilder.EnsureCanvas();
             _root = _canvas.GetComponent<RectTransform>();
             _world = CampusWorldController.Ensure();
@@ -80,7 +82,7 @@ namespace CareerQuest
         public void ShowEntry()
         {
             _showcasePresenter.Stop();
-            _session.StartMode(AppMode.Entry);
+            _router.ShowEntry(_session);
             _world.ShowEntry(_session);
             ResetRoot();
             _entry.Render(_root, this);
@@ -90,7 +92,7 @@ namespace CareerQuest
         public void BeginPlay()
         {
             _showcasePresenter.Stop();
-            _session.StartMode(AppMode.Play);
+            _router.BeginPlay(_session);
             ShowConnection();
         }
 
@@ -106,19 +108,20 @@ namespace CareerQuest
 
         public void ChooseAvatar(string avatarId)
         {
-            _session.SelectAvatar(avatarId);
+            var route = _router.ChooseAvatar(_session, avatarId);
 
-            if (_avatarSelectionTarget == AppMode.Showcase)
+            if (route == ActivityRoute.ShowcaseProof)
             {
-                BeginShowcase();
+                _showcasePresenter.Begin();
                 return;
             }
 
-            BeginPlay();
+            ShowConnection();
         }
 
         public void ShowShowcaseDisclaimer()
         {
+            _router.ShowShowcaseDisclaimer(_session);
             _world.ShowEntry(_session);
             ResetRoot();
             _disclaimer.Render(_root, this);
@@ -127,13 +130,13 @@ namespace CareerQuest
 
         public void BeginShowcase()
         {
-            _session.SeedShowcase();
-            _session.PlayerCount = 2;
+            _router.BeginShowcase(_session);
             _showcasePresenter.Begin();
         }
 
         public void ShowConnection()
         {
+            _router.ShowConnection(_session);
             _world.ShowConnection(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ConnectionPanel", new Color(0.88f, 0.94f, 0.96f));
@@ -144,8 +147,7 @@ namespace CareerQuest
             var host = UiBuilder.Button(panel, "HostP1Button", "Host P1", () =>
             {
                 _networkBootstrap.StartHostP1();
-                _session.SetConnectionMode(ConnectionMode.HostP1);
-                _session.PlayerCount = 1;
+                _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
                 ShowCampus();
             });
             UiBuilder.Place(host.GetComponent<RectTransform>(), -300f, 100f, 240f, 64f);
@@ -153,8 +155,7 @@ namespace CareerQuest
             var joinLocal = UiBuilder.Button(panel, "JoinLocalButton", "Join Localhost as P2", () =>
             {
                 _networkBootstrap.JoinLocalhostP2();
-                _session.SetConnectionMode(ConnectionMode.JoinLocalhostP2);
-                _session.PlayerCount = 2;
+                _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
                 ShowCampus();
             });
             UiBuilder.Place(joinLocal.GetComponent<RectTransform>(), 0f, 100f, 280f, 64f);
@@ -162,8 +163,7 @@ namespace CareerQuest
             var solo = UiBuilder.Button(panel, "SoloFallbackButton", "Solo Fallback", () =>
             {
                 _networkBootstrap.StartSoloFallback();
-                _session.SetConnectionMode(ConnectionMode.SoloFallback);
-                _session.PlayerCount = 1;
+                _router.UseConnectionMode(_session, ConnectionMode.SoloFallback, 1);
                 ShowCampus();
             });
             UiBuilder.Place(solo.GetComponent<RectTransform>(), 300f, 100f, 240f, 64f);
@@ -174,8 +174,7 @@ namespace CareerQuest
             var joinLan = UiBuilder.Button(panel, "JoinLanButton", "Join LAN by IP", () =>
             {
                 _networkBootstrap.JoinLanByIp(input.text);
-                _session.SetConnectionMode(ConnectionMode.JoinLanByIp);
-                _session.PlayerCount = 2;
+                _router.UseConnectionMode(_session, ConnectionMode.JoinLanByIp, 2);
                 ShowCampus();
             });
             UiBuilder.Place(joinLan.GetComponent<RectTransform>(), 190f, -20f, 250f, 56f);
@@ -188,6 +187,7 @@ namespace CareerQuest
 
         public void ShowCampus()
         {
+            _router.ShowCampus(_session);
             _world.ShowCampus(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "CampusPanel", new Color(0.85f, 0.97f, 0.9f));
@@ -220,6 +220,7 @@ namespace CareerQuest
 
         public void ShowShowcaseProofBeat()
         {
+            _router.ShowShowcaseProof(_session);
             _world.ShowProof(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ShowcaseProofPanel", new Color(0.86f, 0.91f, 1f));
@@ -242,6 +243,7 @@ namespace CareerQuest
 
         public void ShowDesignBuild(bool showcaseAutoComplete)
         {
+            _router.ShowActivity(_session, ActivityRoute.DesignBuild);
             _world.ShowDesignBuild(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<DesignBuildController>() ?? gameObject.AddComponent<DesignBuildController>();
@@ -262,6 +264,7 @@ namespace CareerQuest
 
         public void ShowHealthHero()
         {
+            _router.ShowActivity(_session, ActivityRoute.HealthHero);
             _world.ShowClinic(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<HealthHeroController>() ?? gameObject.AddComponent<HealthHeroController>();
@@ -271,6 +274,7 @@ namespace CareerQuest
 
         public void ShowLogicCourt()
         {
+            _router.ShowActivity(_session, ActivityRoute.LogicCourt);
             _world.ShowCourt(_session);
             ResetRoot();
             var controller = gameObject.GetComponent<LogicCourtController>() ?? gameObject.AddComponent<LogicCourtController>();
@@ -280,6 +284,7 @@ namespace CareerQuest
 
         public void ShowGallery()
         {
+            _router.ShowGallery(_session);
             _world.ShowGallery(_session);
             ResetRoot();
             _gallery.Render(_root, _session, this);
@@ -288,6 +293,7 @@ namespace CareerQuest
 
         public void ShowReveal()
         {
+            _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
             _reveal.Render(_root, _session, this);
@@ -296,6 +302,8 @@ namespace CareerQuest
 
         public void QuitGame()
         {
+            _router.Quit(_session);
+
             if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
             {
                 networkManager.Shutdown();
@@ -332,7 +340,7 @@ namespace CareerQuest
 
         private void ShowAvatarSelection(AppMode target)
         {
-            _avatarSelectionTarget = target;
+            _router.ShowAvatarSelection(_session, target);
             _world.ShowEntry(_session);
             ResetRoot();
             _avatarSelection.Render(_root, this);
@@ -368,8 +376,7 @@ namespace CareerQuest
                 case "host":
                     BeginPlay();
                     _networkBootstrap.StartHostP1();
-                    _session.SetConnectionMode(ConnectionMode.HostP1);
-                    _session.PlayerCount = 1;
+                    _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
                     ShowCampus();
                     yield return new WaitForSeconds(6f);
                     break;
@@ -377,8 +384,7 @@ namespace CareerQuest
                     BeginPlay();
                     yield return new WaitForSeconds(1f);
                     _networkBootstrap.JoinLocalhostP2();
-                    _session.SetConnectionMode(ConnectionMode.JoinLocalhostP2);
-                    _session.PlayerCount = 2;
+                    _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
                     ShowCampus();
                     yield return new WaitForSeconds(2f);
                     LogSmoke("CQ_SMOKE_CONNECTED", mode);
@@ -391,8 +397,7 @@ namespace CareerQuest
                 default:
                     BeginPlay();
                     _networkBootstrap.StartSoloFallback();
-                    _session.SetConnectionMode(ConnectionMode.SoloFallback);
-                    _session.PlayerCount = 1;
+                    _router.UseConnectionMode(_session, ConnectionMode.SoloFallback, 1);
                     ShowCampus();
                     yield return new WaitForSeconds(2f);
                     break;

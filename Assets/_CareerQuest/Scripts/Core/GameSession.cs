@@ -15,6 +15,7 @@ namespace CareerQuest
         public string CurrentShowcaseStep { get; set; } = "None";
         public int PlayerCount { get; set; }
         public AvatarDefinition SelectedAvatar { get; private set; } = AvatarConfig.DefaultAvatar;
+        public ActivityRoute CurrentRoute { get; private set; } = ActivityRoute.Entry;
 
         public IReadOnlyCollection<MiniGameResult> BestResults => _bestResults.Values;
         public bool HasSeededResults => _bestResults.Values.Any(result => result.IsSeeded || result.Source == ResultSource.ShowcaseSeed);
@@ -46,6 +47,17 @@ namespace CareerQuest
         public void SelectAvatar(string avatarId)
         {
             SelectedAvatar = AvatarConfig.GetAvatar(avatarId);
+            NotifyChanged();
+        }
+
+        public void SetRoute(ActivityRoute route)
+        {
+            if (CurrentRoute == route)
+            {
+                return;
+            }
+
+            CurrentRoute = route;
             NotifyChanged();
         }
 
