@@ -38,11 +38,11 @@ Gameplay Scene
    +-- NetworkBootstrap
    +-- GameSession
    |     +-- app mode: Play or Showcase
-   |     +-- avatar/display state
+   |     +-- player/session display state
    |     +-- connection mode
    |     +-- best MiniGameResult per activity
    |     +-- Career DNA totals
-   |     +-- Passport state
+   |     +-- Achievement Gallery state
    |     +-- reveal readiness/confidence
    |     +-- seeded/live debug source metadata
    |     +-- recovery routing
@@ -58,7 +58,7 @@ Gameplay Scene
    |     +-- LogicCourt
    |
    +-- MiniGameResultHandler
-   +-- CareerPassportUi
+   +-- AchievementGalleryUi
    +-- RevealCeremony
    +-- RecoveryUi
    +-- DemoDebugOverlay
@@ -109,7 +109,7 @@ The host/server is authoritative for the facts that matter:
 - Mini-game result emission
 - Best-result replacement
 - Career DNA recomputation
-- Passport stamp source/tier
+- Achievement Gallery badge source/tier
 
 Clients may show local previews, but they submit discrete action requests to the host.
 
@@ -210,9 +210,9 @@ Best result ordering:
 
 `GameSession` stores each activity's best result and recomputes Career DNA totals from best results. This avoids trait inflation from replay farming.
 
-## Passport And Reveal
+## Achievement Gallery And Reveal
 
-The Passport shows best results only. Attempts are debug-only.
+The Achievement Gallery shows best results only. Attempts are debug-only.
 
 Stamp tiers:
 
@@ -281,5 +281,5 @@ Ignore:
 2. One computer can run two local clients with split controls.
 3. Two clients can see each other move in campus.
 4. Design Build Studio shared placement is visible on both clients.
-5. Career DNA, Passport, and Reveal work from mini-game results.
+5. Career DNA, Achievement Gallery, and Reveal work from mini-game results.
 6. Windows build and QA evidence are recorded.

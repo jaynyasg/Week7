@@ -16,19 +16,19 @@ This repo is now bootstrapped as a Unity project at the repo root.
 
 ## Game Loop
 
-1. Open connection screen.
-2. Choose `Host P1`, `Join Localhost as P2`, `Join LAN by IP`, or `Solo Fallback`.
-3. Pick avatar and optional session-only display name.
-4. Enter campus and choose mini-games in any order.
-5. Complete at least two mini-games to unlock Career Reveal.
-6. Play more mini-games to improve reveal confidence.
-7. View Passport stamps, top Career DNA traits, top career match, co-leads if tied, and runner-up paths.
+1. Open the entry screen.
+2. Choose `Play` for free campus or `Showcase` for the guided evaluator route.
+3. In `Play`, choose `Host P1`, `Join Localhost as P2`, `Join LAN by IP`, or `Solo Fallback`.
+4. Enter Free Campus and choose mini-games in any order.
+5. Complete one mini-game or Showcase-equivalent result to unlock Career Reveal.
+6. Play more unique mini-games to improve reveal confidence.
+7. View Achievement Gallery badges, top Career DNA traits, top career match, co-leads if tied, and runner-up paths.
 
 ## Mini-Games
 
-All three mini-games are Week7 targets with distinct mechanics and one polished challenge each:
+All three mini-games are implemented Week7 slices with distinct mechanics and one polished challenge each:
 
-- Design Build Studio: collaborative spatial placement. Players place the right shapes/colors into blueprint slots before time ends.
+- Future City Design Build: place clinic, court, studio, lab, and art-tower pieces into a shared future skyline.
 - Health Hero Clinic: timed diagnosis and tool/treatment matching.
 - Logic Court: evidence sorting and strongest closing-argument selection.
 
@@ -78,7 +78,7 @@ Replay is allowed. Only the best result per mini-game counts, ranked by completi
 - Stamp tiers: `Degree` for success, `Practice` for partial/soft failure.
 - Source badges: `Multiplayer`, `Solo`, or `Solo Fallback`.
 - Practice counts toward reveal unlock but lowers confidence.
-- Reveal unlocks after any two unique mini-games.
+- Reveal unlocks after any one unique mini-game or Showcase-equivalent result.
 - Reveal confidence is phrase-only: `Good match`, `Strong match`, or `Very strong match`.
 - Close career ties are shown as co-leads.
 - Reveal language is strength-based, not deterministic.
@@ -96,16 +96,17 @@ Replay is allowed. Only the best result per mini-game counts, ranked by completi
 2. Add this repo root as the Unity project.
 3. Use Unity `6000.4.10f1`.
 4. Let Unity restore packages from `Packages/manifest.json`.
-5. Open the main gameplay scene under `Assets/_CareerQuest/Scenes/` once gameplay scaffolding exists.
+5. Open `Assets/_CareerQuest/Scenes/CareerQuestCampus.unity`.
 
 Bootstrap verification completed on 2026-06-09: Unity opened this project in batchmode with Netcode for GameObjects `2.11.2` and Unity Transport `2.7.2`, then exited with code `0`.
 
 ## Verification Targets
 
 - Unity project opens cleanly in `6000.4.10f1`.
+- `Play` enters unseeded free campus and `Showcase` starts the guided route after a disclaimer.
 - Same-computer host/client can run from one machine.
 - Two clients can see each other move in the campus.
-- Design Build Studio shared placement is visible on both clients.
-- Career DNA, Passport, and Reveal update from mini-game results.
+- Design Build Studio accepted placement produces clear feedback.
+- Career DNA, Achievement Gallery, and Reveal update from mini-game results.
 - Forced failures show retry/return paths.
 - Windows build path and QA evidence are recorded under `docs/qa/`.

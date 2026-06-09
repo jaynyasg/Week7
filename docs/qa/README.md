@@ -50,7 +50,7 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 | Design Build Studio shared placement | PASS/FAIL | |
 | Health Hero Clinic completes | PASS/FAIL | |
 | Logic Court completes | PASS/FAIL | |
-| Passport stamp tier/source | PASS/FAIL | |
+| Achievement Gallery badge tier/source | PASS/FAIL | |
 | Career Reveal unlock after one game | PASS/FAIL | |
 | Reveal confidence improves after more unique games | PASS/FAIL | |
 | Reveal confidence phrase | PASS/FAIL | |
@@ -86,7 +86,7 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 - Solo Fallback is allowed, but must be labeled as fallback/demo mode.
 - `Play` must enter unseeded free campus without Showcase presenter auto-advance.
 - `Showcase` may seed results only after a friendly guided-tour disclaimer.
-- Career Reveal stays celebratory; source metadata belongs in Passport/debug.
+- Career Reveal stays celebratory; source metadata belongs in Achievement Gallery/debug.
 - Career Reveal unlocks after one completed mini-game or Showcase-equivalent result; more unique best results should improve confidence.
 - Do not add accounts, saved profiles, persistent child data, analytics, telemetry, or chat.
 - Failed or partial results should produce `Practice` stamps, not harsh failure copy.

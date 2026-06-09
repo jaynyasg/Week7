@@ -29,19 +29,18 @@ Use this checklist for the five-minute evaluator path and for local smoke testin
 3. Launch a second local client on the same computer.
 4. Select `Join Localhost as P2`.
 5. Confirm split controls are visible on the connection screen.
-6. Choose avatars and optional session-only display names.
-7. Enter campus with both players visible.
-8. Move both players for at least 30 seconds using split controls.
-9. Enter Design Build Studio.
-10. Place a blueprint piece as P1 and confirm P2 sees it.
-11. Place a blueprint piece as P2 and confirm P1 sees it.
-12. Attempt simultaneous or duplicate placement and confirm the second action gets gentle rejection feedback.
-13. Complete the activity and verify one shared result appears on both clients.
-14. Open Passport and verify stamp tier, source badge, and trait updates.
-15. Confirm Career Reveal unlocks after one completed mini-game with a lower-confidence phrase.
-16. Complete at least one more mini-game if available and confirm confidence improves from additional unique results.
-17. Trigger Career Reveal and verify strength-based language, co-lead handling if applicable, and confidence phrase.
-18. Toggle debug overlay and confirm network + game facts are visible.
+6. Enter campus with both players visible.
+7. Move both players for at least 30 seconds using split controls.
+8. Enter Design Build Studio.
+9. Place a blueprint piece as P1 and confirm P2 sees it.
+10. Place a blueprint piece as P2 and confirm P1 sees it.
+11. Attempt simultaneous or duplicate placement and confirm the second action gets gentle rejection feedback.
+12. Complete the activity and verify one shared result appears on both clients.
+13. Open Achievement Gallery and verify badge tier, source, and trait updates.
+14. Confirm Career Reveal unlocks after one completed mini-game with a lower-confidence phrase.
+15. Complete at least one more mini-game if available and confirm confidence improves from additional unique results.
+16. Trigger Career Reveal and verify strength-based language, co-lead handling if applicable, and confidence phrase.
+17. Toggle debug overlay and confirm network + game facts are visible.
 
 ## Solo Fallback Path
 
@@ -50,9 +49,8 @@ Use this checklist for the five-minute evaluator path and for local smoke testin
 3. Confirm fallback mode is clearly labeled.
 4. Verify normal keyboard + mouse controls are available.
 5. Enter Design Build Studio.
-6. Confirm local demo buddy appears where multiplayer matters.
-7. Complete the activity.
-8. Verify Passport source metadata labels the result as fallback/solo while the ceremony stays celebratory.
+6. Complete the activity.
+7. Verify source metadata labels the result as fallback/solo while the ceremony stays celebratory.
 
 ## Three Mini-Game Path
 

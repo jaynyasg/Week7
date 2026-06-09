@@ -1,7 +1,7 @@
 ---
 title: Demo Wow Showcase Implementation Plan
 type: feat
-status: active
+status: completed
 date: 2026-06-09
 origin: docs/brainstorms/2026-06-09-demo-wow-showcase-requirements.md
 ---
