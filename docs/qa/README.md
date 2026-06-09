@@ -38,6 +38,9 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 |---|---|---|
 | Unity opens cleanly | PASS/FAIL | |
 | Packages restore | PASS/FAIL | |
+| Showcase disclaimer appears before guided tour | PASS/FAIL | |
+| Showcase completes under three minutes | PASS/FAIL | |
+| Play enters unseeded free-campus flow | PASS/FAIL | |
 | Host P1 starts | PASS/FAIL | |
 | Join Localhost as P2 | PASS/FAIL | |
 | Split controls in campus | PASS/FAIL | |
@@ -48,9 +51,11 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 | Health Hero Clinic completes | PASS/FAIL | |
 | Logic Court completes | PASS/FAIL | |
 | Passport stamp tier/source | PASS/FAIL | |
-| Career Reveal unlock after two games | PASS/FAIL | |
+| Career Reveal unlock after one game | PASS/FAIL | |
+| Reveal confidence improves after more unique games | PASS/FAIL | |
 | Reveal confidence phrase | PASS/FAIL | |
 | Debug overlay toggle | PASS/FAIL | |
+| No account/profile persistence/analytics/chat added | PASS/FAIL | |
 | Forced host failure | PASS/FAIL | |
 | Forced join failure | PASS/FAIL | |
 | Disconnect recovery | PASS/FAIL | |
@@ -79,5 +84,9 @@ docs/qa/YYYY-MM-DD-build-smoke.md
 - LAN support is optional unless tested and documented.
 - WebGL is preview-only unless networking is already working.
 - Solo Fallback is allowed, but must be labeled as fallback/demo mode.
+- `Play` must enter unseeded free campus without Showcase presenter auto-advance.
+- `Showcase` may seed results only after a friendly guided-tour disclaimer.
 - Career Reveal stays celebratory; source metadata belongs in Passport/debug.
+- Career Reveal unlocks after one completed mini-game or Showcase-equivalent result; more unique best results should improve confidence.
+- Do not add accounts, saved profiles, persistent child data, analytics, telemetry, or chat.
 - Failed or partial results should produce `Practice` stamps, not harsh failure copy.

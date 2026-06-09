@@ -1,8 +1,28 @@
 # Demo Checklist
 
-Use this checklist for the five-minute evaluator path and for local smoke testing.
+Use this checklist for the five-minute evaluator path and for local smoke testing. Showcase is the preferred evaluator route; live host/client testing remains required QA proof.
 
-## Required Demo Path
+## Showcase Evaluator Path
+
+1. Open the game.
+2. Select `Showcase`.
+3. Confirm the friendly guided-tour disclaimer appears before seeded state or auto-advance.
+4. Accept the disclaimer and confirm Showcase begins.
+5. Within the first minute, verify the evaluator sees two-player proof, Career DNA or badge meaning, and at least one larger-campus signal.
+6. Enter or auto-enter Future City Design Build.
+7. Place or watch accepted city pieces with clear contribution feedback.
+8. Open Achievement Gallery and verify badges feel celebratory without visible seeded/tour labels.
+9. Trigger Career Reveal and verify Architect + AI Engineer co-leads, Future Problem Solver language, and strength-based copy.
+10. Confirm the Showcase path can complete in under three minutes.
+
+## Play Free-Campus Path
+
+1. Open the game.
+2. Select `Play`.
+3. Confirm the game enters the normal connection/free-campus flow.
+4. Confirm no Showcase seeded results, presenter auto-advance, or forced route are active.
+
+## Required Live Multiplayer Path
 
 1. Open the game.
 2. Select `Host P1`.
@@ -18,8 +38,8 @@ Use this checklist for the five-minute evaluator path and for local smoke testin
 12. Attempt simultaneous or duplicate placement and confirm the second action gets gentle rejection feedback.
 13. Complete the activity and verify one shared result appears on both clients.
 14. Open Passport and verify stamp tier, source badge, and trait updates.
-15. Complete at least one more mini-game.
-16. Confirm Career Reveal unlocks after any two unique mini-games.
+15. Confirm Career Reveal unlocks after one completed mini-game with a lower-confidence phrase.
+16. Complete at least one more mini-game if available and confirm confidence improves from additional unique results.
 17. Trigger Career Reveal and verify strength-based language, co-lead handling if applicable, and confidence phrase.
 18. Toggle debug overlay and confirm network + game facts are visible.
 
@@ -50,6 +70,7 @@ For each mini-game:
 4. Confirm partial/soft failure produces a `Practice` stamp.
 5. Confirm the best result replaces weaker prior attempts.
 6. Confirm Career DNA totals recompute instead of stacking replay attempts.
+7. Confirm Solo Fallback supports normal keyboard + mouse controls for the activity.
 
 ## Connection Testing
 

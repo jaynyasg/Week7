@@ -10,6 +10,10 @@ This document is an implementation-facing snapshot of the local gstack design, C
 - Distribution target: itch.io with downloadable Windows build. WebGL is preview-only unless networking is already working.
 - Visual style: bright 2.5D campus, flat characters, clean UI, strong feedback moments.
 
+## Privacy Boundaries
+
+The Week7 build does not add accounts, saved profiles, persistent child data, analytics, telemetry, or chat. Optional display names are session-only. Showcase seeded/live source can appear in debug or QA evidence, but the child-facing Gallery and Reveal stay celebratory.
+
 ## Scene Model
 
 P0 uses one persistent gameplay scene. Mini-games are full activities, but they run as states/panels/rooms inside the persistent scene instead of separate Unity scenes.
@@ -17,19 +21,30 @@ P0 uses one persistent gameplay scene. Mini-games are full activities, but they 
 Separate Netcode-managed scenes are deferred until after the P0 loop ships.
 
 ```text
-ConnectionScreen
+EntryScreen
+   |
+   +-- Play
+   |     -> ConnectionScreen
+   |     -> unseeded free campus
+   |
+   +-- Showcase
+   |     -> friendly disclaimer
+   |     -> PresenterController
+   |     -> guided campus route
    |
    v
 Gameplay Scene
    |
    +-- NetworkBootstrap
    +-- GameSession
+   |     +-- app mode: Play or Showcase
    |     +-- avatar/display state
    |     +-- connection mode
    |     +-- best MiniGameResult per activity
    |     +-- Career DNA totals
    |     +-- Passport state
    |     +-- reveal readiness/confidence
+   |     +-- seeded/live debug source metadata
    |     +-- recovery routing
    |
    +-- Campus
@@ -51,7 +66,7 @@ Gameplay Scene
 
 ## Connection Modes
 
-The connection screen shows four clear options:
+`Play` leads to the normal connection screen and then the free campus. The connection screen shows four clear options:
 
 1. `Host P1`
 2. `Join Localhost as P2`
@@ -59,6 +74,12 @@ The connection screen shows four clear options:
 4. `Solo Fallback`
 
 LAN discovery/server browser is a stretch attempt. The required LAN path is manual IP join plus optional local IP display. If LAN is not tested, README and QA docs must mark it experimental.
+
+## Showcase And Play Split
+
+`Showcase` is a separate guided route for evaluators. It starts with a friendly disclaimer, may seed route/results/badges/camera beats, and uses PresenterController to reach the core proof path quickly. Seeded state must never leak into normal `Play` defaults.
+
+`Play` remains the honest free-campus path. It does not auto-advance, does not seed Career DNA, and does not show Showcase-only pacing unless the player explicitly chooses Showcase.
 
 ## Input Modes
 
@@ -204,7 +225,7 @@ Source badge:
 - `Solo`
 - `Solo Fallback`
 
-Reveal unlocks after any two unique mini-games. Practice counts toward unlock but lowers confidence. Results improve after more games.
+Reveal unlocks after any one completed mini-game or Showcase-equivalent result. One result starts at lower confidence; additional unique best results improve confidence and make the recommendation feel more earned.
 
 Confidence phrases:
 
