@@ -25,6 +25,24 @@ Replace the procedural shapes gradually with a reusable sprite kit:
 - Environment props: signs, benches, badge banners, trees, lamps, path tiles, and activity tables.
 - Three animation cues: avatar idle bob, accepted-placement pulse, and reveal-stage light sweep.
 
+## Sprite Kit Pipeline
+
+Generated and curated sprites should enter the project through `AssetCatalog` IDs instead of direct scene paths. The first playable catalog covers:
+
+- `avatar.*` and `npc.*` sprites for selected player identity, campus guide, activity partners, patient, and court judge.
+- `campus.*` sprites for the three playable buildings, gallery, reveal stage, and future-label buildings.
+- `room.*` and `prop.*` sprites for each activity room and its interactable objects.
+- `badge.*` sprites for activity completion and reveal readiness.
+- `ui.*` sprites for persistent controls such as exit, gallery, reveal lock/unlock, confirm, and back.
+
+Source prompt for generated batches:
+
+```text
+Kid-friendly 2D campus adventure game sprite kit, crisp readable silhouettes, transparent backgrounds for characters and props, warm daylight colors, playful career-themed school buildings, simple shape language, no text baked into art, consistent proportions across avatars, icons, badges, and classroom props.
+```
+
+Until final sprites are imported, `SpriteFallbackFactory` generates deliberate placeholder sprites from the same catalog colors. Missing IDs use a high-contrast checker fallback so broken art is visible during QA.
+
 ## Visual Rules
 
 - Keep the campus colorful, but avoid one-color themes. Use green ground, warm paths, blue science spaces, coral creative spaces, gold logic/court spaces, and teal health/helping spaces.
