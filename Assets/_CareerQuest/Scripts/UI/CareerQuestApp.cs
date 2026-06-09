@@ -32,6 +32,7 @@ namespace CareerQuest
         private DemoDebugOverlay _debugOverlay;
         private ShowcasePresenter _showcasePresenter;
         private CampusWorldController _world;
+        private PlayableHubController _hub;
         private SceneFlowRouter _router;
 
         public GameSession Session => _session;
@@ -44,6 +45,7 @@ namespace CareerQuest
             _canvas = UiBuilder.EnsureCanvas();
             _root = _canvas.GetComponent<RectTransform>();
             _world = CampusWorldController.Ensure();
+            _hub = PlayableHubController.Ensure();
 
             _networkBootstrap = GetComponent<NetworkBootstrap>();
             _entry = GetComponent<EntryScreenController>();
@@ -81,6 +83,7 @@ namespace CareerQuest
 
         public void ShowEntry()
         {
+            _hub.Hide();
             _showcasePresenter.Stop();
             _router.ShowEntry(_session);
             _world.ShowEntry(_session);
@@ -121,6 +124,7 @@ namespace CareerQuest
 
         public void ShowShowcaseDisclaimer()
         {
+            _hub.Hide();
             _router.ShowShowcaseDisclaimer(_session);
             _world.ShowEntry(_session);
             ResetRoot();
@@ -136,6 +140,7 @@ namespace CareerQuest
 
         public void ShowConnection()
         {
+            _hub.Hide();
             _router.ShowConnection(_session);
             _world.ShowConnection(_session);
             ResetRoot();
@@ -189,37 +194,43 @@ namespace CareerQuest
         {
             _router.ShowCampus(_session);
             _world.ShowCampus(_session);
+            _hub.Show(_session, this);
             ResetRoot();
-            var panel = UiBuilder.FullPanel(_root, "CampusPanel", new Color(0.85f, 0.97f, 0.9f));
+            var hud = UiBuilder.Panel(_root, "CampusHud", new Color(0.93f, 0.98f, 0.95f, 0.78f));
+            UiBuilder.Place(hud, 0f, 286f, 1050f, 78f);
 
-            var title = UiBuilder.Text(panel, "CampusTitle", "Free Campus", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.2f, 0.13f));
-            UiBuilder.Place(title.rectTransform, 0f, 250f, 900f, 60f);
+            var title = UiBuilder.Text(hud, "CampusTitle", "Free Campus", 30, TextAnchor.MiddleLeft, new Color(0.08f, 0.2f, 0.13f));
+            UiBuilder.Place(title.rectTransform, -365f, 14f, 260f, 36f);
 
-            var mode = UiBuilder.Text(panel, "CampusMode", $"Mode: {_session.Mode} / {_session.ConnectionMode}", 20, TextAnchor.MiddleCenter, new Color(0.1f, 0.2f, 0.14f));
-            UiBuilder.Place(mode.rectTransform, 0f, 205f, 780f, 36f);
+            var mode = UiBuilder.Text(hud, "CampusMode", $"Mode: {_session.Mode} / {_session.ConnectionMode}", 17, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.14f));
+            UiBuilder.Place(mode.rectTransform, -365f, -18f, 340f, 28f);
 
-            AddCampusButton(panel, "Design Build Studio", -310f, 75f, () => ShowDesignBuild(false));
-            AddCampusButton(panel, "Health Hero Clinic", 0f, 75f, () => ShowHealthHero());
-            AddCampusButton(panel, "Logic Court", 310f, 75f, () => ShowLogicCourt());
+            var controls = UiBuilder.Text(hud, "CampusControls", "Move: WASD / arrows     Enter: E / Space     Click a door to enter", 17, TextAnchor.MiddleCenter, new Color(0.1f, 0.2f, 0.14f));
+            UiBuilder.Place(controls.rectTransform, 110f, 12f, 590f, 30f);
 
-            var labels = UiBuilder.Text(panel, "FutureLabels", "Future buildings: " + string.Join("  /  ", CareerConfig.FutureBuildingLabels), 20, TextAnchor.MiddleCenter, new Color(0.15f, 0.25f, 0.18f));
-            UiBuilder.Place(labels.rectTransform, 0f, -30f, 1100f, 48f);
+            var labels = UiBuilder.Text(hud, "FutureLabels", "Future: " + string.Join(" / ", CareerConfig.FutureBuildingLabels), 15, TextAnchor.MiddleCenter, new Color(0.15f, 0.25f, 0.18f));
+            UiBuilder.Place(labels.rectTransform, 110f, -18f, 590f, 26f);
 
-            var gallery = UiBuilder.Button(panel, "CampusGalleryButton", "Achievement Gallery", ShowGallery);
-            UiBuilder.Place(gallery.GetComponent<RectTransform>(), -150f, -155f, 280f, 64f);
+            var actionBar = UiBuilder.Panel(_root, "CampusActionBar", new Color(0.93f, 0.98f, 0.95f, 0.72f));
+            UiBuilder.Place(actionBar, 0f, -305f, 1120f, 68f);
 
-            var revealLabel = _session.RevealReady ? "Career Reveal" : $"Reveal {_session.UniqueCompletedGames}/3";
-            var reveal = UiBuilder.Button(panel, "CampusRevealButton", revealLabel, ShowReveal);
-            UiBuilder.Place(reveal.GetComponent<RectTransform>(), 160f, -155f, 250f, 64f);
+            AddCampusButton(actionBar, "Design Build", -420f, 0f, () => ShowDesignBuild(false));
+            AddCampusButton(actionBar, "Health Hero", -140f, 0f, () => ShowHealthHero());
+            AddCampusButton(actionBar, "Logic Court", 140f, 0f, () => ShowLogicCourt());
 
-            var entry = UiBuilder.Button(panel, "CampusEntryButton", "Entry", ShowEntry);
-            UiBuilder.Place(entry.GetComponent<RectTransform>(), 0f, -245f, 200f, 54f);
+            var gallery = UiBuilder.Button(actionBar, "CampusGalleryButton", "Gallery", ShowGallery);
+            UiBuilder.Place(gallery.GetComponent<RectTransform>(), 360f, 0f, 160f, 46f);
+
+            var revealLabel = _session.RevealReady ? "Reveal" : $"Reveal {_session.UniqueCompletedGames}/3";
+            var reveal = UiBuilder.Button(actionBar, "CampusRevealButton", revealLabel, ShowReveal);
+            UiBuilder.Place(reveal.GetComponent<RectTransform>(), 520f, 0f, 140f, 46f);
 
             AttachDebug();
         }
 
         public void ShowShowcaseProofBeat()
         {
+            _hub.Hide();
             _router.ShowShowcaseProof(_session);
             _world.ShowProof(_session);
             ResetRoot();
@@ -243,6 +254,7 @@ namespace CareerQuest
 
         public void ShowDesignBuild(bool showcaseAutoComplete)
         {
+            _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.DesignBuild);
             _world.ShowDesignBuild(_session);
             ResetRoot();
@@ -264,6 +276,7 @@ namespace CareerQuest
 
         public void ShowHealthHero()
         {
+            _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.HealthHero);
             _world.ShowClinic(_session);
             ResetRoot();
@@ -274,6 +287,7 @@ namespace CareerQuest
 
         public void ShowLogicCourt()
         {
+            _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.LogicCourt);
             _world.ShowCourt(_session);
             ResetRoot();
@@ -284,6 +298,7 @@ namespace CareerQuest
 
         public void ShowGallery()
         {
+            _hub.Hide();
             _router.ShowGallery(_session);
             _world.ShowGallery(_session);
             ResetRoot();
@@ -293,6 +308,7 @@ namespace CareerQuest
 
         public void ShowReveal()
         {
+            _hub.Hide();
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
@@ -330,7 +346,7 @@ namespace CareerQuest
         private void AddCampusButton(RectTransform panel, string label, float x, float y, UnityEngine.Events.UnityAction callback)
         {
             var button = UiBuilder.Button(panel, label.Replace(" ", string.Empty), label, () => callback.Invoke());
-            UiBuilder.Place(button.GetComponent<RectTransform>(), x, y, 270f, 70f);
+            UiBuilder.Place(button.GetComponent<RectTransform>(), x, y, 230f, 46f);
         }
 
         private void ResetRoot()
@@ -340,6 +356,7 @@ namespace CareerQuest
 
         private void ShowAvatarSelection(AppMode target)
         {
+            _hub.Hide();
             _router.ShowAvatarSelection(_session, target);
             _world.ShowEntry(_session);
             ResetRoot();
