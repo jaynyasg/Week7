@@ -35,6 +35,72 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - **Prefab/entity rewrite inside one persistent scene.** The build should move toward Unity-native prefabs and entities while keeping one persistent gameplay scene to avoid Netcode scene-transition risk.
 - **Host-authoritative activity state.** Shared mini-game state is validated by the host, syncs visible progress, emits one result, and lets `GameSession` remain the source for Career DNA and reveal readiness.
 - **Windows-first release.** Windows is the authoritative proof artifact. WebGL remains optional and only ships if it behaves clearly.
+- **Approach B — Full Loop Parity (All-In Parallel).** Walkable campus, all three room-scale activities on shared `ActivityRoomController`, Play + Showcase parity, visual-first proof with full generated/imported sprite kit synced to Resources. CEO-approved 2026-06-10 (SELECTIVE EXPANSION).
+- **Ceremony stack.** Shared completion ceremony on all three rooms via `CeremonyController` + `FeedbackController` + `AudioCueCatalog`; hybrid pacing (~12s cap, Skip after 3s, host-synced 2P).
+- **Session spine.** Host-authoritative `CampusSessionState` with local `GameSession` mirror; ceremony spine lands before room controller refactors.
+- **Optional hub rooms in parallel.** Optional buildings (kitchen, music, robotics, etc.) ship in the same wave priority as core three — not deferred past first playable.
+- **Multiplayer ceiling.** Design campus for four local avatar slots; ship and test two-player only.
+- **Reveal gate catalog.** Extensible `CareerQuestCatalog`; reveal unlocks when completed unique activity count ≥ 3 (configurable).
+- **Shared kid instructions.** `InstructionStrip` on hub and every activity room (≤8-word line + verb CTA icon).
+- **Visual cohesion scheduling.** Wave 4 dedicated campus-wide polish pass after Waves 1–3 (HUD chrome, parallax budget, evaluator screenshot set).
+
+---
+
+## CEO Review Locks (2026-06-10)
+
+**Status:** CEO_APPROVED — SELECTIVE EXPANSION  
+**Canonical plan:** `docs/plans/2026-06-10-career-quest-full-vision-ceo-plan.md`  
+**Next:** `/plan-eng-review` → `/ce-plan` → implement (no code until eng review + plan complete)
+
+### Brainstorm Q1–Q10 (locked)
+
+| # | Decision |
+|---|----------|
+| Q1–Q5 | Play/Showcase parity; visual-first scope; walkable hub; action bar hidden in Play; avatar before campus |
+| Q6 | All three rooms share the same completion ceremony template this week |
+| Q7 | Real walk/idle sprite sheets this week |
+| Q8 | Local multiplayer on walkable campus |
+| Q9 | Keep three unique completed games to unlock Career Reveal |
+| Q10 | All three activities migrate to `ActivityRoomController` with in-world direct manipulation |
+
+### Step 0D cherry-picks (all ACCEPTED)
+
+| ID | Expansion |
+|----|-----------|
+| `exp1_living_campus` | Ambient motion / living hub |
+| `exp2_ambient_hub_sfx` | Hub ambient SFX |
+| `exp_ceremony_polish` | Full DESIGN.md ceremony on all three rooms |
+| `exp_gallery_reveal_polish` | Gallery badge wall, Reveal curtain/cards, synced 2P celebration |
+| `exp5_guide_dialogue` | Guide contextual speech bubbles |
+| `exp6_campus_evolution` | Growing skyline via `prop.city_piece_*` |
+
+### Step 0E (locked)
+
+- Hub avatar motion: sprite sheets (Q7)
+- Ceremony: shared `CeremonyController` stack + `AudioCueCatalog`
+- Multiplayer sync: campus positions + activity state + ceremony moments (host-authoritative)
+- Parallax: rich (4+ layers + ambient motion)
+- Art pipeline: full catalog batch — generate/import entire sprite kit, one integration pass
+
+### Sections 10–11 (trajectory + UX)
+
+| Issue | Decision |
+|-------|----------|
+| S10-1 Optional rooms | **C** — parallel with core three (kitchen, music, robotics, etc.) |
+| S10-2 Multiplayer ceiling | **B** — design for 4 local slots; ship/test 2P only |
+| S10-3 Post-reveal growth | **A** — `CareerQuestCatalog`; gate = count ≥ 3 |
+| S11-1 Instructions | **A** — shared `InstructionStrip` (hub + all rooms) |
+| S11-2 Ceremony pacing | **Hybrid** — 3 beats, richer animation, ~12s cap, Skip after 3s, host-synced 2P |
+| S11-3 Polish scheduling | **A** — Wave 4 visual cohesion after Waves 1–3 |
+
+### Implementation waves (`/ce-plan` input)
+
+| Wave | Deliverable |
+|------|-------------|
+| 1 | `CampusSessionState` + ceremony stack + 2P harness + `InstructionStrip` + art batch + tiered warmup |
+| 2 | Design Build / Health Hero / Logic Court on `ActivityRoomController` + shared chrome + per-room net state |
+| 3 | Optional hub rooms (S10-1 C) + `CareerQuestCatalog` |
+| 4 | Visual cohesion (S11-3) + `CareerQuestBuild.ShipLadder` + `SubmissionBundle/` |
 
 ---
 
@@ -204,7 +270,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 
 **Deferred for later**
 
-- More career buildings, career clusters, and curriculum depth beyond the first playable campus set.
+- Career clusters and curriculum depth beyond the first playable campus set (individual optional rooms are **in scope** in parallel with core three — see S10-1 C).
 - Persistent progression, long-term profiles, rewards across sessions, or player accounts.
 - Automatic LAN discovery or internet matchmaking after same-computer/LAN proof is stable.
 - Separate Unity scenes or additive scene loading for each activity after the persistent-scene first playable is stable.
@@ -239,4 +305,5 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - `docs/qa/2026-06-09-showcase-smoke.md` for current QA gaps around visual/manual multiplayer proof and distribution.
 - `docs/brainstorms/2026-06-09-demo-wow-showcase-requirements.md` as historical Showcase-specific context; this full-vision doc supersedes it for the next planning pass.
 - `docs/plans/2026-06-09-demo-wow-showcase-plan.md` as historical completed implementation context.
-- Local CEO and engineering review notes for full-vision decisions; the relevant decisions are reflected here so downstream plans stay portable.
+- `docs/plans/2026-06-10-career-quest-full-vision-ceo-plan.md` — CEO_APPROVED SELECTIVE EXPANSION plan (Sections 1–11 complete).
+- `docs/plans/2026-06-10-career-quest-ceo-review-handoff.md` — session handoff notes.
