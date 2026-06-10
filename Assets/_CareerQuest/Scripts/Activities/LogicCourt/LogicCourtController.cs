@@ -1,11 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CareerQuest
 {
     public class LogicCourtController : MonoBehaviour
     {
+        private static readonly Color Ink = new(0.16f, 0.1f, 0.2f);
+        private static readonly Color Paper = new(1f, 0.97f, 0.86f, 0.9f);
+        private static readonly Color ButtonPrimary = new(0.08f, 0.34f, 0.42f);
+        private static readonly Color ButtonReady = new(0.05f, 0.48f, 0.4f);
+
         public IReadOnlyList<EvidenceCard> Evidence { get; } = new[]
         {
             new EvidenceCard("The bridge model held 20 blocks.", true),
@@ -41,21 +47,26 @@ namespace CareerQuest
 
         public void Render(Transform parent, GameSession session, CareerQuestApp app, ResultSource source)
         {
-            var panel = UiBuilder.FullPanel(parent, "LogicCourtPanel", new Color(0.97f, 0.93f, 1f));
+            var panel = UiBuilder.FullPanel(parent, "LogicCourtPanel", new Color(0.97f, 0.93f, 1f, 0.04f));
             var caseReviewed = false;
             var testMarked = false;
             var paintRejected = false;
             var blueprintMarked = false;
             var mistakes = 0;
 
-            var title = UiBuilder.Text(panel, "LogicCourtTitle", "Logic Court", 38, TextAnchor.MiddleCenter, new Color(0.18f, 0.1f, 0.24f));
-            UiBuilder.Place(title.rectTransform, 0f, 230f, 900f, 60f);
+            var questHud = UiBuilder.Panel(panel, "LogicCourtQuestHud", Paper);
+            UiBuilder.Place(questHud, -286f, 282f, 664f, 96f);
 
-            var prompt = UiBuilder.Text(panel, "LogicCourtPrompt", "Review the case, sort evidence, then choose a closing argument.", 24, TextAnchor.MiddleCenter, new Color(0.18f, 0.1f, 0.24f));
-            UiBuilder.Place(prompt.rectTransform, 0f, 150f, 960f, 60f);
+            UiBuilder.Shape(questHud, "LogicCourtHudStripe", new Color(0.96f, 0.62f, 0.18f, 0.95f), -318f, 0f, 14f, 96f);
 
-            var status = UiBuilder.Text(panel, "LogicCourtStatus", "Evidence sorted: 0/3", 20, TextAnchor.MiddleCenter, new Color(0.12f, 0.08f, 0.18f));
-            UiBuilder.Place(status.rectTransform, 0f, 100f, 900f, 36f);
+            var title = UiBuilder.Text(questHud, "LogicCourtTitle", "Logic Court", 22, TextAnchor.MiddleLeft, Ink);
+            UiBuilder.Place(title.rectTransform, 4f, 27f, 560f, 26f);
+
+            var prompt = UiBuilder.Text(questHud, "LogicCourtPrompt", "Review the case, sort evidence, then choose a closing argument.", 15, TextAnchor.MiddleLeft, Ink);
+            UiBuilder.Place(prompt.rectTransform, 4f, 0f, 560f, 24f);
+
+            var status = UiBuilder.Text(questHud, "LogicCourtStatus", "Evidence sorted: 0/3", 13, TextAnchor.MiddleLeft, new Color(0.12f, 0.08f, 0.18f));
+            UiBuilder.Place(status.rectTransform, 4f, -27f, 560f, 22f);
 
             void Refresh()
             {
@@ -63,14 +74,21 @@ namespace CareerQuest
                 status.text = $"Evidence sorted: {count}/3";
             }
 
-            var review = UiBuilder.Button(panel, "LogicCourtReviewButton", "Review Case", () =>
+            var evidenceTray = UiBuilder.Panel(panel, "LogicCourtEvidenceTray", new Color(0.95f, 0.99f, 1f, 0.78f));
+            UiBuilder.Place(evidenceTray, -254f, -320f, 790f, 56f);
+
+            var trayLabel = UiBuilder.Text(evidenceTray, "LogicCourtTrayLabel", "Evidence", 12, TextAnchor.MiddleCenter, Ink);
+            UiBuilder.Place(trayLabel.rectTransform, -344f, 0f, 82f, 22f);
+
+            var review = UiBuilder.Button(evidenceTray, "LogicCourtReviewButton", "Review Case", () =>
             {
                 caseReviewed = true;
                 prompt.text = "Case reviewed: only evidence that proves safety and fit should support the argument.";
             });
-            UiBuilder.Place(review.GetComponent<RectTransform>(), -390f, 32f, 220f, 54f);
+            UiBuilder.Place(review.GetComponent<RectTransform>(), -236f, 0f, 136f, 34f);
+            StyleButton(review, ButtonPrimary, 14);
 
-            var test = UiBuilder.Button(panel, "LogicCourtTestButton", "Mark Test Results Helpful", () =>
+            var test = UiBuilder.Button(evidenceTray, "LogicCourtTestButton", "Test Helpful", () =>
             {
                 if (!caseReviewed)
                 {
@@ -83,9 +101,10 @@ namespace CareerQuest
                 prompt.text = "Correct: bridge test results are useful evidence.";
                 Refresh();
             });
-            UiBuilder.Place(test.GetComponent<RectTransform>(), -130f, 32f, 260f, 54f);
+            UiBuilder.Place(test.GetComponent<RectTransform>(), -78f, 0f, 146f, 34f);
+            StyleButton(test, ButtonPrimary, 14);
 
-            var paint = UiBuilder.Button(panel, "LogicCourtPaintButton", "Reject Paint Preference", () =>
+            var paint = UiBuilder.Button(evidenceTray, "LogicCourtPaintButton", "Reject Paint", () =>
             {
                 if (!caseReviewed)
                 {
@@ -98,9 +117,10 @@ namespace CareerQuest
                 prompt.text = "Correct: liking blue paint is not proof the design works.";
                 Refresh();
             });
-            UiBuilder.Place(paint.GetComponent<RectTransform>(), 150f, 32f, 260f, 54f);
+            UiBuilder.Place(paint.GetComponent<RectTransform>(), 86f, 0f, 146f, 34f);
+            StyleButton(paint, ButtonPrimary, 14);
 
-            var blueprint = UiBuilder.Button(panel, "LogicCourtBlueprintButton", "Mark Blueprint Helpful", () =>
+            var blueprint = UiBuilder.Button(evidenceTray, "LogicCourtBlueprintButton", "Blueprint Helpful", () =>
             {
                 if (!caseReviewed)
                 {
@@ -113,9 +133,10 @@ namespace CareerQuest
                 prompt.text = "Correct: matching the safety slots supports the design.";
                 Refresh();
             });
-            UiBuilder.Place(blueprint.GetComponent<RectTransform>(), 430f, 32f, 260f, 54f);
+            UiBuilder.Place(blueprint.GetComponent<RectTransform>(), 266f, 0f, 178f, 34f);
+            StyleButton(blueprint, ButtonPrimary, 14);
 
-            var closing = UiBuilder.Button(panel, "LogicCourtClosingButton", "Make Closing Argument", () =>
+            var closing = UiBuilder.Button(panel, "LogicCourtClosingButton", "Make Argument", () =>
             {
                 if (!testMarked || !paintRejected || !blueprintMarked)
                 {
@@ -127,10 +148,27 @@ namespace CareerQuest
                 session.RecordResult(CreateResult(mistakes <= 1, source));
                 app.ShowGallery();
             });
-            UiBuilder.Place(closing.GetComponent<RectTransform>(), -140f, -118f, 280f, 64f);
+            UiBuilder.Place(closing.GetComponent<RectTransform>(), 430f, -320f, 156f, 38f);
+            StyleButton(closing, ButtonReady, 14);
 
             var campus = UiBuilder.Button(panel, "LogicCourtCampusButton", "Campus", app.ShowCampus);
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 160f, -118f, 210f, 64f);
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 570f, -320f, 112f, 38f);
+            StyleButton(campus, ButtonPrimary, 14);
+        }
+
+        private static void StyleButton(Button button, Color color, int fontSize)
+        {
+            button.GetComponent<Image>().color = color;
+            var label = button.GetComponentInChildren<Text>();
+            if (label == null)
+            {
+                return;
+            }
+
+            label.fontSize = fontSize;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 10;
+            label.resizeTextMaxSize = fontSize;
         }
     }
 }

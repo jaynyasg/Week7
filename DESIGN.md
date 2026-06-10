@@ -237,6 +237,7 @@ Use motion for comprehension first, delight second.
 1. Generate/import avatar sprites, NPCs, buildings, room backgrounds, props, badges, and UI icons.
 2. Route all art through `AssetCatalog` IDs.
 3. Keep procedural fallbacks as QA-visible placeholders only.
+4. Prefer the owned generated sprite kit for first playable polish. Use CC0 Kenney/Quaternius assets as optional accelerators, and use SPUM only if the team wants a fuller 2D character pipeline after the core room art direction is stable.
 
 ### Phase 4 - Make Activities Feel Like Games
 
@@ -252,6 +253,7 @@ Use motion for comprehension first, delight second.
 | 2026-06-10 | Adopted Future Workshop Diorama + Junior Quest UX | User chose `3+5` from design consultation. This combines a handmade toy campus with a clear quest loop, giving the game a stronger identity and better player guidance. |
 | 2026-06-10 | Use world-first UI rules | The game currently feels menu-led; the new direction makes the campus, rooms, avatar, tools, and badges carry the experience. |
 | 2026-06-10 | Make multiplayer secondary to normal play | Connection options are important for QA but confuse first-time players when presented before the game starts. |
+| 2026-06-10 | Use the owned generated sprite kit before importing packages | This is the best free path for immediate character and environment polish because it creates commit-friendly sprites in the repo with no paid asset or redistribution risk. |
 
 ## Design References
 

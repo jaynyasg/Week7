@@ -26,4 +26,16 @@
 **Priority:** P3
 **Depends on:** Week7 P0 demo loop shipped and reviewed.
 
+### B-Narrow Late Join (Hub Catch-Up)
+
+**What:** Allow P2 to join after host has started, but only when host is on Campus. Host pushes full `CampusSessionState` + `GameSession` mirror (results, DNA, reveal gate, evolution pieces, avatars). Reject join if host is in a room, ceremony, gallery, or reveal.
+
+**Why:** Useful for LAN/dev testing when P2 launches late; deferred from Week7 to keep Netcode surface small for ship. CEO review chose lobby-only connect (S2-A) for first playable.
+
+**Context:** Requires snapshot DTO, `GameSession.ApplySnapshot()`, `OnClientConnected` ClientRpc, and hub bootstrap tests. Mid-room full snapshot (Health Hero / Logic Court network state) remains out of scope even for B-narrow.
+
+**Effort:** S–M (~2–3 days)
+**Priority:** P3
+**Depends on:** Week7 first playable shipped; `CampusSessionState` + disconnect/ceremony policies (S1/S2) stable.
+
 ## Completed

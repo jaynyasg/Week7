@@ -1,6 +1,9 @@
+using System.Collections;
 using CareerQuest;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace CareerQuest.Tests
 {
@@ -25,6 +28,59 @@ namespace CareerQuest.Tests
 
             Object.DestroyImmediate(healthObject);
             Object.DestroyImmediate(courtObject);
+        }
+
+        [UnityTest]
+        public IEnumerator HealthAndLogicControlsStayInHudTrays()
+        {
+            var gameObject = new GameObject("optional-room-layout-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            app.BeginPlay();
+            app.ShowHealthHero();
+            yield return null;
+
+            var healthHud = RectFor("HealthHeroQuestHud");
+            var healthTray = RectFor("HealthHeroToolTray");
+            var healthCheck = RectFor("HealthHeroCheckButton");
+            var healthComplete = RectFor("HealthHeroCompleteButton");
+            var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<Text>();
+
+            Assert.That(healthHud.anchoredPosition.y, Is.GreaterThan(230f));
+            Assert.That(Top(healthTray), Is.LessThan(-280f));
+            Assert.That(healthCheck.sizeDelta.y, Is.LessThanOrEqualTo(38f));
+            Assert.That(healthComplete.sizeDelta.y, Is.LessThanOrEqualTo(44f));
+            Assert.That(healthPrompt.fontSize, Is.LessThanOrEqualTo(18));
+
+            app.ShowLogicCourt();
+            yield return null;
+
+            var logicHud = RectFor("LogicCourtQuestHud");
+            var logicTray = RectFor("LogicCourtEvidenceTray");
+            var logicReview = RectFor("LogicCourtReviewButton");
+            var logicClosing = RectFor("LogicCourtClosingButton");
+            var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<Text>();
+
+            Assert.That(logicHud.anchoredPosition.y, Is.GreaterThan(230f));
+            Assert.That(Top(logicTray), Is.LessThan(-280f));
+            Assert.That(logicReview.sizeDelta.y, Is.LessThanOrEqualTo(38f));
+            Assert.That(logicClosing.sizeDelta.y, Is.LessThanOrEqualTo(44f));
+            Assert.That(logicPrompt.fontSize, Is.LessThanOrEqualTo(18));
+
+            Object.Destroy(gameObject);
+        }
+
+        private static RectTransform RectFor(string objectName)
+        {
+            var gameObject = GameObject.Find(objectName);
+            Assert.That(gameObject, Is.Not.Null, $"{objectName} should exist.");
+            return gameObject.GetComponent<RectTransform>();
+        }
+
+        private static float Top(RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition.y + rectTransform.sizeDelta.y * 0.5f;
         }
     }
 }

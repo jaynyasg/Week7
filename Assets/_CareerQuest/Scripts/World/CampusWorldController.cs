@@ -77,26 +77,36 @@ namespace CareerQuest
         public void ShowClinic(GameSession session)
         {
             ClearWorld();
-            AddCatalogSprite("HealthHeroRoomBackdrop", "room.health_hero", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
-            AddBuilding("Health Hero Clinic", -2.4f, 0.6f, 2.5f, 1.65f, Colors.Mint, Colors.TealRoof, 4);
-            AddShape("ClinicTable", SpriteKind.Square, new Vector2(1.7f, -0.7f), new Vector2(2.6f, 0.55f), Colors.Plaza, 4);
-            AddCatalogSprite("Thermometer", "prop.thermometer", new Vector2(1.05f, -0.4f), new Vector2(0.62f, 0.72f), 5);
-            AddCatalogSprite("CarePlan", "prop.care_plan", new Vector2(1.82f, -0.55f), new Vector2(0.66f, 0.66f), 5);
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.2f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.3f, true, session?.SelectedAvatar.SpriteAssetId);
-            AddCharacter("Patient", -1.05f, -1.16f, Colors.Mint, 1.2f, true, "npc.patient");
+            AddCatalogSprite("HealthHeroRoomBackdrop", "room.health_hero", new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 0);
+            AddShape("ClinicExamBedShadow", SpriteKind.Circle, new Vector2(-1.82f, -0.88f), new Vector2(2.25f, 0.36f), Colors.Shadow, 2);
+            AddShape("ClinicExamBed", SpriteKind.Square, new Vector2(-1.82f, -0.66f), new Vector2(2.25f, 0.42f), Colors.Window, 3);
+            AddShape("ClinicExamPillow", SpriteKind.Square, new Vector2(-2.58f, -0.43f), new Vector2(0.5f, 0.22f), Colors.Plaza, 4);
+            AddShape("ClinicCareCounterShadow", SpriteKind.Circle, new Vector2(1.88f, -0.9f), new Vector2(2.5f, 0.36f), Colors.Shadow, 2);
+            AddShape("ClinicCareCounter", SpriteKind.Square, new Vector2(1.88f, -0.62f), new Vector2(2.72f, 0.62f), Colors.Plaza, 3);
+            AddCatalogSprite("Thermometer", "prop.thermometer", new Vector2(1.16f, -0.4f), new Vector2(0.64f, 0.72f), 5);
+            AddCatalogSprite("CarePlan", "prop.care_plan", new Vector2(2.05f, -0.42f), new Vector2(0.72f, 0.72f), 5);
+            AddShape("ClinicWallBadge", SpriteKind.Circle, new Vector2(-3.08f, 0.72f), new Vector2(0.55f, 0.55f), Colors.Mint, 3);
+            AddShape("ClinicWallCrossA", SpriteKind.Square, new Vector2(-3.08f, 0.72f), new Vector2(0.12f, 0.4f), Color.white, 4);
+            AddShape("ClinicWallCrossB", SpriteKind.Square, new Vector2(-3.08f, 0.72f), new Vector2(0.4f, 0.12f), Color.white, 4);
+            AddCharacter("Patient", -1.82f, -1.04f, Colors.Mint, 1.2f, true, "npc.patient", false);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.38f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.3f, true, session?.SelectedAvatar.SpriteAssetId, false);
         }
 
         public void ShowCourt(GameSession session)
         {
             ClearWorld();
-            AddCatalogSprite("LogicCourtRoomBackdrop", "room.logic_court", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
-            AddBuilding("Logic Court", -2.4f, 0.6f, 2.5f, 1.65f, Colors.Gold, Colors.GoldRoof, 4);
-            AddShape("EvidenceTable", SpriteKind.Square, new Vector2(1.7f, -0.7f), new Vector2(2.85f, 0.55f), Colors.Plaza, 4);
-            AddEvidence("Test", 0.8f, -0.52f, Colors.Mint);
-            AddEvidence("Plan", 1.7f, -0.52f, Colors.SkyBlue);
-            AddEvidence("Paint", 2.6f, -0.52f, Colors.Lilac);
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.1f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0.8f, true, session?.SelectedAvatar.SpriteAssetId);
-            AddCharacter("Judge", -1.25f, -1.15f, Colors.PlayerGold, 1.6f, true, "npc.judge");
+            AddCatalogSprite("LogicCourtRoomBackdrop", "room.logic_court", new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 0);
+            AddShape("JudgeBenchShadow", SpriteKind.Circle, new Vector2(-2.05f, -0.62f), new Vector2(2.34f, 0.42f), Colors.Shadow, 2);
+            AddShape("JudgeBench", SpriteKind.Square, new Vector2(-2.05f, -0.34f), new Vector2(2.3f, 0.72f), Colors.GoldRoof, 3);
+            AddShape("JudgeBenchFront", SpriteKind.Square, new Vector2(-2.05f, -0.62f), new Vector2(2.48f, 0.22f), Colors.Gold, 4);
+            AddShape("HelpfulZone", SpriteKind.Square, new Vector2(1.03f, -0.56f), new Vector2(1.35f, 0.78f), new Color(0.74f, 0.93f, 0.76f, 0.86f), 3);
+            AddShape("ReviewZone", SpriteKind.Square, new Vector2(2.48f, -0.56f), new Vector2(1.35f, 0.78f), new Color(0.83f, 0.9f, 1f, 0.86f), 3);
+            AddEvidence("Test", 0.72f, -0.42f, Colors.Mint);
+            AddEvidence("Plan", 1.45f, -0.42f, Colors.SkyBlue);
+            AddEvidence("Paint", 2.5f, -0.42f, Colors.Lilac);
+            AddCatalogSprite("ArgumentMeter", "prop.argument_meter", new Vector2(3.3f, 0.42f), new Vector2(0.8f, 0.8f), 4);
+            AddCharacter("Judge", -2.05f, -1.02f, Colors.PlayerGold, 1.6f, true, "npc.judge", false);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.04f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0.8f, true, session?.SelectedAvatar.SpriteAssetId, false);
         }
 
         public void ShowGallery(GameSession session)

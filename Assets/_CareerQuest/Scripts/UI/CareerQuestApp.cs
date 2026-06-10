@@ -144,6 +144,16 @@ namespace CareerQuest
                     BeginPlay();
                     ShowDesignBuild(false);
                     return true;
+                case "health":
+                case "health-hero":
+                    BeginPlay();
+                    ShowHealthHero();
+                    return true;
+                case "logic":
+                case "logic-court":
+                    BeginPlay();
+                    ShowLogicCourt();
+                    return true;
                 case "gallery":
                     BeginPlay();
                     ShowGallery();
