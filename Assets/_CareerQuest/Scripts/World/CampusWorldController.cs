@@ -69,8 +69,9 @@ namespace CareerQuest
             AddCatalogSprite("DesignBuildRoomBackdrop", "room.design_build", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
             AddBuildTable();
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerTeal, 0.2f, true, session?.SelectedAvatar.SpriteAssetId);
-            AddCharacter("Builder", 3.65f, -1.33f, Colors.PlayerBlue, 1.7f, true, "npc.builder_partner");
+            AddCatalogSprite("DesignBuildBlueprintProp", "prop.blueprint", new Vector2(-3.15f, -0.55f), new Vector2(0.62f, 0.62f), 7);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerTeal, 0.2f, true, session?.SelectedAvatar.SpriteAssetId, false);
+            AddCharacter("Builder", 3.65f, -1.33f, Colors.PlayerBlue, 1.7f, true, "npc.builder_partner", false);
         }
 
         public void ShowClinic(GameSession session)
@@ -236,7 +237,7 @@ namespace CareerQuest
             AddCharacter("Campus Guide", 1.75f, -1.55f, Colors.PlayerTeal, 2.4f, true, "npc.campus_guide");
         }
 
-        private void AddCharacter(string label, float x, float y, Color shirt, float phase, bool animated, string assetId = null)
+        private void AddCharacter(string label, float x, float y, Color shirt, float phase, bool animated, string assetId = null, bool showLabel = true)
         {
             var group = new GameObject(label);
             group.transform.SetParent(_root, false);
@@ -258,7 +259,10 @@ namespace CareerQuest
                 AddShape($"{label}Hair", SpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), Colors.Hair, 11, 0f, group.transform);
             }
 
-            AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, Colors.Ink, 12, group.transform);
+            if (showLabel)
+            {
+                AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, Colors.Ink, 12, group.transform);
+            }
 
             if (animated)
             {

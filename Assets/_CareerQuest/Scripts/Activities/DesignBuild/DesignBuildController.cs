@@ -71,27 +71,28 @@ namespace CareerQuest
             var panel = UiBuilder.FullPanel(parent, "DesignBuildPanel", new Color(0.88f, 0.95f, 1f, 0.04f));
             var blueprintReviewed = false;
             var helperUsed = false;
+            RectTransform tray = null;
 
             var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", Paper);
-            UiBuilder.Place(briefing, 0f, 268f, 900f, 88f);
+            UiBuilder.Place(briefing, -330f, 284f, 560f, 72f);
 
-            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Design Build", 26, TextAnchor.MiddleLeft, Ink);
-            UiBuilder.Place(title.rectTransform, -300f, 20f, 270f, 34f);
+            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, Ink);
+            UiBuilder.Place(title.rectTransform, -172f, 16f, 206f, 24f);
 
-            var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 16, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));
-            UiBuilder.Place(feedback.rectTransform, 36f, 20f, 560f, 28f);
+            var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 13, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));
+            UiBuilder.Place(feedback.rectTransform, 0f, 15f, 278f, 22f);
 
-            var progress = UiBuilder.Text(briefing, "DesignBuildProgress", "Step 1: review blueprint, ask helper, place five pieces.", 15, TextAnchor.MiddleLeft, new Color(0.08f, 0.16f, 0.2f));
-            UiBuilder.Place(progress.rectTransform, 36f, -14f, 560f, 26f);
+            var progress = UiBuilder.Text(briefing, "DesignBuildProgress", "Step 1: review the blueprint.", 12, TextAnchor.MiddleLeft, new Color(0.08f, 0.16f, 0.2f));
+            UiBuilder.Place(progress.rectTransform, 0f, -12f, 278f, 20f);
 
             var review = UiBuilder.Button(briefing, "ReviewBlueprintButton", "Review", () =>
             {
                 blueprintReviewed = true;
                 _feedback = "Blueprint reviewed: every career building needs its matching lot.";
                 feedback.text = _feedback;
-                progress.text = "Step 2: ask the helper, then place each piece.";
+                progress.text = "Step 2: ask the helper.";
             });
-            UiBuilder.Place(review.GetComponent<RectTransform>(), 288f, 18f, 116f, 34f);
+            UiBuilder.Place(review.GetComponent<RectTransform>(), 184f, 16f, 82f, 28f);
             StyleButton(review, ButtonPrimary, 15);
 
             var helper = UiBuilder.Button(briefing, "PatternHelperButton", "Helper", () =>
@@ -106,16 +107,18 @@ namespace CareerQuest
                 helperUsed = true;
                 _feedback = "Helper clue: care, fairness, art, science, invention.";
                 feedback.text = _feedback;
-                progress.text = "Step 3: place all five pieces, then finish.";
+                progress.text = "Step 3: place all five pieces.";
+                tray.gameObject.SetActive(true);
             });
-            UiBuilder.Place(helper.GetComponent<RectTransform>(), 414f, 18f, 116f, 34f);
+            UiBuilder.Place(helper.GetComponent<RectTransform>(), 244f, -16f, 82f, 28f);
             StyleButton(helper, ButtonPrimary, 15);
 
-            var tray = UiBuilder.Panel(panel, "DesignBuildToolTray", new Color(0.95f, 0.99f, 1f, 0.74f));
-            UiBuilder.Place(tray, -85f, -310f, 900f, 58f);
+            tray = UiBuilder.Panel(panel, "DesignBuildToolTray", new Color(0.95f, 0.99f, 1f, 0.74f));
+            UiBuilder.Place(tray, -280f, -322f, 610f, 46f);
+            tray.gameObject.SetActive(false);
 
-            var trayLabel = UiBuilder.Text(tray, "DesignBuildTrayLabel", "Place", 15, TextAnchor.MiddleCenter, Ink);
-            UiBuilder.Place(trayLabel.rectTransform, -414f, 0f, 64f, 28f);
+            var trayLabel = UiBuilder.Text(tray, "DesignBuildTrayLabel", "Place", 12, TextAnchor.MiddleCenter, Ink);
+            UiBuilder.Place(trayLabel.rectTransform, -282f, 0f, 48f, 22f);
 
             var index = 0;
             foreach (var piece in Blueprint.Pieces)
@@ -145,8 +148,8 @@ namespace CareerQuest
                     }
                 });
 
-                UiBuilder.Place(pieceButton.GetComponent<RectTransform>(), -320f + index * 126f, 0f, 112f, 34f);
-                StyleButton(pieceButton, ButtonPrimary, 14);
+                UiBuilder.Place(pieceButton.GetComponent<RectTransform>(), -224f + index * 106f, 0f, 94f, 28f);
+                StyleButton(pieceButton, ButtonPrimary, 12);
                 index++;
             }
 
@@ -164,12 +167,12 @@ namespace CareerQuest
                 Completed?.Invoke(result);
                 app.ShowGallery();
             });
-            UiBuilder.Place(complete.GetComponent<RectTransform>(), 410f, -310f, 168f, 42f);
-            StyleButton(complete, ButtonReady, 16);
+            UiBuilder.Place(complete.GetComponent<RectTransform>(), 438f, -322f, 136f, 34f);
+            StyleButton(complete, ButtonReady, 14);
 
             var campus = UiBuilder.Button(panel, "DesignBuildCampusButton", "Campus", app.ShowCampus);
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 565f, -310f, 126f, 42f);
-            StyleButton(campus, ButtonPrimary, 16);
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 568f, -322f, 106f, 34f);
+            StyleButton(campus, ButtonPrimary, 14);
         }
 
         private static void StyleButton(Button button, Color color, int fontSize)

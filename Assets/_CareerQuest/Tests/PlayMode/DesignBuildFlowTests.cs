@@ -35,21 +35,41 @@ namespace CareerQuest.Tests
 
             app.ShowDesignBuild(false);
 
-            var clinicButton = GameObject.Find("clinicButton").GetComponent<RectTransform>();
-            var tray = GameObject.Find("DesignBuildToolTray").GetComponent<RectTransform>();
+            var clinicButton = FindRectTransform("clinicButton");
+            var tray = FindRectTransform("DesignBuildToolTray");
             var briefing = GameObject.Find("DesignBuildBriefing").GetComponent<RectTransform>();
             var completeButton = GameObject.Find("DesignBuildCompleteButton").GetComponent<RectTransform>();
-            var reviewButton = GameObject.Find("ReviewBlueprintButton").GetComponent<RectTransform>();
+            var reviewButton = GameObject.Find("ReviewBlueprintButton").GetComponent<Button>();
+            var helperButton = GameObject.Find("PatternHelperButton").GetComponent<Button>();
             var title = GameObject.Find("DesignBuildTitle").GetComponent<Text>();
 
+            Assert.That(tray.gameObject.activeSelf, Is.False);
             Assert.That(tray.anchoredPosition.y, Is.LessThan(-280f));
             Assert.That(briefing.anchoredPosition.y, Is.GreaterThan(220f));
             Assert.That(clinicButton.sizeDelta.y, Is.LessThanOrEqualTo(36f));
             Assert.That(completeButton.sizeDelta.y, Is.LessThanOrEqualTo(44f));
-            Assert.That(reviewButton.sizeDelta.y, Is.LessThanOrEqualTo(36f));
+            Assert.That(reviewButton.GetComponent<RectTransform>().sizeDelta.y, Is.LessThanOrEqualTo(36f));
             Assert.That(title.fontSize, Is.LessThanOrEqualTo(28));
 
+            reviewButton.onClick.Invoke();
+            helperButton.onClick.Invoke();
+            Assert.That(tray.gameObject.activeSelf, Is.True);
+
             Object.DestroyImmediate(appObject);
+        }
+
+        private static RectTransform FindRectTransform(string name)
+        {
+            foreach (var rectTransform in Resources.FindObjectsOfTypeAll<RectTransform>())
+            {
+                if (rectTransform.name == name)
+                {
+                    return rectTransform;
+                }
+            }
+
+            Assert.Fail($"{name} should exist.");
+            return null;
         }
     }
 }
