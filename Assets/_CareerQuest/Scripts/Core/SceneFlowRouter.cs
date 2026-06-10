@@ -30,7 +30,8 @@ namespace CareerQuest
         {
             AvatarSelectionTarget = AppMode.Play;
             session.StartMode(AppMode.Play);
-            return ShowConnection(session);
+            session.PlayerCount = 1;
+            return ShowCampus(session);
         }
 
         public ActivityRoute ShowConnection(GameSession session)

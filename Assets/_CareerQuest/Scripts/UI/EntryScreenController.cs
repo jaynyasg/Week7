@@ -15,12 +15,15 @@ namespace CareerQuest
             UiBuilder.Place(subtitle.rectTransform, 0f, 150f, 900f, 50f);
 
             var play = UiBuilder.Button(panel, "PlayButton", "Play", app.ShowAvatarSelectionForPlay);
-            UiBuilder.Place(play.GetComponent<RectTransform>(), -150f, 45f, 240f, 72f);
+            UiBuilder.Place(play.GetComponent<RectTransform>(), -260f, 45f, 220f, 72f);
 
             var showcase = UiBuilder.Button(panel, "ShowcaseButton", "Showcase", app.ShowShowcaseDisclaimer);
-            UiBuilder.Place(showcase.GetComponent<RectTransform>(), 150f, 45f, 240f, 72f);
+            UiBuilder.Place(showcase.GetComponent<RectTransform>(), 0f, 45f, 220f, 72f);
 
-            var note = UiBuilder.Text(panel, "EntryNote", "Showcase gives a quick guided tour. Play lets you explore freely.", 20, TextAnchor.MiddleCenter, new Color(0.2f, 0.25f, 0.28f));
+            var multiplayer = UiBuilder.Button(panel, "MultiplayerTestingButton", "Multiplayer", app.ShowConnection);
+            UiBuilder.Place(multiplayer.GetComponent<RectTransform>(), 260f, 45f, 220f, 72f);
+
+            var note = UiBuilder.Text(panel, "EntryNote", "Play starts in the campus. Multiplayer is for local testing.", 20, TextAnchor.MiddleCenter, new Color(0.2f, 0.25f, 0.28f));
             UiBuilder.Place(note.rectTransform, 0f, -50f, 820f, 50f);
         }
     }

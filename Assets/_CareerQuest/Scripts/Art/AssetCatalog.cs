@@ -62,10 +62,11 @@ namespace CareerQuest
         };
 
         private static readonly Dictionary<string, AssetDefinition> _definitionsById = _definitions.ToDictionary(definition => definition.Id);
-        private static readonly Dictionary<string, Sprite> _spriteCache = new();
+        private static readonly Dictionary<string, SpriteResolution> _resolutionCache = new();
 
         public static IReadOnlyList<AssetDefinition> Definitions => _definitions;
         public static IReadOnlyList<AssetDefinition> RequiredDefinitions => _definitions.Where(definition => definition.RequiredInFirstPlayable).ToArray();
+        public static IReadOnlyList<AssetDefinition> PlayerFacingDefinitions => _definitions.Where(definition => definition.RequiresFinalArtForPlayerFacingAcceptance).ToArray();
 
         public static bool TryGetDefinition(string id, out AssetDefinition definition)
         {
@@ -80,26 +81,78 @@ namespace CareerQuest
 
         public static Sprite SpriteFor(string id)
         {
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return SpriteFallbackFactory.CreateMissing("empty");
-            }
+            return ResolveSprite(id).Sprite;
+        }
 
-            if (_spriteCache.TryGetValue(id, out var cached))
+        public static SpriteResolution ResolveSprite(string id)
+        {
+            var cacheKey = string.IsNullOrWhiteSpace(id) ? string.Empty : id;
+            if (_resolutionCache.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
+            }
+
+            SpriteResolution resolution;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                resolution = new SpriteResolution(id ?? string.Empty, null, SpriteFallbackFactory.CreateMissing("empty"), true, true);
+                _resolutionCache[cacheKey] = resolution;
+                return resolution;
             }
 
             if (!TryGetDefinition(id, out var definition))
             {
                 var missing = SpriteFallbackFactory.CreateMissing(id);
-                _spriteCache[id] = missing;
-                return missing;
+                resolution = new SpriteResolution(id, null, missing, true, true);
+                _resolutionCache[cacheKey] = resolution;
+                return resolution;
             }
 
-            var sprite = Resources.Load<Sprite>(definition.ResourcePath) ?? SpriteFallbackFactory.Create(definition);
-            _spriteCache[id] = sprite;
-            return sprite;
+            var importedSprite = Resources.Load<Sprite>(definition.ResourcePath);
+            var importedTexture = importedSprite == null ? Resources.Load<Texture2D>(definition.ResourcePath) : null;
+            var isFallbackGenerated = importedSprite == null && importedTexture == null;
+            var sprite = importedSprite ?? (importedTexture != null ? CreateSpriteFromTexture(definition, importedTexture) : SpriteFallbackFactory.Create(definition));
+            resolution = new SpriteResolution(id, definition, sprite, isFallbackGenerated, false);
+            _resolutionCache[cacheKey] = resolution;
+            return resolution;
+        }
+
+        public static IReadOnlyList<SpriteResolution> ResolvePlayerFacingSprites()
+        {
+            return PlayerFacingDefinitions.Select(definition => ResolveSprite(definition.Id)).ToArray();
+        }
+
+        public static IReadOnlyList<SpriteResolution> PlayerFacingFallbackUsage()
+        {
+            return ResolvePlayerFacingSprites().Where(resolution => resolution.IsPlayerFacingFallback).ToArray();
+        }
+
+        public static bool IsFallbackSprite(Sprite sprite)
+        {
+            return SpriteFallbackFactory.IsFallbackSprite(sprite);
+        }
+
+        public static bool IsFinalArtSprite(Sprite sprite)
+        {
+            return TryGetDisplayedSpriteInfo(sprite, out var resolution) && resolution.IsFinalArt;
+        }
+
+        public static bool TryGetDisplayedSpriteInfo(Sprite sprite, out SpriteResolution resolution)
+        {
+            resolution = null;
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            resolution = _resolutionCache.Values.FirstOrDefault(candidate => ReferenceEquals(candidate.Sprite, sprite));
+            if (resolution != null)
+            {
+                return true;
+            }
+
+            resolution = new SpriteResolution(sprite.name, null, sprite, SpriteFallbackFactory.IsFallbackSprite(sprite), false);
+            return true;
         }
 
         private static AssetDefinition Avatar(string id, string displayName, Color primary, Color accent)
@@ -114,7 +167,7 @@ namespace CareerQuest
 
         private static AssetDefinition Campus(string id, string displayName, Color primary, Color accent, bool required = true)
         {
-            return new AssetDefinition(id, displayName, AssetCategory.Campus, primary, accent, new Vector2Int(256, 192), required);
+            return new AssetDefinition(id, displayName, AssetCategory.Campus, primary, accent, new Vector2Int(256, 192), required, required);
         }
 
         private static AssetDefinition Room(string id, string displayName, Color primary, Color accent)
@@ -135,6 +188,40 @@ namespace CareerQuest
         private static AssetDefinition Ui(string id, string displayName, Color primary, Color accent)
         {
             return new AssetDefinition(id, displayName, AssetCategory.Ui, primary, accent, new Vector2Int(96, 96));
+        }
+
+        private static Sprite CreateSpriteFromTexture(AssetDefinition definition, Texture2D texture)
+        {
+            var sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+            sprite.name = definition.Id;
+            return sprite;
+        }
+
+        public sealed class SpriteResolution
+        {
+            internal SpriteResolution(
+                string requestedId,
+                AssetDefinition definition,
+                Sprite sprite,
+                bool isFallbackGenerated,
+                bool isMissingDefinition)
+            {
+                RequestedId = requestedId;
+                Definition = definition;
+                Sprite = sprite;
+                IsFallbackGenerated = isFallbackGenerated;
+                IsMissingDefinition = isMissingDefinition;
+            }
+
+            public string RequestedId { get; }
+            public AssetDefinition Definition { get; }
+            public Sprite Sprite { get; }
+            public bool IsFallbackGenerated { get; }
+            public bool IsMissingDefinition { get; }
+            public bool IsCataloged => Definition != null;
+            public bool IsFinalArt => IsCataloged && Sprite != null && !IsFallbackGenerated && !IsMissingDefinition;
+            public bool IsPlayerFacingFallback => Definition != null && Definition.RequiresFinalArtForPlayerFacingAcceptance && IsFallbackGenerated;
+            public string ResourcePath => Definition?.ResourcePath ?? string.Empty;
         }
     }
 }

@@ -61,6 +61,16 @@ Until final sprites are imported, `SpriteFallbackFactory` generates deliberate p
 
 Player-facing milestones must list any fallback sprites still visible in screenshots. If a screenshot uses fallback art for the selected avatar, guide/NPC, primary building, room background, primary prop, badge, or core UI icon, that milestone is not visually complete.
 
+## Generated Sprite Kit Pass - 2026-06-09
+
+The first repeatable sprite kit is generated in-project by `Assets/_CareerQuest/Editor/CareerQuestSpriteKitGenerator.cs`.
+
+- Runtime sprites live under `Assets/Resources/CareerQuest/<Category>/<asset-id>.png` so `AssetCatalog` can load them by stable ID.
+- Review copies live under `Assets/_CareerQuest/Art/...` using the same IDs.
+- The current kit covers all first-playable avatar, NPC, campus, room, prop, badge, and UI IDs in `AssetCatalog`.
+- Characters include head, hair, face, torso, arms, legs, outfit/accent details, and transparent backgrounds.
+- This pass is acceptable as a first generated game-art baseline, but it is not a final illustrator polish pass. Future art can replace the PNGs without changing gameplay code as long as IDs stay stable.
+
 ## Visual Rules
 
 - Keep the campus colorful, but avoid one-color themes. Use green ground, warm paths, blue science spaces, coral creative spaces, gold logic/court spaces, and teal health/helping spaces.

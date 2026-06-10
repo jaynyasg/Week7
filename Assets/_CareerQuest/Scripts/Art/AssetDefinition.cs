@@ -11,7 +11,8 @@ namespace CareerQuest
             Color primaryColor,
             Color accentColor,
             Vector2Int pixelSize,
-            bool requiredInFirstPlayable = true)
+            bool requiredInFirstPlayable = true,
+            bool requiresFinalArtForPlayerFacingAcceptance = true)
         {
             Id = id;
             DisplayName = displayName;
@@ -20,6 +21,7 @@ namespace CareerQuest
             AccentColor = accentColor;
             PixelSize = pixelSize;
             RequiredInFirstPlayable = requiredInFirstPlayable;
+            RequiresFinalArtForPlayerFacingAcceptance = requiresFinalArtForPlayerFacingAcceptance;
         }
 
         public string Id { get; }
@@ -29,6 +31,7 @@ namespace CareerQuest
         public Color AccentColor { get; }
         public Vector2Int PixelSize { get; }
         public bool RequiredInFirstPlayable { get; }
+        public bool RequiresFinalArtForPlayerFacingAcceptance { get; }
         public string ResourcePath => $"CareerQuest/{Category}/{Id}";
     }
 }

@@ -7,18 +7,32 @@ namespace CareerQuest.Tests
     public class SceneFlowRouterTests
     {
         [Test]
-        public void BeginPlayRoutesToConnectionWithoutSeededResults()
+        public void BeginPlayRoutesToCampusWithoutSeededResults()
         {
             var session = new GameSession();
             var router = new SceneFlowRouter();
 
             var route = router.BeginPlay(session);
 
+            Assert.That(route, Is.EqualTo(ActivityRoute.Campus));
+            Assert.That(router.CurrentRoute, Is.EqualTo(ActivityRoute.Campus));
+            Assert.That(session.CurrentRoute, Is.EqualTo(ActivityRoute.Campus));
+            Assert.That(session.Mode, Is.EqualTo(AppMode.Play));
+            Assert.That(session.PlayerCount, Is.EqualTo(1));
+            Assert.That(session.HasSeededResults, Is.False);
+        }
+
+        [Test]
+        public void ConnectionRemainsAvailableAsSecondaryRoute()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+
+            var route = router.ShowConnection(session);
+
             Assert.That(route, Is.EqualTo(ActivityRoute.Connection));
             Assert.That(router.CurrentRoute, Is.EqualTo(ActivityRoute.Connection));
             Assert.That(session.CurrentRoute, Is.EqualTo(ActivityRoute.Connection));
-            Assert.That(session.Mode, Is.EqualTo(AppMode.Play));
-            Assert.That(session.HasSeededResults, Is.False);
         }
 
         [Test]
@@ -43,7 +57,7 @@ namespace CareerQuest.Tests
             var session = new GameSession();
             var router = new SceneFlowRouter();
 
-            router.BeginPlay(session);
+            router.ShowConnection(session);
             var route = router.UseConnectionMode(session, ConnectionMode.JoinLocalhostP2, 2);
 
             Assert.That(route, Is.EqualTo(ActivityRoute.Campus));

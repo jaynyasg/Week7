@@ -30,5 +30,17 @@ namespace CareerQuest.Tests
 
             Assert.That(avatar.Id, Is.EqualTo(AvatarConfig.DefaultAvatarId));
         }
+
+        [Test]
+        public void EveryAvatarHasCharacterCardCopy()
+        {
+            foreach (var avatar in AvatarConfig.Avatars)
+            {
+                Assert.That(avatar.DisplayName, Is.Not.Empty, avatar.Id);
+                Assert.That(avatar.Role, Is.Not.Empty, avatar.Id);
+                Assert.That(avatar.Role.Length, Is.LessThanOrEqualTo(32), avatar.Id);
+                Assert.That(avatar.PersonalityLabel.Length, Is.LessThanOrEqualTo(80), avatar.Id);
+            }
+        }
     }
 }

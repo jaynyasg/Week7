@@ -66,64 +66,60 @@ namespace CareerQuest
         public void ShowDesignBuild(GameSession session)
         {
             ClearWorld();
-            AddSky();
-            AddGround();
+            AddCatalogSprite("DesignBuildRoomBackdrop", "room.design_build", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
             AddBuildTable();
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerTeal, 0.2f, true);
-            AddCharacter("Builder", 3.65f, -1.33f, Colors.PlayerBlue, 1.7f, true);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerTeal, 0.2f, true, session?.SelectedAvatar.SpriteAssetId);
+            AddCharacter("Builder", 3.65f, -1.33f, Colors.PlayerBlue, 1.7f, true, "npc.builder_partner");
         }
 
         public void ShowClinic(GameSession session)
         {
             ClearWorld();
-            AddSky();
-            AddGround();
+            AddCatalogSprite("HealthHeroRoomBackdrop", "room.health_hero", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddBuilding("Health Hero Clinic", -2.4f, 0.6f, 2.5f, 1.65f, Colors.Mint, Colors.TealRoof, 4);
             AddShape("ClinicTable", SpriteKind.Square, new Vector2(1.7f, -0.7f), new Vector2(2.6f, 0.55f), Colors.Plaza, 4);
-            AddShape("Thermometer", SpriteKind.Square, new Vector2(1.05f, -0.45f), new Vector2(0.16f, 0.92f), Colors.Coral, 5);
-            AddShape("CareCup", SpriteKind.Square, new Vector2(1.82f, -0.58f), new Vector2(0.46f, 0.48f), Colors.SkyBlue, 5);
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.2f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.3f, true);
+            AddCatalogSprite("Thermometer", "prop.thermometer", new Vector2(1.05f, -0.4f), new Vector2(0.62f, 0.72f), 5);
+            AddCatalogSprite("CarePlan", "prop.care_plan", new Vector2(1.82f, -0.55f), new Vector2(0.66f, 0.66f), 5);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.2f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.3f, true, session?.SelectedAvatar.SpriteAssetId);
+            AddCharacter("Patient", -1.05f, -1.16f, Colors.Mint, 1.2f, true, "npc.patient");
         }
 
         public void ShowCourt(GameSession session)
         {
             ClearWorld();
-            AddSky();
-            AddGround();
+            AddCatalogSprite("LogicCourtRoomBackdrop", "room.logic_court", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddBuilding("Logic Court", -2.4f, 0.6f, 2.5f, 1.65f, Colors.Gold, Colors.GoldRoof, 4);
             AddShape("EvidenceTable", SpriteKind.Square, new Vector2(1.7f, -0.7f), new Vector2(2.85f, 0.55f), Colors.Plaza, 4);
             AddEvidence("Test", 0.8f, -0.52f, Colors.Mint);
             AddEvidence("Plan", 1.7f, -0.52f, Colors.SkyBlue);
             AddEvidence("Paint", 2.6f, -0.52f, Colors.Lilac);
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.1f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0.8f, true);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.1f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0.8f, true, session?.SelectedAvatar.SpriteAssetId);
+            AddCharacter("Judge", -1.25f, -1.15f, Colors.PlayerGold, 1.6f, true, "npc.judge");
         }
 
         public void ShowGallery(GameSession session)
         {
             ClearWorld();
-            AddSky();
-            AddGround();
-            AddShape("GalleryWall", SpriteKind.Square, new Vector2(0f, 0.25f), new Vector2(6.3f, 2.65f), Colors.SoftGold, 2);
+            AddCatalogSprite("GalleryRoomBackdrop", "room.gallery", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddShape("GalleryShelfA", SpriteKind.Square, new Vector2(0f, 1.08f), new Vector2(5.4f, 0.12f), Colors.TealRoof, 3);
             AddShape("GalleryShelfB", SpriteKind.Square, new Vector2(0f, 0f), new Vector2(5.4f, 0.12f), Colors.CoralRoof, 3);
             AddBadge("Build", -1.9f, 1.35f, Colors.Coral);
             AddBadge("Care", 0f, 1.35f, Colors.Mint);
             AddBadge("Logic", 1.9f, 1.35f, Colors.Gold);
-            AddCharacter("Explorer", -3.25f, -1.45f, Colors.PlayerBlue, 0.4f, true);
-            AddCharacter("Guide", 3.25f, -1.45f, Colors.PlayerTeal, 1.2f, true);
+            AddCharacter("Explorer", -3.25f, -1.45f, Colors.PlayerBlue, 0.4f, true, session?.SelectedAvatar.SpriteAssetId);
+            AddCharacter("Guide", 3.25f, -1.45f, Colors.PlayerTeal, 1.2f, true, "npc.campus_guide");
         }
 
         public void ShowReveal(GameSession session)
         {
             ClearWorld();
-            AddSky();
-            AddGround();
+            AddCatalogSprite("RevealRoomBackdrop", "room.reveal", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
             AddShape("RevealStageShadow", SpriteKind.Circle, new Vector2(0f, -0.9f), new Vector2(5.6f, 1.2f), Colors.Shadow, 1);
             AddShape("RevealStage", SpriteKind.Circle, new Vector2(0f, -0.76f), new Vector2(5.2f, 1f), Colors.Plaza, 2);
             AddShape("RevealBeamA", SpriteKind.Square, new Vector2(-1.1f, 0.65f), new Vector2(0.5f, 3.7f), Colors.LightBeamGold, 1, -12f);
             AddShape("RevealBeamB", SpriteKind.Square, new Vector2(1.1f, 0.65f), new Vector2(0.5f, 3.7f), Colors.LightBeamBlue, 1, 12f);
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Future Path", 0f, -1.25f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0f, true);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Future Path", 0f, -1.25f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0f, true, session?.SelectedAvatar.SpriteAssetId);
         }
 
         private void EnsureSetup()
@@ -205,62 +201,63 @@ namespace CareerQuest
         private void AddBuilding(string label, float x, float y, float width, float height, Color body, Color roof, int order)
         {
             AddShape($"{label}Shadow", SpriteKind.Square, new Vector2(x + 0.08f, y - 0.08f), new Vector2(width + 0.25f, height + 0.15f), Colors.Shadow, order - 1);
-            AddShape($"{label}Body", SpriteKind.Square, new Vector2(x, y), new Vector2(width, height), body, order);
-            AddShape($"{label}Roof", SpriteKind.Square, new Vector2(x, y + height * 0.56f), new Vector2(width + 0.28f, 0.3f), roof, order + 1);
-            AddShape($"{label}Door", SpriteKind.Square, new Vector2(x, y - height * 0.35f), new Vector2(0.34f, 0.52f), Colors.Door, order + 2);
-            AddShape($"{label}WindowA", SpriteKind.Square, new Vector2(x - width * 0.27f, y + 0.1f), new Vector2(0.33f, 0.27f), Colors.Window, order + 2);
-            AddShape($"{label}WindowB", SpriteKind.Square, new Vector2(x + width * 0.27f, y + 0.1f), new Vector2(0.33f, 0.27f), Colors.Window, order + 2);
+            AddCatalogSprite($"{label}Sprite", CampusAssetIdFor(label), new Vector2(x, y + 0.02f), new Vector2(width + 0.28f, height + 0.28f), order);
             AddLabel($"{label}Label", ShortBuildingLabel(label), x, y - height * 0.66f, BuildingLabelSize, Colors.Ink, order + 5);
         }
 
         private void AddSmallBuilding(string label, float x, float y, Color body)
         {
             AddShape($"{label}SmallShadow", SpriteKind.Square, new Vector2(x + 0.06f, y - 0.06f), new Vector2(1.28f, 0.82f), Colors.Shadow, 2);
-            AddShape($"{label}SmallBody", SpriteKind.Square, new Vector2(x, y), new Vector2(1.14f, 0.72f), body, 3);
-            AddShape($"{label}SmallRoof", SpriteKind.Square, new Vector2(x, y + 0.42f), new Vector2(1.32f, 0.18f), Colors.BlueRoof, 4);
+            AddCatalogSprite($"{label}SmallSprite", CampusAssetIdFor(label), new Vector2(x, y + 0.04f), new Vector2(1.28f, 0.96f), 3);
             AddLabel($"{label}SmallLabel", label, x, y - 0.58f, SmallBuildingLabelSize, Colors.Ink, 8);
         }
 
         private void AddSkylineLot(string label, float x, float y, Color body)
         {
             AddShape($"{label}Pad", SpriteKind.Circle, new Vector2(x, y - 0.52f), new Vector2(0.95f, 0.22f), Colors.Shadow, 4);
-            AddShape($"{label}Tower", SpriteKind.Square, new Vector2(x, y), new Vector2(0.75f, 1.04f), body, 5);
-            AddShape($"{label}Cap", SpriteKind.Square, new Vector2(x, y + 0.62f), new Vector2(0.9f, 0.18f), Colors.BlueRoof, 6);
-            AddShape($"{label}LightA", SpriteKind.Square, new Vector2(x - 0.18f, y + 0.14f), new Vector2(0.15f, 0.18f), Colors.Window, 7);
-            AddShape($"{label}LightB", SpriteKind.Square, new Vector2(x + 0.18f, y + 0.14f), new Vector2(0.15f, 0.18f), Colors.Window, 7);
+            AddCatalogSprite($"{label}PieceSprite", PropAssetIdFor(label), new Vector2(x, y + 0.08f), new Vector2(0.95f, 0.95f), 5);
             AddLabel($"{label}LotLabel", label, x, y - 0.86f, ItemLabelSize, Colors.Ink, 8);
         }
 
         private void AddNetworkProof(float x, float y, string label, Color color)
         {
             AddShape($"{label}Ring", SpriteKind.Circle, new Vector2(x, y - 0.2f), new Vector2(1.4f, 0.46f), Colors.Plaza, 2);
-            AddCharacter(label, x, y, color, x, true);
+            AddCharacter(label, x, y, color, x, true, label.Contains("Join") ? "avatar.logic_spark" : "avatar.sky_builder");
         }
 
         private void AddHeroCharacters(GameSession session, bool includeSecond)
         {
-            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Explorer", -0.6f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.2f, true);
+            AddCharacter(session?.SelectedAvatar.DisplayName ?? "Explorer", -0.6f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.2f, true, session?.SelectedAvatar.SpriteAssetId);
             if (includeSecond)
             {
-                AddCharacter("Designer", 0.75f, -1.25f, Colors.PlayerGold, 1.3f, true);
+                AddCharacter("Designer", 0.75f, -1.25f, Colors.PlayerGold, 1.3f, true, "avatar.logic_spark");
             }
 
-            AddCharacter("Campus Guide", 1.75f, -1.55f, Colors.PlayerTeal, 2.4f, true);
+            AddCharacter("Campus Guide", 1.75f, -1.55f, Colors.PlayerTeal, 2.4f, true, "npc.campus_guide");
         }
 
-        private void AddCharacter(string label, float x, float y, Color shirt, float phase, bool animated)
+        private void AddCharacter(string label, float x, float y, Color shirt, float phase, bool animated, string assetId = null)
         {
             var group = new GameObject(label);
             group.transform.SetParent(_root, false);
             group.transform.position = new Vector3(x, y, 0f);
 
             AddShape($"{label}Shadow", SpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), Colors.Shadow, 7, 0f, group.transform);
-            AddShape($"{label}LegA", SpriteKind.Square, new Vector2(-0.1f, -0.34f), new Vector2(0.12f, 0.36f), Colors.Door, 8, 0f, group.transform);
-            AddShape($"{label}LegB", SpriteKind.Square, new Vector2(0.1f, -0.34f), new Vector2(0.12f, 0.36f), Colors.Door, 8, 0f, group.transform);
-            AddShape($"{label}Body", SpriteKind.Square, new Vector2(0f, 0f), new Vector2(0.48f, 0.55f), shirt, 9, 0f, group.transform);
-            AddShape($"{label}Pack", SpriteKind.Square, new Vector2(0.31f, 0.02f), new Vector2(0.16f, 0.38f), Colors.CoralRoof, 8, 0f, group.transform);
-            AddShape($"{label}Head", SpriteKind.Circle, new Vector2(0f, 0.48f), new Vector2(0.43f, 0.43f), Colors.Skin, 10, 0f, group.transform);
-            AddShape($"{label}Hair", SpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), Colors.Hair, 11, 0f, group.transform);
+
+            if (!string.IsNullOrWhiteSpace(assetId))
+            {
+                AddCatalogSprite($"{label}Sprite", assetId, new Vector2(0f, 0.02f), new Vector2(0.86f, 1.16f), 10, 0f, group.transform);
+            }
+            else
+            {
+                AddShape($"{label}LegA", SpriteKind.Square, new Vector2(-0.1f, -0.34f), new Vector2(0.12f, 0.36f), Colors.Door, 8, 0f, group.transform);
+                AddShape($"{label}LegB", SpriteKind.Square, new Vector2(0.1f, -0.34f), new Vector2(0.12f, 0.36f), Colors.Door, 8, 0f, group.transform);
+                AddShape($"{label}Body", SpriteKind.Square, new Vector2(0f, 0f), new Vector2(0.48f, 0.55f), shirt, 9, 0f, group.transform);
+                AddShape($"{label}Pack", SpriteKind.Square, new Vector2(0.31f, 0.02f), new Vector2(0.16f, 0.38f), Colors.CoralRoof, 8, 0f, group.transform);
+                AddShape($"{label}Head", SpriteKind.Circle, new Vector2(0f, 0.48f), new Vector2(0.43f, 0.43f), Colors.Skin, 10, 0f, group.transform);
+                AddShape($"{label}Hair", SpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), Colors.Hair, 11, 0f, group.transform);
+            }
+
             AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, Colors.Ink, 12, group.transform);
 
             if (animated)
@@ -287,14 +284,13 @@ namespace CareerQuest
 
         private void AddEvidence(string label, float x, float y, Color color)
         {
-            AddShape($"{label}Evidence", SpriteKind.Square, new Vector2(x, y), new Vector2(0.68f, 0.52f), color, 5);
+            AddCatalogSprite($"{label}Evidence", "prop.evidence_card", new Vector2(x, y), new Vector2(0.68f, 0.52f), 5);
             AddLabel($"{label}EvidenceLabel", label, x, y, ItemLabelSize, Colors.Ink, 6);
         }
 
         private void AddBadge(string label, float x, float y, Color color)
         {
-            AddShape($"{label}Badge", SpriteKind.Circle, new Vector2(x, y), new Vector2(0.72f, 0.72f), color, 4);
-            AddShape($"{label}BadgeCenter", SpriteKind.Circle, new Vector2(x, y), new Vector2(0.48f, 0.48f), Colors.Plaza, 5);
+            AddCatalogSprite($"{label}Badge", BadgeAssetIdFor(label), new Vector2(x, y), new Vector2(0.88f, 0.88f), 4);
             AddLabel($"{label}BadgeLabel", label, x, y, ItemLabelSize, Colors.Ink, 6);
         }
 
@@ -305,6 +301,73 @@ namespace CareerQuest
                 "Design Build Studio" => "Design Build",
                 "Health Hero Clinic" => "Health Hero",
                 _ => label
+            };
+        }
+
+        private GameObject AddCatalogSprite(
+            string name,
+            string assetId,
+            Vector2 position,
+            Vector2 targetSize,
+            int order,
+            float rotation = 0f,
+            Transform parent = null)
+        {
+            var spriteObject = new GameObject(name, typeof(SpriteRenderer));
+            spriteObject.transform.SetParent(parent != null ? parent : _root, false);
+            spriteObject.transform.localPosition = new Vector3(position.x, position.y, 0f);
+            spriteObject.transform.localRotation = Quaternion.Euler(0f, 0f, rotation);
+
+            var renderer = spriteObject.GetComponent<SpriteRenderer>();
+            renderer.sprite = AssetCatalog.SpriteFor(assetId);
+            renderer.color = Color.white;
+            renderer.sortingOrder = order;
+
+            var bounds = renderer.sprite != null ? renderer.sprite.bounds.size : Vector3.one;
+            var width = Mathf.Approximately(bounds.x, 0f) ? 1f : bounds.x;
+            var height = Mathf.Approximately(bounds.y, 0f) ? 1f : bounds.y;
+            spriteObject.transform.localScale = new Vector3(targetSize.x / width, targetSize.y / height, 1f);
+            return spriteObject;
+        }
+
+        private static string CampusAssetIdFor(string label)
+        {
+            return label switch
+            {
+                "Design Build Studio" => "campus.design_build_studio",
+                "Health Hero Clinic" => "campus.health_hero_clinic",
+                "Logic Court" => "campus.logic_court",
+                "Achievement Gallery" => "campus.achievement_gallery",
+                "Career Reveal Stage" => "campus.reveal_stage",
+                "AI Lab" => "campus.space_lab",
+                "Music Studio" => "campus.music_studio",
+                "Robotics" => "campus.robotics_garage",
+                "Kitchen" => "campus.community_kitchen",
+                _ => "campus.achievement_gallery"
+            };
+        }
+
+        private static string PropAssetIdFor(string label)
+        {
+            return label switch
+            {
+                "Clinic" => "prop.city_piece_clinic",
+                "Court" => "prop.city_piece_court",
+                "Studio" => "prop.city_piece_studio",
+                "Lab" => "prop.city_piece_lab",
+                "Art" => "prop.city_piece_art_tower",
+                _ => "prop.blueprint"
+            };
+        }
+
+        private static string BadgeAssetIdFor(string label)
+        {
+            return label switch
+            {
+                "Build" => "badge.design_build",
+                "Care" => "badge.health_hero",
+                "Logic" => "badge.logic_court",
+                _ => "badge.reveal_ready"
             };
         }
 

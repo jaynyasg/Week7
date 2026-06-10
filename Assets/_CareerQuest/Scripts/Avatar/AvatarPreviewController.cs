@@ -20,11 +20,12 @@ namespace CareerQuest
 
         public static void Apply(Image image, AvatarDefinition avatar)
         {
-            if (image == null || avatar == null)
+            if (image == null)
             {
                 return;
             }
 
+            avatar ??= AvatarConfig.DefaultAvatar;
             image.sprite = AssetCatalog.SpriteFor(avatar.SpriteAssetId);
             image.color = Color.white;
         }

@@ -21,7 +21,7 @@ namespace CareerQuest.Tests
 
             app.BeginPlay();
             Assert.That(app.Session.Mode, Is.EqualTo(AppMode.Play));
-            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.Connection));
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.Campus));
             Assert.That(app.Session.HasSeededResults, Is.False);
 
             app.BeginShowcase();
@@ -41,7 +41,7 @@ namespace CareerQuest.Tests
             var app = gameObject.AddComponent<CareerQuestApp>();
             yield return null;
 
-            app.BeginPlay();
+            app.ShowConnection();
             yield return null;
 
             AssertText("ConnectionTitle", "Start Game");
@@ -51,6 +51,49 @@ namespace CareerQuest.Tests
             AssertButtonText("JoinIpButton", "Join IP");
             Assert.That(GameObject.Find("HostP1Button"), Is.Null);
             Assert.That(GameObject.Find("SoloFallbackButton"), Is.Null);
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator EntryScreenKeepsMultiplayerSecondary()
+        {
+            var gameObject = new GameObject("entry-multiplayer-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            AssertButtonText("PlayButton", "Play");
+            AssertButtonText("ShowcaseButton", "Showcase");
+            AssertButtonText("MultiplayerTestingButton", "Multiplayer");
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator VisualQaStatesRouteToNamedScreens()
+        {
+            var gameObject = new GameObject("visual-qa-state-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            Assert.That(app.ShowVisualQaState("avatar"), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.AvatarSelection));
+
+            Assert.That(app.ShowVisualQaState("campus"), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.Campus));
+
+            Assert.That(app.ShowVisualQaState("design-build"), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.DesignBuild));
+
+            Assert.That(app.ShowVisualQaState("reveal-locked"), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.Reveal));
+            Assert.That(app.Session.RevealReady, Is.False);
+
+            Assert.That(app.ShowVisualQaState("reveal-unlocked"), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.Reveal));
+            Assert.That(app.Session.RevealReady, Is.True);
+
+            Assert.That(app.ShowVisualQaState("unknown-state"), Is.False);
 
             Object.Destroy(gameObject);
         }

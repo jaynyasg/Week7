@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -96,7 +97,7 @@ namespace CareerQuest
         {
             _showcasePresenter.Stop();
             _router.BeginPlay(_session);
-            ShowConnection();
+            ShowCampus();
         }
 
         public void ShowAvatarSelectionForPlay()
@@ -119,7 +120,46 @@ namespace CareerQuest
                 return;
             }
 
-            ShowConnection();
+            ShowCampus();
+        }
+
+        public bool ShowVisualQaState(string state)
+        {
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                return false;
+            }
+
+            switch (state.Trim().ToLowerInvariant())
+            {
+                case "avatar":
+                case "avatar-selection":
+                    ShowAvatarSelectionForPlay();
+                    return true;
+                case "campus":
+                    BeginPlay();
+                    return true;
+                case "design-build":
+                case "design":
+                    BeginPlay();
+                    ShowDesignBuild(false);
+                    return true;
+                case "gallery":
+                    BeginPlay();
+                    ShowGallery();
+                    return true;
+                case "reveal-locked":
+                    BeginPlay();
+                    ShowReveal();
+                    return true;
+                case "reveal-unlocked":
+                    BeginPlay();
+                    SeedVisualQaResults();
+                    ShowReveal();
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         public void ShowShowcaseDisclaimer()
@@ -416,6 +456,13 @@ namespace CareerQuest
         private bool TryStartCommandLineSmoke()
         {
             var args = Environment.GetCommandLineArgs();
+            var visualState = ValueAfter(args, "-cq-visual-state");
+            if (!string.IsNullOrWhiteSpace(visualState))
+            {
+                StartCoroutine(RunCommandLineVisualState(visualState, ValueAfter(args, "-cq-screenshot")));
+                return true;
+            }
+
             if (Array.IndexOf(args, "-cq-smoke") < 0)
             {
                 return false;
@@ -426,6 +473,29 @@ namespace CareerQuest
             return true;
         }
 
+        private IEnumerator RunCommandLineVisualState(string state, string screenshotPath)
+        {
+            Debug.Log($"CQ_VISUAL_STATE_START state={state}");
+            var shown = ShowVisualQaState(state);
+            Debug.Log($"CQ_VISUAL_STATE_READY state={state} shown={shown} route={_session.CurrentRoute} revealReady={_session.RevealReady}");
+
+            if (shown && !string.IsNullOrWhiteSpace(screenshotPath))
+            {
+                yield return new WaitForEndOfFrame();
+                var directory = Path.GetDirectoryName(screenshotPath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                ScreenCapture.CaptureScreenshot(screenshotPath);
+                Debug.Log($"CQ_VISUAL_STATE_SCREENSHOT state={state} path={screenshotPath}");
+            }
+
+            yield return new WaitForSeconds(2f);
+            Application.Quit(shown ? 0 : 2);
+        }
+
         private IEnumerator RunCommandLineSmoke(string mode)
         {
             Debug.Log($"CQ_SMOKE_START mode={mode}");
@@ -433,14 +503,12 @@ namespace CareerQuest
             switch (mode.ToLowerInvariant())
             {
                 case "host":
-                    BeginPlay();
                     _networkBootstrap.StartHostP1();
                     _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
                     ShowCampus();
                     yield return new WaitForSeconds(6f);
                     break;
                 case "client":
-                    BeginPlay();
                     yield return new WaitForSeconds(1f);
                     _networkBootstrap.JoinLocalhostP2();
                     _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
@@ -454,7 +522,6 @@ namespace CareerQuest
                     yield return new WaitForSeconds(7f);
                     break;
                 default:
-                    BeginPlay();
                     _networkBootstrap.StartSoloFallback();
                     _router.UseConnectionMode(_session, ConnectionMode.SoloFallback, 1);
                     ShowCampus();
@@ -488,6 +555,22 @@ namespace CareerQuest
             var connectedClientCount = networkManager != null ? networkManager.ConnectedClientsIds.Count : 0;
             var isConnectedClient = networkManager != null && networkManager.IsConnectedClient;
             Debug.Log($"{label} mode={mode} status=\"{_networkBootstrap.Status}\" connectedClients={connectedClientCount} isConnectedClient={isConnectedClient} sessionMode={_session.Mode} revealReady={_session.RevealReady}");
+        }
+
+        private void SeedVisualQaResults()
+        {
+            foreach (var result in ShowcaseSeedConfig.CreativeTechnicalBuilderResults())
+            {
+                _session.RecordResult(new MiniGameResult(
+                    result.ActivityId,
+                    result.DisplayName,
+                    result.Tier,
+                    ResultSource.Solo,
+                    result.TraitDeltas,
+                    result.TimeRemaining,
+                    result.Accuracy,
+                    result.Summary));
+            }
         }
     }
 }

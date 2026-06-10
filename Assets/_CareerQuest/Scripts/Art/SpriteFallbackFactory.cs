@@ -1,9 +1,13 @@
+using System;
 using UnityEngine;
 
 namespace CareerQuest
 {
     public static class SpriteFallbackFactory
     {
+        public const string FallbackSpriteSuffix = ".fallback";
+        public const string FallbackTextureSuffix = ".fallback.texture";
+
         public static Sprite Create(AssetDefinition definition)
         {
             if (definition == null)
@@ -58,6 +62,16 @@ namespace CareerQuest
 
             DrawRect(pixels, size, size, 10, 10, size - 20, size - 20, new Color(1f, 1f, 1f, 0.18f));
             return BuildSprite($"missing.{id}", size, size, pixels);
+        }
+
+        public static bool IsFallbackSprite(Sprite sprite)
+        {
+            return sprite != null && sprite.name.EndsWith(FallbackSpriteSuffix, StringComparison.Ordinal);
+        }
+
+        public static bool IsFallbackTexture(Texture2D texture)
+        {
+            return texture != null && texture.name.EndsWith(FallbackTextureSuffix, StringComparison.Ordinal);
         }
 
         private static Color[] ClearPixels(int width, int height)
@@ -162,7 +176,7 @@ namespace CareerQuest
             {
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
-                name = $"{name}.fallback.texture",
+                name = $"{name}{FallbackTextureSuffix}",
                 hideFlags = HideFlags.HideAndDontSave
             };
 
@@ -170,7 +184,7 @@ namespace CareerQuest
             texture.Apply();
 
             var sprite = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f);
-            sprite.name = $"{name}.fallback";
+            sprite.name = $"{name}{FallbackSpriteSuffix}";
             sprite.hideFlags = HideFlags.HideAndDontSave;
             return sprite;
         }
