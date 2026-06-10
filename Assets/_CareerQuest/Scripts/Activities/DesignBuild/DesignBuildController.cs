@@ -74,16 +74,16 @@ namespace CareerQuest
             RectTransform tray = null;
 
             var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", Paper);
-            UiBuilder.Place(briefing, -330f, 284f, 560f, 72f);
+            UiBuilder.Place(briefing, -300f, 282f, 620f, 94f);
 
             var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, Ink);
-            UiBuilder.Place(title.rectTransform, -172f, 16f, 206f, 24f);
+            UiBuilder.Place(title.rectTransform, -132f, 26f, 340f, 24f);
 
             var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 13, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));
-            UiBuilder.Place(feedback.rectTransform, 0f, 15f, 278f, 22f);
+            UiBuilder.Place(feedback.rectTransform, -132f, 0f, 380f, 22f);
 
             var progress = UiBuilder.Text(briefing, "DesignBuildProgress", "Step 1: review the blueprint.", 12, TextAnchor.MiddleLeft, new Color(0.08f, 0.16f, 0.2f));
-            UiBuilder.Place(progress.rectTransform, 0f, -12f, 278f, 20f);
+            UiBuilder.Place(progress.rectTransform, -132f, -26f, 380f, 20f);
 
             var review = UiBuilder.Button(briefing, "ReviewBlueprintButton", "Review", () =>
             {
@@ -92,7 +92,7 @@ namespace CareerQuest
                 feedback.text = _feedback;
                 progress.text = "Step 2: ask the helper.";
             });
-            UiBuilder.Place(review.GetComponent<RectTransform>(), 184f, 16f, 82f, 28f);
+            UiBuilder.Place(review.GetComponent<RectTransform>(), 242f, 18f, 96f, 30f);
             StyleButton(review, ButtonPrimary, 15);
 
             var helper = UiBuilder.Button(briefing, "PatternHelperButton", "Helper", () =>
@@ -110,7 +110,7 @@ namespace CareerQuest
                 progress.text = "Step 3: place all five pieces.";
                 tray.gameObject.SetActive(true);
             });
-            UiBuilder.Place(helper.GetComponent<RectTransform>(), 244f, -16f, 82f, 28f);
+            UiBuilder.Place(helper.GetComponent<RectTransform>(), 242f, -22f, 96f, 30f);
             StyleButton(helper, ButtonPrimary, 15);
 
             tray = UiBuilder.Panel(panel, "DesignBuildToolTray", new Color(0.95f, 0.99f, 1f, 0.74f));

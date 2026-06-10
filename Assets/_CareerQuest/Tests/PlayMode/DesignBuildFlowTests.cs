@@ -42,14 +42,23 @@ namespace CareerQuest.Tests
             var reviewButton = GameObject.Find("ReviewBlueprintButton").GetComponent<Button>();
             var helperButton = GameObject.Find("PatternHelperButton").GetComponent<Button>();
             var title = GameObject.Find("DesignBuildTitle").GetComponent<Text>();
+            var titleRect = title.GetComponent<RectTransform>();
+            var feedbackRect = GameObject.Find("DesignBuildFeedback").GetComponent<RectTransform>();
+            var progressRect = GameObject.Find("DesignBuildProgress").GetComponent<RectTransform>();
+            var reviewRect = reviewButton.GetComponent<RectTransform>();
+            var helperRect = helperButton.GetComponent<RectTransform>();
 
             Assert.That(tray.gameObject.activeSelf, Is.False);
             Assert.That(tray.anchoredPosition.y, Is.LessThan(-280f));
             Assert.That(briefing.anchoredPosition.y, Is.GreaterThan(220f));
             Assert.That(clinicButton.sizeDelta.y, Is.LessThanOrEqualTo(36f));
             Assert.That(completeButton.sizeDelta.y, Is.LessThanOrEqualTo(44f));
-            Assert.That(reviewButton.GetComponent<RectTransform>().sizeDelta.y, Is.LessThanOrEqualTo(36f));
+            Assert.That(reviewRect.sizeDelta.y, Is.LessThanOrEqualTo(36f));
             Assert.That(title.fontSize, Is.LessThanOrEqualTo(28));
+            Assert.That(Bottom(titleRect), Is.GreaterThan(Top(feedbackRect)));
+            Assert.That(Bottom(feedbackRect), Is.GreaterThan(Top(progressRect)));
+            Assert.That(Left(reviewRect), Is.GreaterThan(Right(feedbackRect)));
+            Assert.That(Left(helperRect), Is.GreaterThan(Right(progressRect)));
 
             reviewButton.onClick.Invoke();
             helperButton.onClick.Invoke();
@@ -70,6 +79,26 @@ namespace CareerQuest.Tests
 
             Assert.Fail($"{name} should exist.");
             return null;
+        }
+
+        private static float Left(RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition.x - rectTransform.sizeDelta.x * 0.5f;
+        }
+
+        private static float Right(RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition.x + rectTransform.sizeDelta.x * 0.5f;
+        }
+
+        private static float Top(RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition.y + rectTransform.sizeDelta.y * 0.5f;
+        }
+
+        private static float Bottom(RectTransform rectTransform)
+        {
+            return rectTransform.anchoredPosition.y - rectTransform.sizeDelta.y * 0.5f;
         }
     }
 }
