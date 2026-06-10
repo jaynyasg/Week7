@@ -7,7 +7,7 @@ topic: career-quest-full-vision
 
 ## Summary
 
-Career Quest Campus should become a credible first playable: a kid-friendly Unity career campus with generated sprite art, avatar selection, a playable hub, room-scale mini-games, all-three multiplayer support, a three-game Career Reveal gate, visual QA evidence, and a Windows-first release. `Play` is the honest game path; `Showcase` remains the guided evaluator path.
+Career Quest Campus should become a credible first playable: a kid-friendly Unity career campus with generated sprite art, avatar selection, a playable hub, room-scale mini-games, all-three multiplayer support, a three-game Career Reveal gate, visual QA evidence, and a Windows-first release. The next pass is hybrid visual-first: prove the game can look and feel good through real characters, a polished campus, a cleaner Play flow, and one beautiful room template before broadening the rest of the systems.
 
 ---
 
@@ -23,9 +23,13 @@ The full-vision pass exists to turn the existing loop into a real first playable
 
 - **Real first playable over small polish.** The next pass should address visual identity, movement, interactivity, multiplayer, and proof together because the central gap is "does this feel like a game?"
 - **Dual-path release.** `Play` is the normal first-run game path; `Showcase` remains available for guided evaluation and reliable presentation.
+- **Hybrid visual-first execution.** The next implementation slice prioritizes visible game quality first and includes only the shared activity architecture needed to make the first polished room reusable.
+- **Real character bar.** Main-path avatars and NPCs must read as real 2D video game characters with face/head detail, body, limbs, outfit/personality, and clear silhouette at gameplay scale.
+- **Fallbacks are not final art.** Procedural and fallback sprites keep QA playable, but they do not satisfy visual completion for player-facing characters, buildings, room backdrops, primary props, badges, or icons.
 - **Three-game reveal gate.** Career Reveal unlocks only after three unique mini-games; one or two results build progress but do not reveal the final path.
 - **Generated/imported sprite kit with fallbacks.** Generated art is acceptable for the first playable, but every major asset category needs fallback behavior so the game never shows invisible characters or blank rooms.
 - **Playable hub over campus menu.** Campus navigation should happen through avatar movement, building entrances, camera framing, and a guide/NPC presence rather than only through screen buttons.
+- **Normal Play bypasses connection setup.** Multiplayer and connection modes remain available as secondary testing/evaluator flows, but the kid-facing path should be `Play -> Avatar Selection -> Campus`.
 - **Room-scale mini-games.** Design Build, Health Hero, and Logic Court should feel like themed activity rooms with visible objects and player actions, not staged button checklists.
 - **All-three multiplayer, sequenced carefully.** All mini-games should support multiplayer, but Design Build is the first protected multiplayer wow moment and stabilizes before Clinic/Court synchronization.
 - **Prefab/entity rewrite inside one persistent scene.** The build should move toward Unity-native prefabs and entities while keeping one persistent gameplay scene to avoid Netcode scene-transition risk.
@@ -54,7 +58,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - F1. Play first-run route
   - **Trigger:** A player chooses `Play`.
   - **Actors:** A1, A2
-  - **Steps:** The player selects an avatar, chooses a connection mode or solo fallback, enters the hub, moves through the campus, enters three activity buildings, completes mini-games, views Gallery progress, then unlocks Career Reveal after three unique games.
+  - **Steps:** The player selects an avatar, enters the hub directly in solo play, moves through the campus, enters three activity buildings, completes mini-games, views Gallery progress, then unlocks Career Reveal after three unique games.
   - **Outcome:** The player experiences Career Quest as a game path rather than a menu tour.
 
 - F2. Showcase evaluator route
@@ -87,6 +91,12 @@ The full-vision pass exists to turn the existing loop into a real first playable
   - **Steps:** Gallery shows earned stamps and Career DNA progress. Reveal remains locked until three unique mini-games are complete, then presents strength-based career paths and confidence language.
   - **Outcome:** The payoff feels celebratory, exploratory, and earned.
 
+- F7. Multiplayer/testing route
+  - **Trigger:** A tester, presenter, or second player chooses a multiplayer/testing option.
+  - **Actors:** A2, A3, A4
+  - **Steps:** The player opens connection options, chooses solo fallback, host, join-this-PC, or join-by-IP, then enters the same campus and activity flow.
+  - **Outcome:** Multiplayer remains available without confusing the normal child-facing Play path.
+
 ---
 
 ## Requirements
@@ -97,6 +107,8 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - R2. Every major screen must include character presence and environment art; no first-run screen should read as a blank panel or text-only UI.
 - R3. Generated/imported art must be curated informally for safety, consistency, and obvious brand/IP issues before import.
 - R4. Every major asset category must have a fallback sprite or fallback visual so missing art does not make the game blank or invisible.
+- R4a. Player-facing visual completion requires non-fallback art for selected avatars, guide/NPCs, primary campus buildings, room backdrops, primary props, badges, and core UI icons.
+- R4b. Main-path avatars and NPCs must look like real 2D game characters: readable face/head detail, hair or headwear, torso, arms, legs, outfit/accent, personality, and clean silhouette.
 
 **Avatar And Hub**
 
@@ -105,6 +117,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - R7. The campus hub must support avatar movement, visible buildings, building entrances, guide/NPC orientation, Gallery destination, Reveal destination, and exit access.
 - R8. The hub camera should follow the active avatar within bounded campus framing while activity rooms use fixed room framing.
 - R9. Campus buttons may remain as fallback or debug affordances, but the primary Play path should feel like walking to places.
+- R9a. Normal Play must route from avatar selection directly into the campus; connection mode choice belongs behind a secondary multiplayer/testing action.
 
 **Mini-Games**
 
@@ -143,6 +156,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - R30. QA must combine automated tests/smokes, screenshots or short clips, and manual same-computer host/client evidence.
 - R31. Visual evidence must cover avatar selection, hub movement, every mini-game, Gallery, Reveal, exit, and host/client proof.
 - R32. Performance and build evidence must track FPS watchpoints, texture-size expectations, build-size changes, startup smoke, and network smoke.
+- R32a. Visual QA evidence must include 1280x720 screenshots or clips for avatar selection, campus, the first polished activity room, Gallery, locked Reveal, and unlocked Reveal, with any fallback art explicitly noted as a blocker.
 
 **Release And Distribution**
 
@@ -166,8 +180,10 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - AE3. **Covers R15-R20.** Given host and client enter a shared activity, when both players make meaningful actions, then the host validates shared state, both clients see progress, conflicts give feedback, and only one result records.
 - AE4. **Covers R21-R25.** Given one or two unique games are complete, when the player opens Reveal, then it remains locked with progress shown; after the third unique game, Reveal unlocks with strength-based copy.
 - AE5. **Covers R26-R28.** Given a player completes a correct action or invalid choice, when feedback plays, then visual ceremony clearly communicates the outcome and shared feedback appears on both clients where relevant.
-- AE6. **Covers R29-R32.** Given a milestone is considered done, when QA evidence is reviewed, then automated proof, visual evidence, and manual host/client notes exist for that milestone's promised surface.
+- AE6. **Covers R29-R32a.** Given a milestone is considered done, when QA evidence is reviewed, then automated proof, 1280x720 visual evidence, fallback-art notes, and manual host/client notes exist for that milestone's promised surface.
 - AE7. **Covers R33-R39.** Given the release package is prepared, when an evaluator opens the Windows build or itch page materials, then controls, limitations, fallback notes, privacy boundaries, and optional WebGL status are clear.
+- AE8. **Covers R1-R4b, R32a, SC8.** Given reviewers inspect avatar, campus, and first polished room screenshots, when they compare them to the design system, then the main avatar and NPCs read as real 2D game characters and the environment reads as a playable campus/room rather than procedural placeholder shapes.
+- AE9. **Covers R5-R9a.** Given a child chooses normal `Play`, when avatar selection is confirmed, then the player enters the campus directly and connection choices are only visible through the secondary multiplayer/testing path.
 
 ---
 
@@ -180,6 +196,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 - SC5. Career Reveal unlocks only after three unique games and remains strength-based.
 - SC6. Every major screen has screenshot or clip evidence before release.
 - SC7. Windows build is playable as the main proof artifact; WebGL is either absent or clearly labeled as optional/limited.
+- SC8. Avatar, campus, and first polished room screenshots show real game-character art and recognizable environments, not procedural block placeholders.
 
 ---
 
@@ -215,6 +232,7 @@ The full-vision pass exists to turn the existing loop into a real first playable
 ## Sources / Research
 
 - `README.md` for locked scope, privacy rules, game loop, reveal semantics, and verification targets.
+- `DESIGN.md` for Future Workshop Diorama + Junior Quest UX, real character bar, fallback-art rules, and visual QA expectations.
 - `docs/architecture.md` for persistent-scene model, host-authoritative multiplayer, mini-game result contract, and reveal language boundaries.
 - `docs/art-direction.md` for current procedural art direction and next art upgrade goals.
 - `docs/demo-checklist.md` for evaluator, Play, live multiplayer, solo fallback, and release proof expectations.

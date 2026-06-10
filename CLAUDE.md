@@ -52,3 +52,13 @@ auto-sync across all worktrees, run `gbrain autopilot --install` once per
 machine — gbrain's daemon handles incremental refresh on a schedule.
 
 <!-- gstack-gbrain-search-guidance:end -->
+
+## Design System
+
+Always read `DESIGN.md` before making visual or UI decisions for Career Quest Campus. The project direction is **Future Workshop Diorama + Junior Quest UX**: a handmade toy campus with quest-style flow, clear career rooms, avatar presence, tools, badges, and short kid-facing instructions.
+
+All color, typography, spacing, layout, motion, HUD, world, and activity-room choices should follow `DESIGN.md`. Do not introduce a conflicting visual direction without explicit user approval.
+
+## Workflow Preferences
+
+When running `ce-work` for this project, use subagents for implementation work every time a callable subagent mechanism is available. Search for the relevant subagent/spawn-agent tool at the start of the `ce-work` run, then choose serial or parallel subagents using the skill's safety rules. If no subagent tool is available in the current harness, say that explicitly before continuing in the main thread.

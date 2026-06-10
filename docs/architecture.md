@@ -8,7 +8,7 @@ This document is an implementation-facing snapshot of the local gstack design, C
 - Networking: Unity Netcode for GameObjects.
 - Transport: Unity Transport.
 - Distribution target: itch.io with downloadable Windows build. WebGL is preview-only unless networking is already working.
-- Visual style: bright 2.5D campus, flat characters, clean UI, strong feedback moments.
+- Visual style: Future Workshop Diorama + Junior Quest UX: bright 2.5D campus, polished 2D game characters, clean quest HUD, strong feedback moments.
 
 ## Privacy Boundaries
 
@@ -24,8 +24,12 @@ Separate Netcode-managed scenes are deferred until after the P0 loop ships.
 EntryScreen
    |
    +-- Play
+   |     -> AvatarSelection
+   |     -> Solo/free campus
+   |
+   +-- Multiplayer / Testing
    |     -> ConnectionScreen
-   |     -> unseeded free campus
+   |     -> host/join/solo fallback campus
    |
    +-- Showcase
    |     -> friendly disclaimer
@@ -66,12 +70,12 @@ Gameplay Scene
 
 ## Connection Modes
 
-`Play` leads to the normal connection screen and then the free campus. The connection screen shows four clear options:
+Normal `Play` should bypass connection setup: `Play -> Avatar Selection -> Campus`. The connection screen is a secondary Multiplayer/Testing route for local proof and QA. It shows four clear options:
 
-1. `Host P1`
-2. `Join Localhost as P2`
-3. `Join LAN by IP`
-4. `Solo Fallback`
+1. `Play Solo`
+2. `Host Game`
+3. `Join This PC`
+4. `Join By IP`
 
 LAN discovery/server browser is a stretch attempt. The required LAN path is manual IP join plus optional local IP display. If LAN is not tested, README and QA docs must mark it experimental.
 
@@ -127,7 +131,7 @@ If two players try to place the same Design Build Studio piece at once, the host
 
 ## Protected Wow Moment
 
-The protected wow moment is shared multiplayer placement in Design Build Studio. Both clients should clearly see:
+The protected visual moment is the first polished playable room: a selected avatar, helper NPC, recognizable room/workbench, direct-manipulation props, immediate feedback, and badge ceremony. The protected multiplayer wow moment remains shared placement in Design Build Studio. Both clients should clearly see:
 
 - Snap animation
 - Sound or UI pulse
