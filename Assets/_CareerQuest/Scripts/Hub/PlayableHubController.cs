@@ -108,8 +108,8 @@ namespace CareerQuest
             text.text = label;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
-            text.characterSize = 0.075f;
-            text.fontSize = 64;
+            text.characterSize = 0.032f;
+            text.fontSize = 28;
             text.color = new Color(0.05f, 0.09f, 0.11f);
 
             var renderer = labelObject.GetComponent<MeshRenderer>();

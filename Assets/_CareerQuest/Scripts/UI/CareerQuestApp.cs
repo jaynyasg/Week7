@@ -144,48 +144,75 @@ namespace CareerQuest
             _router.ShowConnection(_session);
             _world.ShowConnection(_session);
             ResetRoot();
-            var panel = UiBuilder.FullPanel(_root, "ConnectionPanel", new Color(0.88f, 0.94f, 0.96f));
+            var overlay = UiBuilder.FullPanel(_root, "ConnectionOverlay", new Color(0.86f, 0.95f, 1f));
+            var panel = UiBuilder.Panel(overlay, "ConnectionPanel", new Color(0.96f, 0.99f, 1f, 0.94f));
+            UiBuilder.Place(panel, 0f, 12f, 920f, 548f);
 
-            var title = UiBuilder.Text(panel, "ConnectionTitle", "Choose Connection", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.16f, 0.2f));
-            UiBuilder.Place(title.rectTransform, 0f, 240f, 880f, 60f);
+            UiBuilder.Shape(panel, "ConnectionHeaderBand", new Color(0.06f, 0.25f, 0.34f, 0.95f), 0f, 226f, 920f, 96f);
+            var title = UiBuilder.Text(panel, "ConnectionTitle", "Start Game", 38, TextAnchor.MiddleCenter, Color.white);
+            UiBuilder.Place(title.rectTransform, 0f, 242f, 860f, 48f);
 
-            var host = UiBuilder.Button(panel, "HostP1Button", "Host P1", () =>
-            {
-                _networkBootstrap.StartHostP1();
-                _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
-                ShowCampus();
-            });
-            UiBuilder.Place(host.GetComponent<RectTransform>(), -300f, 100f, 240f, 64f);
+            var subtitle = UiBuilder.Text(panel, "ConnectionSubtitle", "Play solo now, or use local multiplayer when testing two players.", 18, TextAnchor.MiddleCenter, new Color(0.88f, 0.97f, 1f));
+            UiBuilder.Place(subtitle.rectTransform, 0f, 206f, 820f, 32f);
 
-            var joinLocal = UiBuilder.Button(panel, "JoinLocalButton", "Join Localhost as P2", () =>
-            {
-                _networkBootstrap.JoinLocalhostP2();
-                _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
-                ShowCampus();
-            });
-            UiBuilder.Place(joinLocal.GetComponent<RectTransform>(), 0f, 100f, 280f, 64f);
-
-            var solo = UiBuilder.Button(panel, "SoloFallbackButton", "Solo Fallback", () =>
+            var solo = UiBuilder.Button(panel, "PlaySoloButton", "Play Solo", () =>
             {
                 _networkBootstrap.StartSoloFallback();
                 _router.UseConnectionMode(_session, ConnectionMode.SoloFallback, 1);
                 ShowCampus();
             });
-            UiBuilder.Place(solo.GetComponent<RectTransform>(), 300f, 100f, 240f, 64f);
+            UiBuilder.Place(solo.GetComponent<RectTransform>(), -282f, 104f, 244f, 74f);
+            StyleConnectionButton(solo, new Color(0.05f, 0.49f, 0.43f), 28);
+
+            var soloHint = UiBuilder.Text(panel, "PlaySoloHint", "Recommended", 16, TextAnchor.MiddleCenter, new Color(0.06f, 0.22f, 0.2f));
+            UiBuilder.Place(soloHint.rectTransform, -282f, 50f, 244f, 30f);
+
+            var host = UiBuilder.Button(panel, "HostLocalGameButton", "Host Game", () =>
+            {
+                _networkBootstrap.StartHostP1();
+                _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
+                ShowCampus();
+            });
+            UiBuilder.Place(host.GetComponent<RectTransform>(), 0f, 104f, 244f, 68f);
+            StyleConnectionButton(host, new Color(0.09f, 0.31f, 0.42f), 24);
+
+            var hostHint = UiBuilder.Text(panel, "HostLocalHint", "Start a local session", 15, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
+            UiBuilder.Place(hostHint.rectTransform, 0f, 50f, 244f, 30f);
+
+            var joinLocal = UiBuilder.Button(panel, "JoinThisComputerButton", "Join This PC", () =>
+            {
+                _networkBootstrap.JoinLocalhostP2();
+                _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
+                ShowCampus();
+            });
+            UiBuilder.Place(joinLocal.GetComponent<RectTransform>(), 282f, 104f, 244f, 68f);
+            StyleConnectionButton(joinLocal, new Color(0.09f, 0.31f, 0.42f), 24);
+
+            var joinHint = UiBuilder.Text(panel, "JoinThisComputerHint", "Connect to a host on this computer", 15, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
+            UiBuilder.Place(joinHint.rectTransform, 282f, 50f, 280f, 34f);
+
+            UiBuilder.Shape(panel, "ConnectionAdvancedDivider", new Color(0.06f, 0.25f, 0.34f, 0.18f), 0f, -12f, 760f, 2f);
+
+            var advancedTitle = UiBuilder.Text(panel, "ConnectionAdvancedTitle", "Advanced: join by IP", 18, TextAnchor.MiddleLeft, new Color(0.06f, 0.16f, 0.2f));
+            UiBuilder.Place(advancedTitle.rectTransform, -244f, -52f, 280f, 30f);
 
             var input = UiBuilder.Input(panel, "LanAddressInput", "127.0.0.1");
-            UiBuilder.Place(input.GetComponent<RectTransform>(), -110f, -20f, 250f, 48f);
+            UiBuilder.Place(input.GetComponent<RectTransform>(), -94f, -100f, 330f, 48f);
 
-            var joinLan = UiBuilder.Button(panel, "JoinLanButton", "Join LAN by IP", () =>
+            var joinLan = UiBuilder.Button(panel, "JoinIpButton", "Join IP", () =>
             {
                 _networkBootstrap.JoinLanByIp(input.text);
                 _router.UseConnectionMode(_session, ConnectionMode.JoinLanByIp, 2);
                 ShowCampus();
             });
-            UiBuilder.Place(joinLan.GetComponent<RectTransform>(), 190f, -20f, 250f, 56f);
+            UiBuilder.Place(joinLan.GetComponent<RectTransform>(), 220f, -100f, 176f, 48f);
+            StyleConnectionButton(joinLan, new Color(0.09f, 0.31f, 0.42f), 20);
 
-            var controls = UiBuilder.Text(panel, "ConnectionControls", $"{PlayerControlPreset.P1().Label}     {PlayerControlPreset.P2().Label}     {PlayerControlPreset.Solo().Label}", 20, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
-            UiBuilder.Place(controls.rectTransform, 0f, -120f, 1040f, 44f);
+            var advancedHint = UiBuilder.Text(panel, "ConnectionAdvancedHint", "Use IP join only when another device is hosting on the same network.", 15, TextAnchor.MiddleCenter, new Color(0.18f, 0.26f, 0.3f));
+            UiBuilder.Place(advancedHint.rectTransform, 0f, -148f, 760f, 34f);
+
+            var controls = UiBuilder.Text(panel, "ConnectionControls", "Campus controls: WASD or arrows to move. E / Space enters a door.", 16, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
+            UiBuilder.Place(controls.rectTransform, 0f, -212f, 760f, 36f);
 
             AttachDebug();
         }
@@ -347,6 +374,21 @@ namespace CareerQuest
         {
             var button = UiBuilder.Button(panel, label.Replace(" ", string.Empty), label, () => callback.Invoke());
             UiBuilder.Place(button.GetComponent<RectTransform>(), x, y, 230f, 46f);
+        }
+
+        private static void StyleConnectionButton(Button button, Color color, int fontSize)
+        {
+            button.GetComponent<Image>().color = color;
+            var label = button.GetComponentInChildren<Text>();
+            if (label == null)
+            {
+                return;
+            }
+
+            label.fontSize = fontSize;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 16;
+            label.resizeTextMaxSize = fontSize;
         }
 
         private void ResetRoot()

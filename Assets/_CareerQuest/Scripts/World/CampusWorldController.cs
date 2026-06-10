@@ -10,6 +10,12 @@ namespace CareerQuest
         private Transform _root;
         private Camera _camera;
 
+        private const int WorldLabelFontSize = 28;
+        private const float BuildingLabelSize = 0.033f;
+        private const float SmallBuildingLabelSize = 0.027f;
+        private const float CharacterLabelSize = 0.028f;
+        private const float ItemLabelSize = 0.034f;
+
         public static CampusWorldController Ensure()
         {
             var existing = FindFirstObjectByType<CampusWorldController>();
@@ -34,9 +40,8 @@ namespace CareerQuest
         public void ShowConnection(GameSession session)
         {
             BuildCampus("Connection");
-            AddNetworkProof(-2.2f, 0.1f, "P1 Host", Colors.PlayerBlue);
-            AddNetworkProof(2.2f, 0.1f, "P2 Join", Colors.PlayerGold);
-            AddLabel("ConnectionLabel", "same campus, two players", 0f, -1.35f, 0.16f, Colors.Ink, 20);
+            AddNetworkProof(-2.2f, 0.1f, "Host", Colors.PlayerBlue);
+            AddNetworkProof(2.2f, 0.1f, "Join", Colors.PlayerGold);
         }
 
         public void ShowCampus(GameSession session)
@@ -56,7 +61,6 @@ namespace CareerQuest
             AddNetworkProof(2.6f, -0.85f, "P2 Designer", Colors.PlayerGold);
             AddShape("ProofPulseA", SpriteKind.Circle, new Vector2(-2.6f, -0.85f), new Vector2(1.35f, 1.35f), Colors.PlayerBlueSoft, 1);
             AddShape("ProofPulseB", SpriteKind.Circle, new Vector2(2.6f, -0.85f), new Vector2(1.35f, 1.35f), Colors.PlayerGoldSoft, 1);
-            AddLabel("ProofLabel", "two visible players in one world", 0f, -1.8f, 0.17f, Colors.Ink, 20);
         }
 
         public void ShowDesignBuild(GameSession session)
@@ -68,7 +72,6 @@ namespace CareerQuest
             AddBuildTable();
             AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerTeal, 0.2f, true);
             AddCharacter("Builder", 3.65f, -1.33f, Colors.PlayerBlue, 1.7f, true);
-            AddLabel("BuildWorldLabel", "Future City workbench", 0f, 2.4f, 0.18f, Colors.Ink, 20);
         }
 
         public void ShowClinic(GameSession session)
@@ -81,7 +84,6 @@ namespace CareerQuest
             AddShape("Thermometer", SpriteKind.Square, new Vector2(1.05f, -0.45f), new Vector2(0.16f, 0.92f), Colors.Coral, 5);
             AddShape("CareCup", SpriteKind.Square, new Vector2(1.82f, -0.58f), new Vector2(0.46f, 0.48f), Colors.SkyBlue, 5);
             AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.2f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerBlue, 0.3f, true);
-            AddLabel("ClinicWorldLabel", "diagnose, choose a tool, help someone feel better", 0f, 2.35f, 0.16f, Colors.Ink, 20);
         }
 
         public void ShowCourt(GameSession session)
@@ -95,7 +97,6 @@ namespace CareerQuest
             AddEvidence("Plan", 1.7f, -0.52f, Colors.SkyBlue);
             AddEvidence("Paint", 2.6f, -0.52f, Colors.Lilac);
             AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.1f, -1.2f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0.8f, true);
-            AddLabel("CourtWorldLabel", "sort evidence and make the strongest argument", 0f, 2.35f, 0.16f, Colors.Ink, 20);
         }
 
         public void ShowGallery(GameSession session)
@@ -123,7 +124,6 @@ namespace CareerQuest
             AddShape("RevealBeamA", SpriteKind.Square, new Vector2(-1.1f, 0.65f), new Vector2(0.5f, 3.7f), Colors.LightBeamGold, 1, -12f);
             AddShape("RevealBeamB", SpriteKind.Square, new Vector2(1.1f, 0.65f), new Vector2(0.5f, 3.7f), Colors.LightBeamBlue, 1, 12f);
             AddCharacter(session?.SelectedAvatar.DisplayName ?? "Future Path", 0f, -1.25f, session?.SelectedAvatar.ShirtColor ?? Colors.PlayerGold, 0f, true);
-            AddLabel("RevealWorldLabel", "career reveal ceremony", 0f, 2.25f, 0.2f, Colors.Ink, 20);
         }
 
         private void EnsureSetup()
@@ -210,7 +210,7 @@ namespace CareerQuest
             AddShape($"{label}Door", SpriteKind.Square, new Vector2(x, y - height * 0.35f), new Vector2(0.34f, 0.52f), Colors.Door, order + 2);
             AddShape($"{label}WindowA", SpriteKind.Square, new Vector2(x - width * 0.27f, y + 0.1f), new Vector2(0.33f, 0.27f), Colors.Window, order + 2);
             AddShape($"{label}WindowB", SpriteKind.Square, new Vector2(x + width * 0.27f, y + 0.1f), new Vector2(0.33f, 0.27f), Colors.Window, order + 2);
-            AddLabel($"{label}Label", label, x, y - height * 0.66f, 0.105f, Colors.Ink, order + 5);
+            AddLabel($"{label}Label", ShortBuildingLabel(label), x, y - height * 0.66f, BuildingLabelSize, Colors.Ink, order + 5);
         }
 
         private void AddSmallBuilding(string label, float x, float y, Color body)
@@ -218,7 +218,7 @@ namespace CareerQuest
             AddShape($"{label}SmallShadow", SpriteKind.Square, new Vector2(x + 0.06f, y - 0.06f), new Vector2(1.28f, 0.82f), Colors.Shadow, 2);
             AddShape($"{label}SmallBody", SpriteKind.Square, new Vector2(x, y), new Vector2(1.14f, 0.72f), body, 3);
             AddShape($"{label}SmallRoof", SpriteKind.Square, new Vector2(x, y + 0.42f), new Vector2(1.32f, 0.18f), Colors.BlueRoof, 4);
-            AddLabel($"{label}SmallLabel", label, x, y - 0.58f, 0.085f, Colors.Ink, 8);
+            AddLabel($"{label}SmallLabel", label, x, y - 0.58f, SmallBuildingLabelSize, Colors.Ink, 8);
         }
 
         private void AddSkylineLot(string label, float x, float y, Color body)
@@ -228,7 +228,7 @@ namespace CareerQuest
             AddShape($"{label}Cap", SpriteKind.Square, new Vector2(x, y + 0.62f), new Vector2(0.9f, 0.18f), Colors.BlueRoof, 6);
             AddShape($"{label}LightA", SpriteKind.Square, new Vector2(x - 0.18f, y + 0.14f), new Vector2(0.15f, 0.18f), Colors.Window, 7);
             AddShape($"{label}LightB", SpriteKind.Square, new Vector2(x + 0.18f, y + 0.14f), new Vector2(0.15f, 0.18f), Colors.Window, 7);
-            AddLabel($"{label}LotLabel", label, x, y - 0.86f, 0.075f, Colors.Ink, 8);
+            AddLabel($"{label}LotLabel", label, x, y - 0.86f, ItemLabelSize, Colors.Ink, 8);
         }
 
         private void AddNetworkProof(float x, float y, string label, Color color)
@@ -261,7 +261,7 @@ namespace CareerQuest
             AddShape($"{label}Pack", SpriteKind.Square, new Vector2(0.31f, 0.02f), new Vector2(0.16f, 0.38f), Colors.CoralRoof, 8, 0f, group.transform);
             AddShape($"{label}Head", SpriteKind.Circle, new Vector2(0f, 0.48f), new Vector2(0.43f, 0.43f), Colors.Skin, 10, 0f, group.transform);
             AddShape($"{label}Hair", SpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), Colors.Hair, 11, 0f, group.transform);
-            AddLabel($"{label}Label", label, 0f, -0.83f, 0.075f, Colors.Ink, 12, group.transform);
+            AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, Colors.Ink, 12, group.transform);
 
             if (animated)
             {
@@ -288,14 +288,24 @@ namespace CareerQuest
         private void AddEvidence(string label, float x, float y, Color color)
         {
             AddShape($"{label}Evidence", SpriteKind.Square, new Vector2(x, y), new Vector2(0.68f, 0.52f), color, 5);
-            AddLabel($"{label}EvidenceLabel", label, x, y, 0.075f, Colors.Ink, 6);
+            AddLabel($"{label}EvidenceLabel", label, x, y, ItemLabelSize, Colors.Ink, 6);
         }
 
         private void AddBadge(string label, float x, float y, Color color)
         {
             AddShape($"{label}Badge", SpriteKind.Circle, new Vector2(x, y), new Vector2(0.72f, 0.72f), color, 4);
             AddShape($"{label}BadgeCenter", SpriteKind.Circle, new Vector2(x, y), new Vector2(0.48f, 0.48f), Colors.Plaza, 5);
-            AddLabel($"{label}BadgeLabel", label, x, y, 0.07f, Colors.Ink, 6);
+            AddLabel($"{label}BadgeLabel", label, x, y, ItemLabelSize, Colors.Ink, 6);
+        }
+
+        private static string ShortBuildingLabel(string label)
+        {
+            return label switch
+            {
+                "Design Build Studio" => "Design Build",
+                "Health Hero Clinic" => "Health Hero",
+                _ => label
+            };
         }
 
         private GameObject AddShape(string name, SpriteKind kind, Vector2 position, Vector2 size, Color color, int order, float rotation = 0f, Transform parent = null)
@@ -324,7 +334,7 @@ namespace CareerQuest
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
             label.characterSize = characterSize;
-            label.fontSize = 64;
+            label.fontSize = WorldLabelFontSize;
             label.color = color;
 
             var renderer = labelObject.GetComponent<MeshRenderer>();
