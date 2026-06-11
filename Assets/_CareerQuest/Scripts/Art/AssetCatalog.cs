@@ -11,9 +11,13 @@ namespace CareerQuest
         private static readonly AssetDefinition[] _definitions =
         {
             Avatar("avatar.sky_builder", "Sky Builder", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
+            Avatar("avatar.sky_builder.walk", "Sky Builder Walk", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
             Avatar("avatar.care_captain", "Care Captain", new Color(0.05f, 0.55f, 0.5f), new Color(0.36f, 0.78f, 0.6f)),
+            Avatar("avatar.care_captain.walk", "Care Captain Walk", new Color(0.05f, 0.55f, 0.5f), new Color(0.36f, 0.78f, 0.6f)),
             Avatar("avatar.logic_spark", "Logic Spark", new Color(0.93f, 0.55f, 0.12f), new Color(0.96f, 0.86f, 0.35f)),
+            Avatar("avatar.logic_spark.walk", "Logic Spark Walk", new Color(0.93f, 0.55f, 0.12f), new Color(0.96f, 0.86f, 0.35f)),
             Avatar("avatar.art_inventor", "Art Inventor", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
+            Avatar("avatar.art_inventor.walk", "Art Inventor Walk", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
 
             Npc("npc.campus_guide", "Campus Guide", new Color(0.05f, 0.55f, 0.5f), new Color(1f, 0.92f, 0.64f)),
             Npc("npc.builder_partner", "Builder Partner", new Color(0.12f, 0.43f, 0.86f), new Color(0.93f, 0.55f, 0.12f)),
@@ -82,6 +86,17 @@ namespace CareerQuest
         public static Sprite SpriteFor(string id)
         {
             return ResolveSprite(id).Sprite;
+        }
+
+        public static string SpriteIdForLocomotion(string baseSpriteAssetId, bool isMoving)
+        {
+            if (!isMoving || string.IsNullOrWhiteSpace(baseSpriteAssetId))
+            {
+                return baseSpriteAssetId;
+            }
+
+            var walkId = baseSpriteAssetId.EndsWith(".walk") ? baseSpriteAssetId : $"{baseSpriteAssetId}.walk";
+            return TryGetDefinition(walkId, out _) ? walkId : baseSpriteAssetId;
         }
 
         public static SpriteResolution ResolveSprite(string id)

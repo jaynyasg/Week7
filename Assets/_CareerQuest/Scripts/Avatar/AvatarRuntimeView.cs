@@ -9,6 +9,10 @@ namespace CareerQuest
         [SerializeField] private int sortingOrder = 10;
 
         private SpriteRenderer _spriteRenderer;
+        private string _spriteAssetId;
+        private bool _isMoving;
+        private float _facingX = 1f;
+        private Vector3 _baseScale = new(0.75f, 0.75f, 1f);
 
         public string AvatarId => avatarId;
         public AvatarDefinition Definition => AvatarConfig.GetAvatar(avatarId);
@@ -34,14 +38,34 @@ namespace CareerQuest
             }
 
             avatarId = avatar.Id;
-            _spriteRenderer.sprite = AssetCatalog.SpriteFor(avatar.SpriteAssetId);
+            _spriteAssetId = avatar.SpriteAssetId;
+            _isMoving = false;
+            _facingX = 1f;
+            RefreshSprite();
+        }
+
+        public void SetLocomotion(bool isMoving, float facingX)
+        {
+            _isMoving = isMoving;
+            if (Mathf.Abs(facingX) > 0.01f)
+            {
+                _facingX = Mathf.Sign(facingX);
+            }
+
+            RefreshSprite();
+        }
+
+        private void RefreshSprite()
+        {
+            EnsureRenderer();
+            var spriteId = AssetCatalog.SpriteIdForLocomotion(_spriteAssetId, _isMoving);
+            _spriteRenderer.sprite = AssetCatalog.SpriteFor(spriteId);
             _spriteRenderer.color = Color.white;
             _spriteRenderer.sortingOrder = sortingOrder;
 
-            if (transform.localScale == Vector3.one)
-            {
-                transform.localScale = new Vector3(0.75f, 0.75f, 1f);
-            }
+            var scale = _baseScale;
+            scale.x = Mathf.Abs(scale.x) * _facingX;
+            transform.localScale = scale;
         }
 
         private void EnsureRenderer()

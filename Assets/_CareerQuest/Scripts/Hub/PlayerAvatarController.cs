@@ -16,9 +16,14 @@ namespace CareerQuest
         private Action<ActivityRoute> _onDestination;
         private AvatarRuntimeView _avatarView;
 
-        public void Configure(GameSession session, IReadOnlyList<BuildingEntrance> entrances, Action<ActivityRoute> onDestination)
+        private void Awake()
         {
             _avatarView = GetComponent<AvatarRuntimeView>();
+        }
+
+        public void Configure(GameSession session, IReadOnlyList<BuildingEntrance> entrances, Action<ActivityRoute> onDestination)
+        {
+            _avatarView ??= GetComponent<AvatarRuntimeView>();
             _avatarView.ApplyAvatar(session?.SelectedAvatar ?? AvatarConfig.DefaultAvatar);
             _entrances = entrances ?? Array.Empty<BuildingEntrance>();
             _onDestination = onDestination;
@@ -30,6 +35,11 @@ namespace CareerQuest
             if (move.sqrMagnitude > 0f)
             {
                 Move(move * moveSpeed * Time.deltaTime);
+                _avatarView.SetLocomotion(true, move.x);
+            }
+            else
+            {
+                _avatarView.SetLocomotion(false, transform.localScale.x);
             }
 
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.E))
