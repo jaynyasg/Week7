@@ -14,10 +14,7 @@ namespace CareerQuest.Tests
             var gameObject = new GameObject("hub-flow-test");
             var app = gameObject.AddComponent<CareerQuestApp>();
             yield return null;
-
-            app.BeginPlay();
-            app.ShowCampus();
-            yield return null;
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
 
             var hub = Object.FindAnyObjectByType<PlayableHubController>();
             Assert.That(hub, Is.Not.Null);

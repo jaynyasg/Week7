@@ -16,9 +16,7 @@ namespace CareerQuest.Tests
             var app = appObject.AddComponent<CareerQuestApp>();
             yield return null;
 
-            app.BeginPlay();
-            app.ShowCampus();
-            yield return null;
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
 
             Assert.That(GameObject.Find("CampusActionBar"), Is.Null);
             var label = FindInstructionLabel();
@@ -35,9 +33,7 @@ namespace CareerQuest.Tests
             var app = appObject.AddComponent<CareerQuestApp>();
             yield return null;
 
-            app.BeginPlay();
-            app.ShowCampus();
-            yield return null;
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
 
             var hub = Object.FindAnyObjectByType<PlayableHubController>();
             Assert.That(hub, Is.Not.Null);
@@ -80,9 +76,8 @@ namespace CareerQuest.Tests
             var app = appObject.AddComponent<CareerQuestApp>();
             yield return null;
 
-            app.BeginPlay();
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
             app.ShowDesignBuild(false);
-            yield return null;
 
             Assert.That(FindInstructionLabel(), Is.Not.Null, "Play mode should show instructions before ceremony.");
 

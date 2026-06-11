@@ -60,8 +60,7 @@ namespace CareerQuest.Tests
             var app = gameObject.AddComponent<CareerQuestApp>();
 
             yield return null;
-            app.BeginPlay();
-            yield return null;
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
 
             var hub = Object.FindAnyObjectByType<PlayableHubController>();
             Assert.That(hub, Is.Not.Null);
