@@ -40,3 +40,6 @@ sysinfo.txt
 
 # AgentOps session artifacts
 /.agents/
+
+# Unity test/build logs
+/Logs/
