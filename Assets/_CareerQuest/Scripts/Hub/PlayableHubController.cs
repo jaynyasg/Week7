@@ -54,7 +54,7 @@ namespace CareerQuest
             guideObject.GetComponent<CampusGuideController>().Configure("Move to a door, then press E.");
 
             _cameraRig = gameObject.GetComponent<HubCameraRig>() ?? gameObject.AddComponent<HubCameraRig>();
-            _cameraRig.Configure(Camera.main, playerObject.transform);
+            _cameraRig.Configure(CameraDirector.Ensure(), playerObject.transform);
         }
 
         public void Hide()

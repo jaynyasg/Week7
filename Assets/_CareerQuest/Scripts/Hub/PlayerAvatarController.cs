@@ -49,7 +49,7 @@ namespace CareerQuest
 
             if (Input.GetMouseButtonDown(0))
             {
-                var camera = Camera.main;
+                var camera = CameraDirector.Ensure().Camera;
                 if (camera != null)
                 {
                     var world = camera.ScreenToWorldPoint(Input.mousePosition);

@@ -5,7 +5,7 @@ namespace CareerQuest
     public class CampusWorldController : MonoBehaviour
     {
         private Transform _root;
-        private Camera _camera;
+        private CameraDirector _cameraDirector;
         private CampusWorldBuilder _builder;
         private HubBootController _hubBoot;
         private RoomVeilController _roomVeil;
@@ -13,6 +13,15 @@ namespace CareerQuest
         public bool IsHubBootComplete => _hubBoot != null && _hubBoot.IsBootComplete;
         public bool IsHubDecorLoaded => _hubBoot != null && _hubBoot.IsDecorLoaded;
         public bool IsRoomVeilActive => _roomVeil != null && _roomVeil.IsVeilActive;
+
+        public CameraDirector CameraDirector
+        {
+            get
+            {
+                EnsureSetup();
+                return _cameraDirector;
+            }
+        }
 
         public static CampusWorldController Ensure()
         {
@@ -50,7 +59,9 @@ namespace CareerQuest
 
         public void ShowProof(GameSession session)
         {
+            EnsureSetup();
             CancelBoot();
+            _cameraDirector.SetRouteShot(CameraShot.Default);
             _builder.ClearWorld();
             _builder.AddSky();
             _builder.AddGround();
@@ -96,17 +107,20 @@ namespace CareerQuest
         {
             CancelBoot();
             _builder?.ClearWorld();
+            _cameraDirector?.ResetToRouteShot();
         }
 
         private void BeginHub(string name)
         {
             EnsureSetup();
+            _cameraDirector.SetRouteShot(CameraShot.Default);
             _hubBoot.BuildCampus(name);
         }
 
         private void BeginRoom(System.Action buildRoom)
         {
             EnsureSetup();
+            _cameraDirector.SetRouteShot(CameraShot.Default);
             _roomVeil.ShowRoom(buildRoom);
         }
 
@@ -124,19 +138,9 @@ namespace CareerQuest
                 _root.SetParent(transform, false);
             }
 
-            if (_camera == null)
+            if (_cameraDirector == null)
             {
-                _camera = Camera.main;
-                if (_camera == null)
-                {
-                    var cameraObject = new GameObject("CampusWorldCamera", typeof(Camera));
-                    _camera = cameraObject.GetComponent<Camera>();
-                    _camera.orthographic = true;
-                    _camera.orthographicSize = 4.5f;
-                    _camera.backgroundColor = CampusWorldPalette.Sky;
-                    _camera.clearFlags = CameraClearFlags.SolidColor;
-                    _camera.transform.position = new Vector3(0f, 0f, -10f);
-                }
+                _cameraDirector = CameraDirector.Ensure();
             }
 
             if (_builder == null)
