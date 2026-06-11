@@ -254,6 +254,7 @@ Use motion for comprehension first, delight second.
 | 2026-06-10 | Use world-first UI rules | The game currently feels menu-led; the new direction makes the campus, rooms, avatar, tools, and badges carry the experience. |
 | 2026-06-10 | Make multiplayer secondary to normal play | Connection options are important for QA but confuse first-time players when presented before the game starts. |
 | 2026-06-10 | Use the owned generated sprite kit before importing packages | This is the best free path for immediate character and environment polish because it creates commit-friendly sprites in the repo with no paid asset or redistribution risk. |
+| 2026-06-11 | **Reversal: imported-assets-first.** Kenney CC0 packs are the primary player-facing art source; the generated sprite kit is demoted to QA fallback only. | Three passes proved the generator can only emit programmer art; the Wow Quality Pass commits to a reference bar (`docs/references/`) that requires curated art. Locked sources: Kenney Toon Characters, Background Elements, New Platformer Pack, UI Pack, Game Icons, Emotes, Cursor Pack + 5 Kenney audio packs (all CC0); Fredoka + Lexend (SIL OFL 1.1, licenses shipped in `Assets/Fonts/`). Campus buildings are the one exception: upgraded owned art styled to the Kenney palette (Kenney has no 2D cartoon town buildings) — direction sample at `docs/references/building-direction-sample.png`, owner-affirmed before world assembly. |
 
 ## Design References
 

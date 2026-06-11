@@ -71,6 +71,30 @@ The first repeatable sprite kit is generated in-project by `Assets/_CareerQuest/
 - Characters include head, hair, face, torso, arms, legs, outfit/accent details, and transparent backgrounds.
 - This pass is acceptable as a first generated game-art baseline, but it is not a final illustrator polish pass. Future art can replace the PNGs without changing gameplay code as long as IDs stay stable.
 
+## Imported-Assets-First Pass - 2026-06-11
+
+The Wow Quality Pass reverses the generator-first pipeline. Decision log: see
+DESIGN.md 2026-06-11 entry.
+
+- **Primary art source:** Kenney CC0 packs, curated under
+  `Assets/_CareerQuest/Art/Kenney/<Pack>/` (review/curation location). Only
+  curated, catalog-ID-named copies move to `Assets/Resources/CareerQuest/`
+  as later units land — the `AssetCatalog` stable-ID pipeline is unchanged.
+- **Fonts:** Fredoka (display) + Lexend (body) static TTFs under
+  `Assets/Fonts/` with their OFL.txt licenses; baked into TMP SDF assets in
+  the typography unit.
+- **Buildings:** upgraded owned art styled to the Kenney palette (Kenney has
+  no 2D cartoon town buildings). Direction sample:
+  `docs/references/building-direction-sample.png`.
+- **Import settings:** `CareerQuestTexturePostprocessor` enforces
+  Sprite/Single, 100 PPU, bilinear, no mipmaps, uncompressed for everything
+  under the CareerQuest art paths — no manual inspector edits.
+- **Generator status:** `CareerQuestSpriteKitGenerator` and
+  `SpriteFallbackFactory` remain as the QA fallback layer only. Fallback art
+  visible in player-facing screenshots still fails a milestone.
+- **Quality bar:** `docs/references/` is the standing side-by-side review
+  anchor (Toca Boca World, Khan Academy Kids, Skillsville, Kenney previews).
+
 ## Visual Rules
 
 - Keep the campus colorful, but avoid one-color themes. Use green ground, warm paths, blue science spaces, coral creative spaces, gold logic/court spaces, and teal health/helping spaces.
