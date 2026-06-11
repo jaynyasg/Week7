@@ -36,9 +36,18 @@ namespace CareerQuest
         private PlayableHubController _hub;
         private SceneFlowRouter _router;
         private Text _connectionStatusText;
+        private bool _ceremonyActive;
+        private CeremonyController _ceremonyController;
+        private Coroutine _ceremonyCoroutine;
+        private GameObject _ceremonyOverlay;
+        private Text _ceremonyTitleText;
+        private Text _ceremonyMessageText;
+        private Text _ceremonyBadgeText;
+        private Button _ceremonySkipButton;
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
+        public bool IsCeremonyActive => _ceremonyActive;
 
         private void Awake()
         {
@@ -366,6 +375,11 @@ namespace CareerQuest
 
         private void HandleClientConnectionLost()
         {
+            if (_ceremonyActive)
+            {
+                CancelCeremony();
+            }
+
             UnbindCampusSessionState();
             if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
             {
@@ -377,6 +391,11 @@ namespace CareerQuest
 
         public void ShowCampus()
         {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
             _router.ShowCampus(_session);
             _world.ShowCampus(_session);
             _hub.Show(_session, this);
@@ -439,6 +458,11 @@ namespace CareerQuest
 
         public void ShowDesignBuild(bool showcaseAutoComplete)
         {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
             _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.DesignBuild);
             _world.ShowDesignBuild(_session);
@@ -461,6 +485,11 @@ namespace CareerQuest
 
         public void ShowHealthHero()
         {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
             _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.HealthHero);
             _world.ShowClinic(_session);
@@ -472,6 +501,11 @@ namespace CareerQuest
 
         public void ShowLogicCourt()
         {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
             _hub.Hide();
             _router.ShowActivity(_session, ActivityRoute.LogicCourt);
             _world.ShowCourt(_session);
@@ -483,16 +517,21 @@ namespace CareerQuest
 
         public void ShowGallery()
         {
-            _hub.Hide();
-            _router.ShowGallery(_session);
-            _world.ShowGallery(_session);
-            ResetRoot();
-            _gallery.Render(_root, _session, this);
-            AttachDebug();
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
+            ShowGalleryInternal();
         }
 
         public void ShowReveal()
         {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
             _hub.Hide();
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
@@ -697,6 +736,142 @@ namespace CareerQuest
                     result.Accuracy,
                     result.Summary));
             }
+        }
+
+        public void CompleteActivity(MiniGameResult result)
+        {
+            if (result == null || _ceremonyActive)
+            {
+                return;
+            }
+
+            var lifecycle = new ActivityLifecycle(result.ActivityId);
+            lifecycle.MarkComplete();
+
+            var emitter = new ActivityResultEmitter();
+            if (!emitter.TryRecord(_session, lifecycle.State, result) && _session.GetBestResult(result.ActivityId) == null)
+            {
+                return;
+            }
+
+            lifecycle.BeginCeremony();
+            _router.BeginCeremony(_session);
+            _ceremonyCoroutine = StartCoroutine(RunCeremony(result));
+        }
+
+        private void ShowGalleryInternal()
+        {
+            _hub.Hide();
+            _router.ShowGallery(_session);
+            _world.ShowGallery(_session);
+            ResetRoot();
+            _gallery.Render(_root, _session, this);
+            AttachDebug();
+        }
+
+        private IEnumerator RunCeremony(MiniGameResult result)
+        {
+            _ceremonyActive = true;
+            var presentation = FeedbackController.ForResult(result);
+            _ceremonyController = new CeremonyController(result);
+            BuildCeremonyOverlay(presentation);
+
+            var audio = GetComponent<AudioSource>();
+            if (audio == null)
+            {
+                audio = gameObject.AddComponent<AudioSource>();
+            }
+
+            AudioCueCatalog.TryPlay(audio, presentation.CueId);
+
+            while (!_ceremonyController.IsComplete)
+            {
+                _ceremonyController.Tick(Time.unscaledDeltaTime);
+                UpdateCeremonyOverlay(presentation);
+                if (_ceremonySkipButton != null)
+                {
+                    _ceremonySkipButton.interactable = _ceremonyController.CanSkip;
+                }
+
+                yield return null;
+            }
+
+            TearDownCeremonyOverlay();
+            _ceremonyActive = false;
+            _ceremonyController = null;
+            _ceremonyCoroutine = null;
+            ShowGalleryInternal();
+        }
+
+        private void BuildCeremonyOverlay(CeremonyPresentation presentation)
+        {
+            var overlayRect = UiBuilder.FullPanel(_root, "CeremonyOverlay", presentation.AccentColor);
+            _ceremonyOverlay = overlayRect.gameObject;
+
+            var card = UiBuilder.Panel(overlayRect, "CeremonyCard", new Color(0.98f, 0.99f, 1f, 0.98f));
+            UiBuilder.Place(card, 0f, 20f, 780f, 420f);
+
+            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 36, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f));
+            UiBuilder.Place(_ceremonyTitleText.rectTransform, 0f, 140f, 700f, 50f);
+
+            _ceremonyBadgeText = UiBuilder.Text(card, "CeremonyBadge", presentation.BadgeLabel, 22, TextAnchor.MiddleCenter, presentation.AccentColor);
+            UiBuilder.Place(_ceremonyBadgeText.rectTransform, 0f, 80f, 700f, 36f);
+
+            _ceremonyMessageText = UiBuilder.Text(card, "CeremonyMessage", presentation.Message, 20, TextAnchor.MiddleCenter, new Color(0.15f, 0.2f, 0.28f));
+            UiBuilder.Place(_ceremonyMessageText.rectTransform, 0f, 10f, 680f, 80f);
+
+            _ceremonySkipButton = UiBuilder.Button(card, "CeremonySkipButton", "Skip", () =>
+            {
+                if (_ceremonyController != null && _ceremonyController.CanSkip)
+                {
+                    _ceremonyController.Skip();
+                }
+            });
+            UiBuilder.Place(_ceremonySkipButton.GetComponent<RectTransform>(), 0f, -150f, 200f, 48f);
+            _ceremonySkipButton.interactable = false;
+        }
+
+        private void UpdateCeremonyOverlay(CeremonyPresentation presentation)
+        {
+            if (_ceremonyController == null || _ceremonyMessageText == null)
+            {
+                return;
+            }
+
+            _ceremonyMessageText.text = _ceremonyController.CurrentSubPhase switch
+            {
+                CeremonySubPhase.Celebration => presentation.Message,
+                CeremonySubPhase.Feedback => "Great work! Your badge is on the way to the gallery.",
+                CeremonySubPhase.Transition => "Opening your achievement gallery...",
+                _ => presentation.Message
+            };
+        }
+
+        private void TearDownCeremonyOverlay()
+        {
+            if (_ceremonyOverlay != null)
+            {
+                Destroy(_ceremonyOverlay);
+                _ceremonyOverlay = null;
+            }
+
+            _ceremonyTitleText = null;
+            _ceremonyMessageText = null;
+            _ceremonyBadgeText = null;
+            _ceremonySkipButton = null;
+        }
+
+        private void CancelCeremony()
+        {
+            if (_ceremonyCoroutine != null)
+            {
+                StopCoroutine(_ceremonyCoroutine);
+                _ceremonyCoroutine = null;
+            }
+
+            TearDownCeremonyOverlay();
+            _ceremonyActive = false;
+            _ceremonyController = null;
         }
     }
 }

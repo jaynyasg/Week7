@@ -79,6 +79,12 @@ namespace CareerQuest
             return SetRoute(session, route);
         }
 
+        public ActivityRoute BeginCeremony(GameSession session)
+        {
+            session.SetSessionPhase(SessionPhase.Ceremony);
+            return CurrentRoute;
+        }
+
         public ActivityRoute ShowGallery(GameSession session)
         {
             return SetRoute(session, ActivityRoute.Gallery);

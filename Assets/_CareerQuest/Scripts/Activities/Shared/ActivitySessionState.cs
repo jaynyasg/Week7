@@ -7,6 +7,7 @@ namespace CareerQuest
         Interact,
         Review,
         Complete,
+        Ceremony,
         ResultRecorded,
         Exit
     }

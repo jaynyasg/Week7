@@ -62,9 +62,10 @@ namespace CareerQuest
             }
 
             CurrentRoute = route;
-            if (CurrentPhase != SessionPhase.Ceremony)
+            var routedPhase = PhaseFromRoute(route);
+            if (CurrentPhase != SessionPhase.Ceremony || routedPhase == SessionPhase.Gallery)
             {
-                CurrentPhase = PhaseFromRoute(route);
+                CurrentPhase = routedPhase;
             }
 
             NotifyChanged();

@@ -163,9 +163,8 @@ namespace CareerQuest
                 }
 
                 var result = CreateResult(source);
-                session.RecordResult(result);
                 Completed?.Invoke(result);
-                app.ShowGallery();
+                app.CompleteActivity(result);
             });
             UiBuilder.Place(complete.GetComponent<RectTransform>(), 438f, -322f, 136f, 34f);
             StyleButton(complete, ButtonReady, 14);

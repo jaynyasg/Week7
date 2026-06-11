@@ -33,6 +33,11 @@ namespace CareerQuest
             MoveTo(ActivityPhase.Complete);
         }
 
+        public void BeginCeremony()
+        {
+            MoveTo(ActivityPhase.Ceremony);
+        }
+
         public void Exit()
         {
             MoveTo(ActivityPhase.Exit);

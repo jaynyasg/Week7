@@ -145,8 +145,7 @@ namespace CareerQuest
                     return;
                 }
 
-                session.RecordResult(CreateResult(mistakes <= 1, source));
-                app.ShowGallery();
+                app.CompleteActivity(CreateResult(mistakes <= 1, source));
             });
             UiBuilder.Place(closing.GetComponent<RectTransform>(), 430f, -320f, 156f, 38f);
             StyleButton(closing, ButtonReady, 14);
