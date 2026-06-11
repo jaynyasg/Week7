@@ -17,6 +17,8 @@ namespace CareerQuest.Editor
         private const uint PlayerAvatarHash = 0xC0171001;
         private const uint DesignBuildStateHash = 0xC0171002;
         private const uint CampusSessionStateHash = 0xC0171003;
+        private const uint HealthHeroStateHash = 0xC0171004;
+        private const uint LogicCourtStateHash = 0xC0171005;
 
         [MenuItem("Career Quest/Bootstrap Project")]
         public static void BootstrapProject()
@@ -102,6 +104,8 @@ namespace CareerQuest.Editor
 
             var designBuildState = new GameObject("DesignBuildNetworkState", typeof(NetworkObject), typeof(DesignBuildNetworkState));
             var campusSessionState = new GameObject("CampusSessionState", typeof(NetworkObject), typeof(CampusSessionState));
+            var healthHeroState = new GameObject("HealthHeroNetworkState", typeof(NetworkObject), typeof(HealthHeroNetworkState));
+            var logicCourtState = new GameObject("LogicCourtNetworkState", typeof(NetworkObject), typeof(LogicCourtNetworkState));
 
             var appObject = new GameObject("CareerQuestApp", typeof(CareerQuestApp));
             appObject.GetComponent<NetworkBootstrap>().Bind(manager, transport);
@@ -109,8 +113,12 @@ namespace CareerQuest.Editor
             EditorSceneManager.SaveScene(scene, ScenePath);
             RefreshNetworkObjectHash(designBuildState.GetComponent<NetworkObject>(), DesignBuildStateHash);
             RefreshNetworkObjectHash(campusSessionState.GetComponent<NetworkObject>(), CampusSessionStateHash);
+            RefreshNetworkObjectHash(healthHeroState.GetComponent<NetworkObject>(), HealthHeroStateHash);
+            RefreshNetworkObjectHash(logicCourtState.GetComponent<NetworkObject>(), LogicCourtStateHash);
             EditorUtility.SetDirty(designBuildState);
             EditorUtility.SetDirty(campusSessionState);
+            EditorUtility.SetDirty(healthHeroState);
+            EditorUtility.SetDirty(logicCourtState);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
 

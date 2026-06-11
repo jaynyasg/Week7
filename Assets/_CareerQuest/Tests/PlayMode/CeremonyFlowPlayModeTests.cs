@@ -32,6 +32,50 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
+        public IEnumerator HealthHeroCompletionShowsCeremonyBeforeGallery()
+        {
+            var appObject = new GameObject("ceremony-health-hero-test");
+            var app = appObject.AddComponent<CareerQuestApp>();
+
+            yield return null;
+            app.ShowHealthHero();
+            yield return null;
+
+            CompleteHealthHeroRoom();
+
+            var overlay = GameObject.Find("CeremonyOverlay");
+            Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after Health Hero completion.");
+            Assert.That(overlay.activeSelf, Is.True);
+
+            var gallery = GameObject.Find("AchievementGalleryPanel");
+            Assert.That(gallery, Is.Null, "Gallery should stay hidden until ceremony finishes.");
+
+            Object.DestroyImmediate(appObject);
+        }
+
+        [UnityTest]
+        public IEnumerator LogicCourtCompletionShowsCeremonyBeforeGallery()
+        {
+            var appObject = new GameObject("ceremony-logic-court-test");
+            var app = appObject.AddComponent<CareerQuestApp>();
+
+            yield return null;
+            app.ShowLogicCourt();
+            yield return null;
+
+            CompleteLogicCourtRoom();
+
+            var overlay = GameObject.Find("CeremonyOverlay");
+            Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after Logic Court completion.");
+            Assert.That(overlay.activeSelf, Is.True);
+
+            var gallery = GameObject.Find("AchievementGalleryPanel");
+            Assert.That(gallery, Is.Null, "Gallery should stay hidden until ceremony finishes.");
+
+            Object.DestroyImmediate(appObject);
+        }
+
+        [UnityTest]
         public IEnumerator CeremonySkipOpensGalleryAfterDelay()
         {
             var appObject = new GameObject("ceremony-skip-test");
@@ -77,6 +121,23 @@ namespace CareerQuest.Tests
             }
 
             FindButton("DesignBuildCompleteButton").onClick.Invoke();
+        }
+
+        private static void CompleteHealthHeroRoom()
+        {
+            FindButton("HealthHeroCheckButton").onClick.Invoke();
+            FindButton("HealthHeroToolButton").onClick.Invoke();
+            FindButton("HealthHeroCareButton").onClick.Invoke();
+            FindButton("HealthHeroCompleteButton").onClick.Invoke();
+        }
+
+        private static void CompleteLogicCourtRoom()
+        {
+            FindButton("LogicCourtReviewButton").onClick.Invoke();
+            FindButton("LogicCourtTestButton").onClick.Invoke();
+            FindButton("LogicCourtPaintButton").onClick.Invoke();
+            FindButton("LogicCourtBlueprintButton").onClick.Invoke();
+            FindButton("LogicCourtClosingButton").onClick.Invoke();
         }
 
         private static Button FindButton(string name)

@@ -4,13 +4,8 @@ using UnityEngine.UI;
 
 namespace CareerQuest
 {
-    public class DesignBuildController : MonoBehaviour
+    public class DesignBuildController : ActivityRoomController
     {
-        private static readonly Color Ink = new(0.08f, 0.18f, 0.25f);
-        private static readonly Color Paper = new(0.95f, 0.99f, 1f, 0.72f);
-        private static readonly Color ButtonPrimary = new(0.08f, 0.34f, 0.42f);
-        private static readonly Color ButtonReady = new(0.05f, 0.48f, 0.4f);
-
         private FutureCityBlueprint _blueprint;
         private int _acceptedPlacements;
         private string _feedback = "Place city pieces into the future skyline.";
@@ -67,16 +62,17 @@ namespace CareerQuest
 
         public void Render(Transform parent, GameSession session, CareerQuestApp app, ResultSource source)
         {
+            BeginRoom(CareerConfig.DesignBuildId);
             ResetActivity();
             var panel = UiBuilder.FullPanel(parent, "DesignBuildPanel", new Color(0.88f, 0.95f, 1f, 0.04f));
             var blueprintReviewed = false;
             var helperUsed = false;
             RectTransform tray = null;
 
-            var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", Paper);
+            var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", ActivityRoomChrome.DesignPaper);
             UiBuilder.Place(briefing, -300f, 282f, 620f, 94f);
 
-            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, Ink);
+            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, ActivityRoomChrome.DesignInk);
             UiBuilder.Place(title.rectTransform, -132f, 26f, 340f, 24f);
 
             var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 13, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));
@@ -93,7 +89,7 @@ namespace CareerQuest
                 progress.text = "Step 2: ask the helper.";
             });
             UiBuilder.Place(review.GetComponent<RectTransform>(), 242f, 18f, 96f, 30f);
-            StyleButton(review, ButtonPrimary, 15);
+            ActivityRoomChrome.StyleButton(review, ActivityRoomChrome.ButtonPrimary, 15);
 
             var helper = UiBuilder.Button(briefing, "PatternHelperButton", "Helper", () =>
             {
@@ -111,13 +107,13 @@ namespace CareerQuest
                 tray.gameObject.SetActive(true);
             });
             UiBuilder.Place(helper.GetComponent<RectTransform>(), 242f, -22f, 96f, 30f);
-            StyleButton(helper, ButtonPrimary, 15);
+            ActivityRoomChrome.StyleButton(helper, ActivityRoomChrome.ButtonPrimary, 15);
 
             tray = UiBuilder.Panel(panel, "DesignBuildToolTray", new Color(0.95f, 0.99f, 1f, 0.74f));
             UiBuilder.Place(tray, -280f, -322f, 610f, 46f);
             tray.gameObject.SetActive(false);
 
-            var trayLabel = UiBuilder.Text(tray, "DesignBuildTrayLabel", "Place", 12, TextAnchor.MiddleCenter, Ink);
+            var trayLabel = UiBuilder.Text(tray, "DesignBuildTrayLabel", "Place", 12, TextAnchor.MiddleCenter, ActivityRoomChrome.DesignInk);
             UiBuilder.Place(trayLabel.rectTransform, -282f, 0f, 48f, 22f);
 
             var index = 0;
@@ -149,7 +145,7 @@ namespace CareerQuest
                 });
 
                 UiBuilder.Place(pieceButton.GetComponent<RectTransform>(), -224f + index * 106f, 0f, 94f, 28f);
-                StyleButton(pieceButton, ButtonPrimary, 12);
+                ActivityRoomChrome.StyleButton(pieceButton, ActivityRoomChrome.ButtonPrimary, 12);
                 index++;
             }
 
@@ -162,31 +158,24 @@ namespace CareerQuest
                     return;
                 }
 
+                var networkState = FindAnyObjectByType<DesignBuildNetworkState>();
+                if (source == ResultSource.Multiplayer && networkState != null && networkState.IsSpawned && !networkState.Complete)
+                {
+                    _feedback = "Wait for both players to place all city pieces.";
+                    feedback.text = _feedback;
+                    return;
+                }
+
                 var result = CreateResult(source);
                 Completed?.Invoke(result);
-                app.CompleteActivity(result);
+                TryCompleteRoom(session, app, result);
             });
             UiBuilder.Place(complete.GetComponent<RectTransform>(), 438f, -322f, 136f, 34f);
-            StyleButton(complete, ButtonReady, 14);
+            ActivityRoomChrome.StyleButton(complete, ActivityRoomChrome.ButtonReady, 14);
 
-            var campus = UiBuilder.Button(panel, "DesignBuildCampusButton", "Campus", app.ShowCampus);
+            var campus = UiBuilder.Button(panel, "DesignBuildCampusButton", "Campus", () => ExitToCampus(app));
             UiBuilder.Place(campus.GetComponent<RectTransform>(), 568f, -322f, 106f, 34f);
-            StyleButton(campus, ButtonPrimary, 14);
-        }
-
-        private static void StyleButton(Button button, Color color, int fontSize)
-        {
-            button.GetComponent<Image>().color = color;
-            var label = button.GetComponentInChildren<Text>();
-            if (label == null)
-            {
-                return;
-            }
-
-            label.fontSize = fontSize;
-            label.resizeTextForBestFit = true;
-            label.resizeTextMinSize = 10;
-            label.resizeTextMaxSize = fontSize;
+            ActivityRoomChrome.StyleButton(campus, ActivityRoomChrome.ButtonPrimary, 14);
         }
     }
 }
