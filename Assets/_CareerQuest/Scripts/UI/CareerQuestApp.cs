@@ -44,6 +44,8 @@ namespace CareerQuest
         private Text _ceremonyMessageText;
         private Text _ceremonyBadgeText;
         private Button _ceremonySkipButton;
+        private Text _instructionStripText;
+        private bool _sessionChangedSubscribed;
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
@@ -80,6 +82,7 @@ namespace CareerQuest
             _networkBootstrap.Bind(networkManager, unityTransport);
             _debugOverlay.Bind(_session, _networkBootstrap);
             _showcasePresenter.Bind(this, _session);
+            EnsureSessionChangedSubscription();
         }
 
         private void OnEnable()
@@ -98,6 +101,7 @@ namespace CareerQuest
             }
 
             UnbindCampusSessionState();
+            UnsubscribeSessionChanged();
         }
 
         private void Start()
@@ -371,6 +375,12 @@ namespace CareerQuest
         private void HandleCampusSessionChanged()
         {
             CampusSessionState.Instance?.ApplyToGameSession(_session);
+            RefreshInstructionStrip();
+        }
+
+        private void HandleSessionChanged()
+        {
+            RefreshInstructionStrip();
         }
 
         private void HandleClientConnectionLost()
@@ -415,19 +425,26 @@ namespace CareerQuest
             var labels = UiBuilder.Text(hud, "FutureLabels", "Future: " + string.Join(" / ", CareerConfig.FutureBuildingLabels), 15, TextAnchor.MiddleCenter, new Color(0.15f, 0.25f, 0.18f));
             UiBuilder.Place(labels.rectTransform, 110f, -18f, 590f, 26f);
 
-            var actionBar = UiBuilder.Panel(_root, "CampusActionBar", new Color(0.93f, 0.98f, 0.95f, 0.72f));
-            UiBuilder.Place(actionBar, 0f, -305f, 1120f, 68f);
+            if (UsesPlayInstructionStrip)
+            {
+                MountInstructionStrip();
+            }
+            else
+            {
+                var actionBar = UiBuilder.Panel(_root, "CampusActionBar", new Color(0.93f, 0.98f, 0.95f, 0.72f));
+                UiBuilder.Place(actionBar, 0f, -305f, 1120f, 68f);
 
-            AddCampusButton(actionBar, "Design Build", -420f, 0f, () => ShowDesignBuild(false));
-            AddCampusButton(actionBar, "Health Hero", -140f, 0f, () => ShowHealthHero());
-            AddCampusButton(actionBar, "Logic Court", 140f, 0f, () => ShowLogicCourt());
+                AddCampusButton(actionBar, "Design Build", -420f, 0f, () => ShowDesignBuild(false));
+                AddCampusButton(actionBar, "Health Hero", -140f, 0f, () => ShowHealthHero());
+                AddCampusButton(actionBar, "Logic Court", 140f, 0f, () => ShowLogicCourt());
 
-            var gallery = UiBuilder.Button(actionBar, "CampusGalleryButton", "Gallery", ShowGallery);
-            UiBuilder.Place(gallery.GetComponent<RectTransform>(), 360f, 0f, 160f, 46f);
+                var gallery = UiBuilder.Button(actionBar, "CampusGalleryButton", "Gallery", ShowGallery);
+                UiBuilder.Place(gallery.GetComponent<RectTransform>(), 360f, 0f, 160f, 46f);
 
-            var revealLabel = _session.RevealReady ? "Reveal" : $"Reveal {_session.UniqueCompletedGames}/3";
-            var reveal = UiBuilder.Button(actionBar, "CampusRevealButton", revealLabel, ShowReveal);
-            UiBuilder.Place(reveal.GetComponent<RectTransform>(), 520f, 0f, 140f, 46f);
+                var revealLabel = _session.RevealReady ? "Reveal" : $"Reveal {_session.UniqueCompletedGames}/3";
+                var reveal = UiBuilder.Button(actionBar, "CampusRevealButton", revealLabel, ShowReveal);
+                UiBuilder.Place(reveal.GetComponent<RectTransform>(), 520f, 0f, 140f, 46f);
+            }
 
             AttachDebug();
         }
@@ -480,6 +497,7 @@ namespace CareerQuest
                 _session.RecordResult(controller.CreateResult(ResultSource.ShowcaseSeed));
             }
 
+            MountInstructionStrip();
             AttachDebug();
         }
 
@@ -496,6 +514,7 @@ namespace CareerQuest
             ResetRoot();
             var controller = gameObject.GetComponent<HealthHeroController>() ?? gameObject.AddComponent<HealthHeroController>();
             controller.Render(_root, _session, this, CurrentResultSource());
+            MountInstructionStrip();
             AttachDebug();
         }
 
@@ -512,6 +531,7 @@ namespace CareerQuest
             ResetRoot();
             var controller = gameObject.GetComponent<LogicCourtController>() ?? gameObject.AddComponent<LogicCourtController>();
             controller.Render(_root, _session, this, CurrentResultSource());
+            MountInstructionStrip();
             AttachDebug();
         }
 
@@ -591,6 +611,72 @@ namespace CareerQuest
         private void ResetRoot()
         {
             UiBuilder.Clear(_root);
+            _instructionStripText = null;
+        }
+
+        private bool UsesPlayInstructionStrip => InstructionStrip.ShouldShowForMode(_session.Mode);
+
+        private void EnsureSessionChangedSubscription()
+        {
+            if (_session == null || _sessionChangedSubscribed)
+            {
+                return;
+            }
+
+            _session.Changed += HandleSessionChanged;
+            _sessionChangedSubscribed = true;
+        }
+
+        private void UnsubscribeSessionChanged()
+        {
+            if (_session == null || !_sessionChangedSubscribed)
+            {
+                return;
+            }
+
+            _session.Changed -= HandleSessionChanged;
+            _sessionChangedSubscribed = false;
+        }
+
+        private void MountInstructionStrip()
+        {
+            if (!UsesPlayInstructionStrip || _ceremonyActive || _root == null)
+            {
+                return;
+            }
+
+            _instructionStripText = InstructionStrip.Build(_root, _session);
+        }
+
+        private void RefreshInstructionStrip()
+        {
+            if (_instructionStripText == null)
+            {
+                return;
+            }
+
+            InstructionStrip.Refresh(_instructionStripText, _session);
+        }
+
+        private void HideInstructionStrip()
+        {
+            if (_instructionStripText != null)
+            {
+                var panel = _instructionStripText.transform.parent;
+                if (panel != null)
+                {
+                    Destroy(panel.gameObject);
+                }
+
+                _instructionStripText = null;
+                return;
+            }
+
+            var existing = _root != null ? _root.Find(InstructionStrip.PanelName) : null;
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+            }
         }
 
         private void ShowAvatarSelection(AppMode target)
@@ -772,6 +858,7 @@ namespace CareerQuest
         private IEnumerator RunCeremony(MiniGameResult result)
         {
             _ceremonyActive = true;
+            HideInstructionStrip();
             var presentation = FeedbackController.ForResult(result);
             _ceremonyController = new CeremonyController(result);
             BuildCeremonyOverlay(presentation);

@@ -74,6 +74,14 @@ namespace CareerQuest
             return panel.GetComponent<RectTransform>();
         }
 
+        public static RectTransform InstructionStripPanel(Transform parent, string name, Color fill, Color accent)
+        {
+            var panel = Panel(parent, name, fill);
+            var band = Shape(panel, $"{name}Accent", accent, 0f, 30f, 1120f, 4f);
+            band.GetComponent<Image>().raycastTarget = false;
+            return panel;
+        }
+
         public static RectTransform Shape(Transform parent, string name, Color color, float x, float y, float width, float height)
         {
             var shape = Panel(parent, name, color);
