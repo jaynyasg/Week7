@@ -181,6 +181,28 @@ namespace CareerQuest
             _registeredManager = manager;
         }
 
+        public bool TryGetJoinRejectionReason(out string reason)
+        {
+            var manager = Manager;
+            var connectedCount = manager != null && manager.IsListening ? manager.ConnectedClientsIds.Count : 0;
+            var hostPhase = CampusSessionState.Instance != null
+                ? CampusSessionState.Instance.CurrentPhase
+                : SessionPhase.Hub;
+            return TryGetJoinRejectionForPhase(hostPhase, connectedCount, out reason);
+        }
+
+        public static bool TryGetJoinRejectionForPhase(SessionPhase hostPhase, int connectedClientCount, out string reason)
+        {
+            if (CampusJoinPolicy.CanJoin(hostPhase, connectedClientCount))
+            {
+                reason = string.Empty;
+                return false;
+            }
+
+            reason = CampusJoinPolicy.GetRejectionMessage(hostPhase, connectedClientCount);
+            return true;
+        }
+
         private void ApprovalCheck(
             NetworkManager.ConnectionApprovalRequest request,
             NetworkManager.ConnectionApprovalResponse response)
@@ -191,10 +213,10 @@ namespace CareerQuest
                 ? CampusSessionState.Instance.CurrentPhase
                 : SessionPhase.Hub;
 
-            if (!CampusJoinPolicy.CanJoin(hostPhase, connectedCount))
+            if (TryGetJoinRejectionForPhase(hostPhase, connectedCount, out var rejectionReason))
             {
                 response.Approved = false;
-                response.Reason = CampusJoinPolicy.GetRejectionMessage(hostPhase, connectedCount);
+                response.Reason = rejectionReason;
                 response.CreatePlayerObject = false;
                 response.Pending = false;
                 return;

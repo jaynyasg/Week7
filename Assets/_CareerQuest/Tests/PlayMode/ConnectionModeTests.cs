@@ -30,5 +30,29 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(bootstrapObject);
             Object.DestroyImmediate(networkObject);
         }
+
+        [Test]
+        public void JoinRejectionMatchesCampusJoinPolicyForHubAndInRoom()
+        {
+            Assert.That(
+                NetworkBootstrap.TryGetJoinRejectionForPhase(SessionPhase.Hub, 1, out var reason),
+                Is.False);
+            Assert.That(reason, Is.Empty);
+
+            Assert.That(
+                NetworkBootstrap.TryGetJoinRejectionForPhase(SessionPhase.InRoom, 1, out reason),
+                Is.True);
+            Assert.That(reason, Does.Contain("activity room"));
+
+            Assert.That(
+                NetworkBootstrap.TryGetJoinRejectionForPhase(SessionPhase.Ceremony, 1, out reason),
+                Is.True);
+            Assert.That(reason, Does.Contain("finishing an activity"));
+
+            Assert.That(
+                NetworkBootstrap.TryGetJoinRejectionForPhase(SessionPhase.Hub, 2, out reason),
+                Is.True);
+            Assert.That(reason, Does.Contain("two players"));
+        }
     }
 }
