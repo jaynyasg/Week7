@@ -50,6 +50,7 @@ namespace CareerQuest
             debugText.text =
                 $"Mode: {_session.Mode}\n" +
                 $"Connection: {_session.ConnectionMode}\n" +
+                $"Phase: {_session.CurrentPhase}\n" +
                 $"Network: {(_networkBootstrap != null ? _networkBootstrap.Status : "n/a")}\n" +
                 $"Players: {_session.PlayerCount}\n" +
                 $"Showcase: {_session.CurrentShowcaseStep}\n" +

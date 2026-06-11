@@ -16,6 +16,7 @@ namespace CareerQuest.Editor
         private const string NetworkPrefabsPath = "Assets/DefaultNetworkPrefabs.asset";
         private const uint PlayerAvatarHash = 0xC0171001;
         private const uint DesignBuildStateHash = 0xC0171002;
+        private const uint CampusSessionStateHash = 0xC0171003;
 
         [MenuItem("Career Quest/Bootstrap Project")]
         public static void BootstrapProject()
@@ -97,15 +98,19 @@ namespace CareerQuest.Editor
             var transport = networkObject.GetComponent<UnityTransport>();
             manager.NetworkConfig.NetworkTransport = transport;
             manager.NetworkConfig.PlayerPrefab = playerPrefab;
+            manager.NetworkConfig.ConnectionApproval = true;
 
             var designBuildState = new GameObject("DesignBuildNetworkState", typeof(NetworkObject), typeof(DesignBuildNetworkState));
+            var campusSessionState = new GameObject("CampusSessionState", typeof(NetworkObject), typeof(CampusSessionState));
 
             var appObject = new GameObject("CareerQuestApp", typeof(CareerQuestApp));
             appObject.GetComponent<NetworkBootstrap>().Bind(manager, transport);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             RefreshNetworkObjectHash(designBuildState.GetComponent<NetworkObject>(), DesignBuildStateHash);
+            RefreshNetworkObjectHash(campusSessionState.GetComponent<NetworkObject>(), CampusSessionStateHash);
             EditorUtility.SetDirty(designBuildState);
+            EditorUtility.SetDirty(campusSessionState);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
 

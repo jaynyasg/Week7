@@ -16,15 +16,19 @@ namespace CareerQuest
         public int PlayerCount { get; set; }
         public AvatarDefinition SelectedAvatar { get; private set; } = AvatarConfig.DefaultAvatar;
         public ActivityRoute CurrentRoute { get; private set; } = ActivityRoute.Entry;
+        public SessionPhase CurrentPhase { get; private set; } = SessionPhase.Hub;
 
         public IReadOnlyCollection<MiniGameResult> BestResults => _bestResults.Values;
         public bool HasSeededResults => _bestResults.Values.Any(result => result.IsSeeded || result.Source == ResultSource.ShowcaseSeed);
-        public int UniqueCompletedGames => _bestResults.Count;
+        public int UniqueCompletedGames => _networkReadModel ? _networkUniqueCompletedGames : _bestResults.Count;
         public int GamesNeededForReveal => Math.Max(0, 3 - UniqueCompletedGames);
         public bool RevealReady => UniqueCompletedGames >= 3;
         public string LastResultId { get; private set; } = "None";
 
         public event Action Changed;
+
+        private bool _networkReadModel;
+        private int _networkUniqueCompletedGames;
 
         public void StartMode(AppMode mode)
         {
@@ -58,11 +62,63 @@ namespace CareerQuest
             }
 
             CurrentRoute = route;
+            if (CurrentPhase != SessionPhase.Ceremony)
+            {
+                CurrentPhase = PhaseFromRoute(route);
+            }
+
             NotifyChanged();
+        }
+
+        public void SetSessionPhase(SessionPhase phase)
+        {
+            if (CurrentPhase == phase)
+            {
+                return;
+            }
+
+            CurrentPhase = phase;
+            NotifyChanged();
+        }
+
+        public static SessionPhase PhaseFromRoute(ActivityRoute route)
+        {
+            switch (route)
+            {
+                case ActivityRoute.Gallery:
+                    return SessionPhase.Gallery;
+                case ActivityRoute.DesignBuild:
+                case ActivityRoute.HealthHero:
+                case ActivityRoute.LogicCourt:
+                    return SessionPhase.InRoom;
+                default:
+                    return SessionPhase.Hub;
+            }
+        }
+
+        public void ApplyNetworkSnapshot(SessionPhase phase, ActivityRoute route, int playerCount, int uniqueCompletedGames)
+        {
+            _networkReadModel = true;
+            _networkUniqueCompletedGames = uniqueCompletedGames;
+            CurrentPhase = phase;
+            CurrentRoute = route;
+            PlayerCount = playerCount;
+            NotifyChanged();
+        }
+
+        public void ClearNetworkReadModel()
+        {
+            _networkReadModel = false;
+            _networkUniqueCompletedGames = 0;
         }
 
         public bool RecordResult(MiniGameResult result)
         {
+            if (_networkReadModel)
+            {
+                return false;
+            }
+
             if (result == null || string.IsNullOrWhiteSpace(result.ActivityId))
             {
                 return false;

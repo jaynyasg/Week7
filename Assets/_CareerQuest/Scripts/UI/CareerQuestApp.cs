@@ -35,6 +35,7 @@ namespace CareerQuest
         private CampusWorldController _world;
         private PlayableHubController _hub;
         private SceneFlowRouter _router;
+        private Text _connectionStatusText;
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
@@ -70,6 +71,24 @@ namespace CareerQuest
             _networkBootstrap.Bind(networkManager, unityTransport);
             _debugOverlay.Bind(_session, _networkBootstrap);
             _showcasePresenter.Bind(this, _session);
+        }
+
+        private void OnEnable()
+        {
+            if (_networkBootstrap != null)
+            {
+                _networkBootstrap.ClientConnectionLost += HandleClientConnectionLost;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_networkBootstrap != null)
+            {
+                _networkBootstrap.ClientConnectionLost -= HandleClientConnectionLost;
+            }
+
+            UnbindCampusSessionState();
         }
 
         private void Start()
@@ -205,6 +224,10 @@ namespace CareerQuest
             var subtitle = UiBuilder.Text(panel, "ConnectionSubtitle", "Play solo now, or use local multiplayer when testing two players.", 18, TextAnchor.MiddleCenter, new Color(0.88f, 0.97f, 1f));
             UiBuilder.Place(subtitle.rectTransform, 0f, 206f, 820f, 32f);
 
+            _connectionStatusText = UiBuilder.Text(panel, "ConnectionStatusText", string.Empty, 17, TextAnchor.MiddleCenter, new Color(0.55f, 0.12f, 0.12f));
+            UiBuilder.Place(_connectionStatusText.rectTransform, 0f, 168f, 820f, 36f);
+            _connectionStatusText.gameObject.SetActive(false);
+
             var solo = UiBuilder.Button(panel, "PlaySoloButton", "Play Solo", () =>
             {
                 _networkBootstrap.StartSoloFallback();
@@ -217,24 +240,14 @@ namespace CareerQuest
             var soloHint = UiBuilder.Text(panel, "PlaySoloHint", "Recommended", 16, TextAnchor.MiddleCenter, new Color(0.06f, 0.22f, 0.2f));
             UiBuilder.Place(soloHint.rectTransform, -282f, 50f, 244f, 30f);
 
-            var host = UiBuilder.Button(panel, "HostLocalGameButton", "Host Game", () =>
-            {
-                _networkBootstrap.StartHostP1();
-                _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
-                ShowCampus();
-            });
+            var host = UiBuilder.Button(panel, "HostLocalGameButton", "Host Game", () => StartCoroutine(ConnectAsHost()));
             UiBuilder.Place(host.GetComponent<RectTransform>(), 0f, 104f, 244f, 68f);
             StyleConnectionButton(host, new Color(0.09f, 0.31f, 0.42f), 24);
 
             var hostHint = UiBuilder.Text(panel, "HostLocalHint", "Start a local session", 15, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
             UiBuilder.Place(hostHint.rectTransform, 0f, 50f, 244f, 30f);
 
-            var joinLocal = UiBuilder.Button(panel, "JoinThisComputerButton", "Join This PC", () =>
-            {
-                _networkBootstrap.JoinLocalhostP2();
-                _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
-                ShowCampus();
-            });
+            var joinLocal = UiBuilder.Button(panel, "JoinThisComputerButton", "Join This PC", () => StartCoroutine(ConnectAsLocalClient()));
             UiBuilder.Place(joinLocal.GetComponent<RectTransform>(), 282f, 104f, 244f, 68f);
             StyleConnectionButton(joinLocal, new Color(0.09f, 0.31f, 0.42f), 24);
 
@@ -249,12 +262,7 @@ namespace CareerQuest
             var input = UiBuilder.Input(panel, "LanAddressInput", "127.0.0.1");
             UiBuilder.Place(input.GetComponent<RectTransform>(), -94f, -100f, 330f, 48f);
 
-            var joinLan = UiBuilder.Button(panel, "JoinIpButton", "Join IP", () =>
-            {
-                _networkBootstrap.JoinLanByIp(input.text);
-                _router.UseConnectionMode(_session, ConnectionMode.JoinLanByIp, 2);
-                ShowCampus();
-            });
+            var joinLan = UiBuilder.Button(panel, "JoinIpButton", "Join IP", () => StartCoroutine(ConnectAsLanClient(input.text)));
             UiBuilder.Place(joinLan.GetComponent<RectTransform>(), 220f, -100f, 176f, 48f);
             StyleConnectionButton(joinLan, new Color(0.09f, 0.31f, 0.42f), 20);
 
@@ -265,6 +273,106 @@ namespace CareerQuest
             UiBuilder.Place(controls.rectTransform, 0f, -212f, 760f, 36f);
 
             AttachDebug();
+        }
+
+        public void ShowConnectionError(string message)
+        {
+            ShowConnection();
+            if (_connectionStatusText == null)
+            {
+                return;
+            }
+
+            _connectionStatusText.text = message;
+            _connectionStatusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(message));
+        }
+
+        private IEnumerator ConnectAsHost()
+        {
+            yield return ConnectAndShowCampus(ConnectionMode.HostP1, 1, () => _networkBootstrap.StartHostP1());
+        }
+
+        private IEnumerator ConnectAsLocalClient()
+        {
+            yield return ConnectAndShowCampus(ConnectionMode.JoinLocalhostP2, 2, () => _networkBootstrap.JoinLocalhostP2());
+        }
+
+        private IEnumerator ConnectAsLanClient(string address)
+        {
+            yield return ConnectAndShowCampus(ConnectionMode.JoinLanByIp, 2, () => _networkBootstrap.JoinLanByIp(address));
+        }
+
+        private IEnumerator ConnectAndShowCampus(ConnectionMode mode, int playerSlot, Func<bool> startNetwork)
+        {
+            if (!startNetwork())
+            {
+                ShowConnectionError("Could not start network. Try again or use Play Solo.");
+                yield break;
+            }
+
+            _router.UseConnectionMode(_session, mode, playerSlot);
+            yield return _networkBootstrap.WaitForConnection(12f);
+
+            if (!_networkBootstrap.LastConnectionSucceeded)
+            {
+                var message = string.IsNullOrWhiteSpace(_networkBootstrap.LastConnectionError)
+                    ? "Could not connect. Check the host is running, then try again."
+                    : _networkBootstrap.LastConnectionError;
+                ShowConnectionError(message);
+                yield break;
+            }
+
+            BindCampusSessionState();
+            ShowCampus();
+        }
+
+        private void BindCampusSessionState()
+        {
+            var state = CampusSessionState.Instance;
+            if (state == null)
+            {
+                return;
+            }
+
+            if (networkManager != null && networkManager.IsServer)
+            {
+                state.BindHostSession(_session);
+                state.ServerSyncPlayerCount(networkManager.ConnectedClientsIds.Count);
+            }
+            else if (networkManager != null && networkManager.IsConnectedClient)
+            {
+                state.Changed -= HandleCampusSessionChanged;
+                state.Changed += HandleCampusSessionChanged;
+                state.ApplyToGameSession(_session);
+            }
+        }
+
+        private void UnbindCampusSessionState()
+        {
+            var state = CampusSessionState.Instance;
+            if (state != null)
+            {
+                state.UnbindHostSession();
+                state.Changed -= HandleCampusSessionChanged;
+            }
+
+            _session.ClearNetworkReadModel();
+        }
+
+        private void HandleCampusSessionChanged()
+        {
+            CampusSessionState.Instance?.ApplyToGameSession(_session);
+        }
+
+        private void HandleClientConnectionLost()
+        {
+            UnbindCampusSessionState();
+            if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
+            {
+                networkManager.Shutdown();
+            }
+
+            ShowConnectionError("The host disconnected. Start a new game or join again.");
         }
 
         public void ShowCampus()
@@ -513,16 +621,24 @@ namespace CareerQuest
             switch (mode.ToLowerInvariant())
             {
                 case "host":
-                    _networkBootstrap.StartHostP1();
-                    _router.UseConnectionMode(_session, ConnectionMode.HostP1, 1);
-                    ShowCampus();
+                    yield return ConnectAndShowCampus(ConnectionMode.HostP1, 1, () => _networkBootstrap.StartHostP1());
+                    if (!_networkBootstrap.LastConnectionSucceeded)
+                    {
+                        Application.Quit(2);
+                        yield break;
+                    }
+
                     yield return new WaitForSeconds(6f);
                     break;
                 case "client":
                     yield return new WaitForSeconds(1f);
-                    _networkBootstrap.JoinLocalhostP2();
-                    _router.UseConnectionMode(_session, ConnectionMode.JoinLocalhostP2, 2);
-                    ShowCampus();
+                    yield return ConnectAndShowCampus(ConnectionMode.JoinLocalhostP2, 2, () => _networkBootstrap.JoinLocalhostP2());
+                    if (!_networkBootstrap.LastConnectionSucceeded)
+                    {
+                        Application.Quit(2);
+                        yield break;
+                    }
+
                     yield return new WaitForSeconds(2f);
                     LogSmoke("CQ_SMOKE_CONNECTED", mode);
                     yield return new WaitForSeconds(6f);
