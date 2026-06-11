@@ -59,6 +59,21 @@ Always read `DESIGN.md` before making visual or UI decisions for Career Quest Ca
 
 All color, typography, spacing, layout, motion, HUD, world, and activity-room choices should follow `DESIGN.md`. Do not introduce a conflicting visual direction without explicit user approval.
 
+## Git remotes and push policy
+
+This repo has two remotes:
+
+- `origin` — Gauntlet Labs (`https://labs.gauntletai.com/jaygodfrey/week7`)
+- `github` — GitHub mirror (`https://github.com/jaynyasg/Week7`)
+
+`origin` is configured with **dual push URLs** (Gauntlet + GitHub). After commits, push with:
+
+```bash
+git push origin main
+```
+
+That updates both remotes. `main` tracks `origin/main`. Use `git push github main` only if you need to push the mirror alone.
+
 ## Workflow Preferences
 
 When running `ce-work` for this project, use subagents for implementation work every time a callable subagent mechanism is available. Search for the relevant subagent/spawn-agent tool at the start of the `ce-work` run, then choose serial or parallel subagents using the skill's safety rules. If no subagent tool is available in the current harness, say that explicitly before continuing in the main thread.
