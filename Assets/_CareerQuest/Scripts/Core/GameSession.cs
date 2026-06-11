@@ -91,6 +91,10 @@ namespace CareerQuest
                 case ActivityRoute.DesignBuild:
                 case ActivityRoute.HealthHero:
                 case ActivityRoute.LogicCourt:
+                case ActivityRoute.AiLab:
+                case ActivityRoute.MusicStudio:
+                case ActivityRoute.RoboticsGarage:
+                case ActivityRoute.CommunityKitchen:
                     return SessionPhase.InRoom;
                 default:
                     return SessionPhase.Hub;

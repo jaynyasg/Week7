@@ -102,9 +102,7 @@ namespace CareerQuest
 
         public static bool IsMiniGameRoute(ActivityRoute route)
         {
-            return route == ActivityRoute.DesignBuild ||
-                   route == ActivityRoute.HealthHero ||
-                   route == ActivityRoute.LogicCourt;
+            return CareerQuestCatalog.IsPlayableRoute(route);
         }
 
         private ActivityRoute SetRoute(GameSession session, ActivityRoute route)

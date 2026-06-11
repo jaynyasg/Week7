@@ -82,6 +82,11 @@ namespace CareerQuest
             BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session));
         }
 
+        public void ShowOptionalRoom(GameSession session, CatalogEntry entry)
+        {
+            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry));
+        }
+
         public void ShowReveal(GameSession session)
         {
             BeginRoom(() => CampusRoomScenes.ShowReveal(_builder, session));

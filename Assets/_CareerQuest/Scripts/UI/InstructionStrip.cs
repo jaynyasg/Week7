@@ -37,6 +37,14 @@ namespace CareerQuest
                     return "Read the symptom, choose the right tool, then pick the care plan.";
                 case ActivityRoute.LogicCourt:
                     return "Match each clue to the fair rule, then decide the case.";
+                case ActivityRoute.AiLab:
+                    return "Train the model, then launch the probe to finish the lab quest.";
+                case ActivityRoute.MusicStudio:
+                    return "Record a beat, then mix your chorus to finish the studio quest.";
+                case ActivityRoute.RoboticsGarage:
+                    return "Build the robot, then power it on to finish the garage quest.";
+                case ActivityRoute.CommunityKitchen:
+                    return "Prep the ingredients, then serve the meal to finish the kitchen quest.";
                 case ActivityRoute.Gallery:
                     return "Look at your badges. Tap a room when you are ready for another quest.";
                 case ActivityRoute.Campus:

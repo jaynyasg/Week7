@@ -23,10 +23,16 @@ namespace CareerQuest.Tests
             Assert.That(hub, Is.Not.Null);
             Assert.That(hub.IsVisible, Is.True);
             Assert.That(hub.Player, Is.Not.Null);
-            Assert.That(hub.Entrances.Count, Is.EqualTo(3));
+            Assert.That(hub.Entrances.Count, Is.EqualTo(7));
 
             Assert.That(hub.TryEnter(ActivityRoute.HealthHero), Is.True);
             Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.HealthHero));
+
+            app.ShowCampus();
+            yield return null;
+
+            Assert.That(hub.TryEnter(ActivityRoute.MusicStudio), Is.True);
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.MusicStudio));
 
             Object.Destroy(gameObject);
             Object.Destroy(hub.gameObject);

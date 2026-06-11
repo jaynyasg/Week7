@@ -29,7 +29,7 @@ namespace CareerQuest
 
         public static CeremonyPresentation ForResult(MiniGameResult result)
         {
-            var activity = CareerConfig.GetActivity(result.ActivityId);
+            var activity = CareerQuestCatalog.GetActivity(result.ActivityId);
             var accent = AccentForActivity(result.ActivityId);
             var earnedDegree = result.Tier == CompletionTier.Degree;
             var tierLabel = earnedDegree ? "Degree" : "Practice";

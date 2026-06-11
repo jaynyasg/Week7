@@ -86,5 +86,17 @@ namespace CareerQuest.Tests
 
             Assert.Throws<ArgumentException>(() => router.ShowActivity(session, ActivityRoute.Gallery));
         }
+
+        [Test]
+        public void OptionalActivityRoutesCanBeShownAsActivity()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+
+            var route = router.ShowActivity(session, ActivityRoute.MusicStudio);
+
+            Assert.That(route, Is.EqualTo(ActivityRoute.MusicStudio));
+            Assert.That(session.CurrentPhase, Is.EqualTo(SessionPhase.InRoom));
+        }
     }
 }

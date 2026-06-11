@@ -12,8 +12,9 @@ namespace CareerQuest
             UiBuilder.Place(title.rectTransform, 0f, 250f, 900f, 60f);
 
             var y = 160f;
-            foreach (var activity in CareerConfig.Activities)
+            foreach (var entry in CareerQuestCatalog.All)
             {
+                var activity = entry.ToActivityDefinition();
                 var result = session.GetBestResult(activity.Id);
                 var label = result == null
                     ? $"{activity.BadgeName}: planned"

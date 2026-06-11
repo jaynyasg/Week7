@@ -11,6 +11,10 @@ namespace CareerQuest
         DesignBuild,
         HealthHero,
         LogicCourt,
+        AiLab,
+        MusicStudio,
+        RoboticsGarage,
+        CommunityKitchen,
         Gallery,
         Reveal,
         Quit

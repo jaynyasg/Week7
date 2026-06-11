@@ -37,6 +37,10 @@ namespace CareerQuest
             AddEntrance("DesignBuildEntrance", "Design Build", ActivityRoute.DesignBuild, new Vector2(-3f, -0.26f), new Color(0.94f, 0.34f, 0.28f));
             AddEntrance("HealthHeroEntrance", "Health Hero", ActivityRoute.HealthHero, new Vector2(0f, -0.18f), new Color(0.36f, 0.78f, 0.6f));
             AddEntrance("LogicCourtEntrance", "Logic Court", ActivityRoute.LogicCourt, new Vector2(3f, -0.26f), new Color(0.96f, 0.62f, 0.18f));
+            AddEntrance("AiLabEntrance", "AI Lab", ActivityRoute.AiLab, new Vector2(-4.45f, -1.75f), new Color(0.28f, 0.66f, 0.94f));
+            AddEntrance("MusicStudioEntrance", "Music Studio", ActivityRoute.MusicStudio, new Vector2(-2.05f, -2f), new Color(0.62f, 0.52f, 0.86f));
+            AddEntrance("RoboticsEntrance", "Robotics", ActivityRoute.RoboticsGarage, new Vector2(2.05f, -2f), new Color(0.13f, 0.55f, 0.58f));
+            AddEntrance("KitchenEntrance", "Kitchen", ActivityRoute.CommunityKitchen, new Vector2(4.45f, -1.75f), new Color(0.55f, 0.82f, 0.5f));
 
             var playerObject = new GameObject("HubPlayer", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(PlayerAvatarController));
             playerObject.transform.SetParent(transform, false);
@@ -128,6 +132,18 @@ namespace CareerQuest
                     break;
                 case ActivityRoute.LogicCourt:
                     _app.ShowLogicCourt();
+                    break;
+                case ActivityRoute.AiLab:
+                    _app.ShowAiLab();
+                    break;
+                case ActivityRoute.MusicStudio:
+                    _app.ShowMusicStudio();
+                    break;
+                case ActivityRoute.RoboticsGarage:
+                    _app.ShowRoboticsGarage();
+                    break;
+                case ActivityRoute.CommunityKitchen:
+                    _app.ShowCommunityKitchen();
                     break;
                 default:
                     throw new ArgumentException($"{route} is not a playable campus destination.", nameof(route));

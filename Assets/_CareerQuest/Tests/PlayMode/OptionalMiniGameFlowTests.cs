@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using CareerQuest;
 using NUnit.Framework;
 using UnityEngine;
@@ -28,6 +29,47 @@ namespace CareerQuest.Tests
 
             Object.DestroyImmediate(healthObject);
             Object.DestroyImmediate(courtObject);
+        }
+
+        [UnityTest]
+        public IEnumerator MusicStudioCompletionShowsCeremonyBeforeGallery()
+        {
+            var gameObject = new GameObject("optional-music-studio-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+
+            yield return null;
+            app.ShowMusicStudio();
+            yield return null;
+
+            CompleteOptionalRoom("MusicStudio");
+
+            var overlay = GameObject.Find("CeremonyOverlay");
+            Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after optional room completion.");
+            Assert.That(overlay.activeSelf, Is.True);
+
+            var gallery = GameObject.Find("AchievementGalleryPanel");
+            Assert.That(gallery, Is.Null, "Gallery should stay hidden until ceremony finishes.");
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator OptionalHubRoomsExposePlayableEntrances()
+        {
+            var gameObject = new GameObject("optional-hub-entrances-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+
+            yield return null;
+            app.BeginPlay();
+            yield return null;
+
+            var hub = Object.FindAnyObjectByType<PlayableHubController>();
+            Assert.That(hub, Is.Not.Null);
+            Assert.That(hub.Entrances.Count, Is.EqualTo(7));
+            Assert.That(hub.Entrances.Any(entrance => entrance.Route == ActivityRoute.MusicStudio), Is.True);
+            Assert.That(hub.Entrances.Any(entrance => entrance.Route == ActivityRoute.RoboticsGarage), Is.True);
+
+            Object.Destroy(gameObject);
         }
 
         [UnityTest]
@@ -81,6 +123,12 @@ namespace CareerQuest.Tests
         private static float Top(RectTransform rectTransform)
         {
             return rectTransform.anchoredPosition.y + rectTransform.sizeDelta.y * 0.5f;
+        }
+
+        private static void CompleteOptionalRoom(string panelPrefix)
+        {
+            GameObject.Find($"{panelPrefix}StepButton").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find($"{panelPrefix}CompleteButton").GetComponent<Button>().onClick.Invoke();
         }
     }
 }

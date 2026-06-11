@@ -186,6 +186,26 @@ namespace CareerQuest
                     BeginPlay();
                     ShowLogicCourt();
                     return true;
+                case "music-studio":
+                case "music":
+                    BeginPlay();
+                    ShowMusicStudio();
+                    return true;
+                case "ai-lab":
+                case "space-lab":
+                    BeginPlay();
+                    ShowAiLab();
+                    return true;
+                case "robotics":
+                case "robotics-garage":
+                    BeginPlay();
+                    ShowRoboticsGarage();
+                    return true;
+                case "kitchen":
+                case "community-kitchen":
+                    BeginPlay();
+                    ShowCommunityKitchen();
+                    return true;
                 case "gallery":
                     BeginPlay();
                     ShowGallery();
@@ -535,6 +555,26 @@ namespace CareerQuest
             AttachDebug();
         }
 
+        public void ShowAiLab()
+        {
+            ShowOptionalRoom(ActivityRoute.AiLab);
+        }
+
+        public void ShowMusicStudio()
+        {
+            ShowOptionalRoom(ActivityRoute.MusicStudio);
+        }
+
+        public void ShowRoboticsGarage()
+        {
+            ShowOptionalRoom(ActivityRoute.RoboticsGarage);
+        }
+
+        public void ShowCommunityKitchen()
+        {
+            ShowOptionalRoom(ActivityRoute.CommunityKitchen);
+        }
+
         public void ShowGallery()
         {
             if (_ceremonyActive)
@@ -843,6 +883,24 @@ namespace CareerQuest
             lifecycle.BeginCeremony();
             _router.BeginCeremony(_session);
             _ceremonyCoroutine = StartCoroutine(RunCeremony(result));
+        }
+
+        private void ShowOptionalRoom(ActivityRoute route)
+        {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
+            var entry = CareerQuestCatalog.GetByRoute(route);
+            _hub.Hide();
+            _router.ShowActivity(_session, route);
+            _world.ShowOptionalRoom(_session, entry);
+            ResetRoot();
+            var controller = gameObject.GetComponent<OptionalRoomController>() ?? gameObject.AddComponent<OptionalRoomController>();
+            controller.Render(_root, _session, this, CurrentResultSource(), entry.Id);
+            MountInstructionStrip();
+            AttachDebug();
         }
 
         private void ShowGalleryInternal()

@@ -59,6 +59,33 @@ namespace CareerQuest
             builder.AddCharacter("Guide", 3.25f, -1.45f, CampusWorldPalette.PlayerTeal, 1.2f, true, "npc.campus_guide");
         }
 
+        public static void ShowOptionalRoom(CampusWorldBuilder builder, GameSession session, CatalogEntry entry)
+        {
+            builder.AddCatalogSprite(
+                $"{entry.Id}RoomBackdrop",
+                entry.CampusAssetId,
+                new Vector2(0f, 0.12f),
+                new Vector2(7.4f, 4.16f),
+                0);
+            builder.AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
+            builder.AddCatalogSprite(
+                $"{entry.Id}RoomProp",
+                "prop.evidence_card",
+                new Vector2(0f, -0.35f),
+                new Vector2(0.82f, 0.82f),
+                6);
+            builder.AddCharacter(
+                session?.SelectedAvatar.DisplayName ?? "Explorer",
+                -1.2f,
+                -1.35f,
+                session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerTeal,
+                0.2f,
+                true,
+                session?.SelectedAvatar.SpriteAssetId,
+                false);
+            builder.AddCharacter("Guide", 1.65f, -1.35f, CampusWorldPalette.PlayerBlue, 1.4f, true, "npc.campus_guide", false);
+        }
+
         public static void ShowReveal(CampusWorldBuilder builder, GameSession session)
         {
             builder.AddCatalogSprite("RevealRoomBackdrop", "room.reveal", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
