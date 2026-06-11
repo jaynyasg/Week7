@@ -43,6 +43,7 @@ namespace CareerQuest
         private Text _ceremonyTitleText;
         private Text _ceremonyMessageText;
         private Text _ceremonyBadgeText;
+        private RectTransform _ceremonyBadgeStamp;
         private Button _ceremonySkipButton;
         private Text _instructionStripText;
         private bool _sessionChangedSubscribed;
@@ -764,6 +765,8 @@ namespace CareerQuest
 
             if (shown && !string.IsNullOrWhiteSpace(screenshotPath))
             {
+                var waitSeconds = state.Contains("reveal", System.StringComparison.OrdinalIgnoreCase) ? 3.5f : 2f;
+                yield return new WaitForSeconds(waitSeconds);
                 yield return new WaitForEndOfFrame();
                 var directory = Path.GetDirectoryName(screenshotPath);
                 if (!string.IsNullOrWhiteSpace(directory))
@@ -775,7 +778,7 @@ namespace CareerQuest
                 Debug.Log($"CQ_VISUAL_STATE_SCREENSHOT state={state} path={screenshotPath}");
             }
 
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(shown && !string.IsNullOrWhiteSpace(screenshotPath) ? 0.5f : 2f);
             Application.Quit(shown ? 0 : 2);
         }
 
@@ -950,20 +953,27 @@ namespace CareerQuest
 
         private void BuildCeremonyOverlay(CeremonyPresentation presentation)
         {
-            var overlayRect = UiBuilder.FullPanel(_root, "CeremonyOverlay", presentation.AccentColor);
+            var overlayRect = UiBuilder.FullPanel(_root, "CeremonyOverlay", QuestStageUi.StageNight);
             _ceremonyOverlay = overlayRect.gameObject;
 
-            var card = UiBuilder.Panel(overlayRect, "CeremonyCard", new Color(0.98f, 0.99f, 1f, 0.98f));
-            UiBuilder.Place(card, 0f, 20f, 780f, 420f);
+            QuestStageUi.MountStageBackdrop(overlayRect, unlocked: true);
 
-            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 36, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f));
-            UiBuilder.Place(_ceremonyTitleText.rectTransform, 0f, 140f, 700f, 50f);
+            var card = UiBuilder.Panel(overlayRect, "CeremonyCard", QuestStageUi.Paper);
+            UiBuilder.Place(card, 0f, 20f, 780f, 440f);
 
-            _ceremonyBadgeText = UiBuilder.Text(card, "CeremonyBadge", presentation.BadgeLabel, 22, TextAnchor.MiddleCenter, presentation.AccentColor);
-            UiBuilder.Place(_ceremonyBadgeText.rectTransform, 0f, 80f, 700f, 36f);
+            var stripe = UiBuilder.Panel(card, "CeremonyStripe", presentation.AccentColor);
+            UiBuilder.Place(stripe, 0f, 198f, 780f, 10f);
 
-            _ceremonyMessageText = UiBuilder.Text(card, "CeremonyMessage", presentation.Message, 20, TextAnchor.MiddleCenter, new Color(0.15f, 0.2f, 0.28f));
-            UiBuilder.Place(_ceremonyMessageText.rectTransform, 0f, 10f, 680f, 80f);
+            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 40, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            UiBuilder.Place(_ceremonyTitleText.rectTransform, 0f, 150f, 700f, 52f);
+
+            _ceremonyBadgeStamp = UiBuilder.Circle(card, "CeremonyBadgeStamp", presentation.AccentColor, 0f, 40f, 120f, 120f);
+
+            _ceremonyBadgeText = UiBuilder.Text(card, "CeremonyBadge", presentation.BadgeLabel, 20, TextAnchor.MiddleCenter, Color.white);
+            UiBuilder.Place(_ceremonyBadgeText.rectTransform, 0f, 40f, 110f, 36f);
+
+            _ceremonyMessageText = UiBuilder.Text(card, "CeremonyMessage", presentation.Message, 20, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            UiBuilder.Place(_ceremonyMessageText.rectTransform, 0f, -70f, 680f, 80f);
 
             _ceremonySkipButton = UiBuilder.Button(card, "CeremonySkipButton", "Skip", () =>
             {
@@ -972,7 +982,8 @@ namespace CareerQuest
                     _ceremonyController.Skip();
                 }
             });
-            UiBuilder.Place(_ceremonySkipButton.GetComponent<RectTransform>(), 0f, -150f, 200f, 48f);
+            UiBuilder.Place(_ceremonySkipButton.GetComponent<RectTransform>(), 0f, -165f, 200f, 48f);
+            QuestStageUi.StyleSecondaryButton(_ceremonySkipButton);
             _ceremonySkipButton.interactable = false;
         }
 
@@ -986,10 +997,16 @@ namespace CareerQuest
             _ceremonyMessageText.text = _ceremonyController.CurrentSubPhase switch
             {
                 CeremonySubPhase.Celebration => presentation.Message,
-                CeremonySubPhase.Feedback => "Great work! Your badge is on the way to the gallery.",
+                CeremonySubPhase.Feedback => "Badge stamped! Your quest passport just got a new sticker.",
                 CeremonySubPhase.Transition => "Opening your achievement gallery...",
                 _ => presentation.Message
             };
+
+            if (_ceremonyBadgeStamp != null)
+            {
+                var pulse = 1f + Mathf.Sin(_ceremonyController.ElapsedSeconds * 4f) * 0.06f;
+                _ceremonyBadgeStamp.localScale = new Vector3(pulse, pulse, 1f);
+            }
         }
 
         private void TearDownCeremonyOverlay()
@@ -1003,6 +1020,7 @@ namespace CareerQuest
             _ceremonyTitleText = null;
             _ceremonyMessageText = null;
             _ceremonyBadgeText = null;
+            _ceremonyBadgeStamp = null;
             _ceremonySkipButton = null;
         }
 
