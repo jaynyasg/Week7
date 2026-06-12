@@ -49,6 +49,11 @@ namespace CareerQuest.Tests
             Assert.That(director.Camera.CompareTag("MainCamera"), Is.True);
             Assert.That(Camera.main, Is.Not.Null);
             Assert.That(director.CameraHost, Is.SameAs(director.Camera.gameObject));
+
+            // The director camera is the game's only AudioListener (the world is
+            // code/prefab built) — without it the whole game is silent.
+            Assert.That(director.Camera.GetComponent<AudioListener>(), Is.Not.Null,
+                "The director-owned camera must carry the AudioListener.");
             yield return null;
         }
 

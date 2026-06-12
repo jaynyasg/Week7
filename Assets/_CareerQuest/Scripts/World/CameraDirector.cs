@@ -140,6 +140,14 @@ namespace CareerQuest
                 ApplyShot(_routeShot);
             }
 
+            // The director-owned camera is also the game's ears: nothing else in
+            // the project carries an AudioListener (the world is code/prefab
+            // built), so without this every AudioSource plays into silence.
+            if (_camera.GetComponent<AudioListener>() == null)
+            {
+                _camera.gameObject.AddComponent<AudioListener>();
+            }
+
             return _camera;
         }
 
