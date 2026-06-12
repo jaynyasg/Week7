@@ -259,6 +259,52 @@ namespace CareerQuest
             UnityEngine.Object.Destroy(poofObject, 1.4f);
         }
 
+        /// <summary>
+        /// P1 ceremony confetti: a celebratory two-color ParticleSystem shower
+        /// (upward cone, gravity pull-down). World-space, self-destroying;
+        /// returns the object so the ceremony teardown can drop it early.
+        /// </summary>
+        public static GameObject ConfettiBurst(Vector3 position, Color colorA, Color colorB, int count = 48)
+        {
+            var confettiObject = new GameObject("CeremonyConfetti", typeof(ParticleSystem));
+            confettiObject.transform.position = position;
+
+            var system = confettiObject.GetComponent<ParticleSystem>();
+            var main = system.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.1f, 1.7f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(2.6f, 4.4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.2f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new ParticleSystem.MinMaxGradient(colorA, colorB);
+            main.gravityModifier = 0.65f;
+            main.maxParticles = 96;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            var emission = system.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)count) });
+
+            var shape = system.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 38f;
+            shape.radius = 0.25f;
+            shape.rotation = new Vector3(-90f, 0f, 0f); // cone fires upward
+
+            var renderer = confettiObject.GetComponent<ParticleSystemRenderer>();
+            renderer.material = PoofMaterial();
+            // Above every world band including the scene wipe (600). The ceremony
+            // overlay UI sits above world rendering but its full-screen backdrop is
+            // alpha-clamped translucent (UiBuilder.FullPanel), so the burst reads
+            // through it around the ceremony card.
+            renderer.sortingOrder = 650;
+
+            system.Play();
+            UnityEngine.Object.Destroy(confettiObject, 3f);
+            return confettiObject;
+        }
+
         private static Material _poofMaterial;
 
         private static Material PoofMaterial()

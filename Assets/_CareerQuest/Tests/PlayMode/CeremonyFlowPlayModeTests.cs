@@ -94,10 +94,14 @@ namespace CareerQuest.Tests
             var skip = skipButton.GetComponent<Button>();
             Assert.That(skip.interactable, Is.False, "Skip should stay disabled until the delay elapses.");
 
+            // U7 migration: skip drives the TrySkipCeremony seam (the overlay
+            // button shares the same guarded path), not onClick.Invoke.
+            Assert.That(app.TrySkipCeremony(), Is.False, "Skip seam should refuse before the delay elapses.");
+
             yield return new WaitForSecondsRealtime(CeremonyController.SkipDelaySeconds + 0.25f);
 
             Assert.That(skip.interactable, Is.True, "Skip should become available after the delay.");
-            skip.onClick.Invoke();
+            Assert.That(app.TrySkipCeremony(), Is.True, "Skip seam should fire after the delay.");
 
             yield return null;
 

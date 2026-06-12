@@ -144,12 +144,100 @@ namespace CareerQuest
 
         public static void ShowReveal(CampusWorldBuilder builder, GameSession session)
         {
-            builder.AddCatalogSprite("RevealRoomBackdrop", "room.reveal", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
-            builder.AddShape("RevealStageShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.9f), new Vector2(5.6f, 1.2f), CampusWorldPalette.Shadow, 1);
-            builder.AddShape("RevealStage", CampusSpriteKind.Circle, new Vector2(0f, -0.76f), new Vector2(5.2f, 1f), CampusWorldPalette.Plaza, 2);
-            builder.AddShape("RevealBeamA", CampusSpriteKind.Square, new Vector2(-1.1f, 0.65f), new Vector2(0.5f, 3.7f), CampusWorldPalette.LightBeamGold, 1, -12f);
-            builder.AddShape("RevealBeamB", CampusSpriteKind.Square, new Vector2(1.1f, 0.65f), new Vector2(0.5f, 3.7f), CampusWorldPalette.LightBeamBlue, 1, 12f);
-            builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Future Path", 0f, -1.25f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerGold, 0f, true, session?.SelectedAvatar.SpriteAssetId);
+            // U7: the reveal route mounts the authored RevealStage prefab
+            // (visual-only, no NetworkObject). When the prefab has not been
+            // built yet, a code-built stage with the SAME anchor/glow names
+            // keeps the cinematic playable — RevealCinematicDirector resolves
+            // everything by name with RevealStageLayout fallbacks.
+            if (!TryMountRevealStage(builder))
+            {
+                BuildFallbackRevealStage(builder);
+            }
+
+            AddRevealHeroAvatar(builder, session);
+        }
+
+        private static bool TryMountRevealStage(CampusWorldBuilder builder)
+        {
+            var prefab = Resources.Load<GameObject>(RevealStageLayout.PrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    $"RevealStage prefab missing at Resources/{RevealStageLayout.PrefabResourcePath} — " +
+                    "run 'Career Quest/World/Build Reveal Stage Prefab' " +
+                    "(CareerQuestRoomPrefabBuilder.BuildRevealStage). Falling back to the code-built stage.");
+                return false;
+            }
+
+            var instance = Object.Instantiate(prefab, builder.Root);
+            instance.name = RevealStageLayout.StageRootName;
+            return true;
+        }
+
+        /// <summary>
+        /// Fallback stage mirroring the prefab structure: platform, three token
+        /// slot pedestals + anchors, faked stage lighting (glow sprites — P7,
+        /// no URP). Sorting uses the world band 200-299; light wash sits in the
+        /// 300-399 band so the sweep reads over the stage and characters.
+        /// </summary>
+        private static void BuildFallbackRevealStage(CampusWorldBuilder builder)
+        {
+            builder.AddCatalogSprite("RevealRoomBackdrop", "room.reveal", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 200);
+            builder.AddShape("RevealStageShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.9f), new Vector2(5.6f, 1.2f), CampusWorldPalette.Shadow, 206);
+            builder.AddShape("RevealStagePlatform", CampusSpriteKind.Circle, new Vector2(0f, -0.76f), new Vector2(5.2f, 1f), CampusWorldPalette.Plaza, 208);
+
+            // Faked stage lighting (P7): a warm spot pool plus two angled beams.
+            // Beams start dim and angled wide; the light-sweep beat ramps alpha
+            // and rotates them toward vertical.
+            var spot = builder.AddShape(RevealStageLayout.GlowSpotName, CampusSpriteKind.Circle, new Vector2(RevealStageLayout.StageCenter.x, RevealStageLayout.StageCenter.y - 0.35f), new Vector2(4.2f, 2.1f), CampusWorldPalette.LightBeamGold, 212);
+            SetSpriteAlpha(spot, 0.3f);
+            var beamLeft = builder.AddShape(RevealStageLayout.GlowBeamLeftName, CampusSpriteKind.Square, new Vector2(-1.1f, 0.65f), new Vector2(0.5f, 3.7f), CampusWorldPalette.LightBeamGold, 360, -26f);
+            SetSpriteAlpha(beamLeft, 0.25f);
+            var beamRight = builder.AddShape(RevealStageLayout.GlowBeamRightName, CampusSpriteKind.Square, new Vector2(1.1f, 0.65f), new Vector2(0.5f, 3.7f), CampusWorldPalette.LightBeamBlue, 360, 26f);
+            SetSpriteAlpha(beamRight, 0.25f);
+
+            for (var i = 0; i < RevealStageLayout.SlotCount; i++)
+            {
+                var slot = RevealStageLayout.SlotPosition(i);
+                builder.AddShape($"RevealSlotPedestal{i}", CampusSpriteKind.Square, new Vector2(slot.x, slot.y - 0.52f), new Vector2(0.72f, 0.34f), CampusWorldPalette.Plaza, 214);
+                var ring = builder.AddShape($"RevealSlotRing{i}", CampusSpriteKind.Circle, slot, new Vector2(0.78f, 0.78f), CampusWorldPalette.LightBeamGold, 215);
+                SetSpriteAlpha(ring, 0.35f);
+
+                var anchor = new GameObject(RevealStageLayout.SlotAnchorPrefix + i);
+                anchor.transform.SetParent(builder.Root, false);
+                anchor.transform.localPosition = new Vector3(slot.x, slot.y, 0f);
+            }
+        }
+
+        /// <summary>
+        /// The hero avatar is created in code for both paths (prefab and
+        /// fallback) so the P15 celebrate hook always finds the same
+        /// AvatarRuntimeView + name (mirrors the BuilderNpc convention).
+        /// </summary>
+        private static void AddRevealHeroAvatar(CampusWorldBuilder builder, GameSession session)
+        {
+            var heroObject = new GameObject(RevealStageLayout.HeroAvatarName, typeof(SpriteRenderer), typeof(AvatarRuntimeView));
+            heroObject.transform.SetParent(builder.Root, false);
+            heroObject.transform.localPosition = new Vector3(
+                RevealStageLayout.HeroAvatarPosition.x,
+                RevealStageLayout.HeroAvatarPosition.y,
+                0f);
+            builder.AddShape("RevealHeroShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, heroObject.transform);
+            heroObject.GetComponent<AvatarRuntimeView>().ApplySpriteAsset(
+                session?.SelectedAvatar?.SpriteAssetId ?? AvatarConfig.DefaultAvatar.SpriteAssetId);
+        }
+
+        private static void SetSpriteAlpha(GameObject spriteObject, float alpha)
+        {
+            var renderer = spriteObject.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            var color = renderer.color;
+            color.a = alpha;
+            renderer.color = color;
         }
     }
 }

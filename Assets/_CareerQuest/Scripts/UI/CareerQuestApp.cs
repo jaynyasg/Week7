@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using Unity.Netcode;
@@ -46,6 +47,7 @@ namespace CareerQuest
         private TextMeshProUGUI _ceremonyBadgeText;
         private RectTransform _ceremonyBadgeStamp;
         private Button _ceremonySkipButton;
+        private readonly List<GameObject> _ceremonyConfetti = new();
         private TextMeshProUGUI _instructionStripText;
         private bool _sessionChangedSubscribed;
 
@@ -409,10 +411,10 @@ namespace CareerQuest
 
         private void HandleClientConnectionLost()
         {
-            if (_ceremonyActive)
-            {
-                CancelCeremony();
-            }
+            // U7: CancelCeremony now carries world/camera/drag teardown duties,
+            // so it runs unconditionally (it is a safe no-op when idle) — a
+            // disconnect mid-reveal-cinematic or mid-drag tears down cleanly.
+            CancelCeremony();
 
             // Session-scoped flags reset on disconnect (System-Wide Impact note).
             FirstRunGuideBeat.ResetSessionFlag();
@@ -603,8 +605,28 @@ namespace CareerQuest
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
+            AnnounceRevealStartIfHost();
             _reveal.Render(_root, _session, this);
             AttachDebug();
+        }
+
+        /// <summary>
+        /// U7 sync moment: the host announces the reveal start through
+        /// CampusSessionState. Only clients already on the reveal route consume
+        /// it (as one input of their start latch) — nobody is force-navigated.
+        /// </summary>
+        private void AnnounceRevealStartIfHost()
+        {
+            if (!_session.RevealReady)
+            {
+                return;
+            }
+
+            var state = CampusSessionState.Instance;
+            if (state != null && networkManager != null && networkManager.IsServer)
+            {
+                state.ServerAnnounceRevealStart();
+            }
         }
 
         public void QuitGame()
@@ -657,6 +679,12 @@ namespace CareerQuest
 
         private void ResetRoot()
         {
+            // U7 single-teardown chokepoint: every route change (exit actions,
+            // disconnect → connection screen, re-renders) flows through here,
+            // so a live reveal cinematic always stops, active drags cancel, and
+            // the camera restores before the next screen mounts.
+            _reveal?.CancelCinematic();
+
             UiBuilder.Clear(_root);
             _instructionStripText = null;
         }
@@ -771,7 +799,10 @@ namespace CareerQuest
 
             if (shown && !string.IsNullOrWhiteSpace(screenshotPath))
             {
-                var waitSeconds = state.Contains("reveal", System.StringComparison.OrdinalIgnoreCase) ? 3.5f : 2f;
+                // U7: the reveal is now an in-world cinematic (~5.6s of beats
+                // after the stage mounts) — wait past resolve so the screenshot
+                // captures the result copy over the lit stage, not mid-beat.
+                var waitSeconds = state.Contains("reveal", System.StringComparison.OrdinalIgnoreCase) ? 7.5f : 2f;
                 yield return new WaitForSeconds(waitSeconds);
                 yield return new WaitForEndOfFrame();
                 var directory = Path.GetDirectoryName(screenshotPath);
@@ -995,6 +1026,30 @@ namespace CareerQuest
             UiBuilder.Place(_ceremonySkipButton.GetComponent<RectTransform>(), 0f, -165f, 200f, 48f);
             QuestStageUi.StyleSecondaryButton(_ceremonySkipButton);
             _ceremonySkipButton.interactable = false;
+
+            SpawnCeremonyConfetti(presentation);
+        }
+
+        /// <summary>
+        /// P1: the ceremony celebration moment uses a real ParticleSystem (no
+        /// hand-rolled confetti). The bursts live in world space flanking the
+        /// ceremony card; the overlay's full-screen backdrop is alpha-clamped
+        /// translucent (UiBuilder.FullPanel), so they read through it. Tracked so
+        /// the single teardown can drop them early on skip/cancel.
+        /// </summary>
+        private void SpawnCeremonyConfetti(CeremonyPresentation presentation)
+        {
+            var director = _world != null ? _world.CameraDirector : null;
+            if (director == null)
+            {
+                return;
+            }
+
+            var shot = director.Camera.transform.position;
+            _ceremonyConfetti.Add(ParticlePoof.ConfettiBurst(
+                new Vector3(shot.x - 2.7f, shot.y - 1.8f, 0f), QuestStageUi.PathGold, presentation.AccentColor));
+            _ceremonyConfetti.Add(ParticlePoof.ConfettiBurst(
+                new Vector3(shot.x + 2.7f, shot.y - 1.8f, 0f), presentation.AccentColor, QuestStageUi.PathGold, 36));
         }
 
         private void UpdateCeremonyOverlay(CeremonyPresentation presentation)
@@ -1027,6 +1082,19 @@ namespace CareerQuest
                 _ceremonyOverlay = null;
             }
 
+            // Confetti systems self-destroy after 3s; an early teardown
+            // (skip/cancel/disconnect) must not leave them playing over the
+            // next screen.
+            foreach (var confetti in _ceremonyConfetti)
+            {
+                if (confetti != null)
+                {
+                    Destroy(confetti);
+                }
+            }
+
+            _ceremonyConfetti.Clear();
+
             _ceremonyTitleText = null;
             _ceremonyMessageText = null;
             _ceremonyBadgeText = null;
@@ -1045,6 +1113,29 @@ namespace CareerQuest
             TearDownCeremonyOverlay();
             _ceremonyActive = false;
             _ceremonyController = null;
+
+            // U7: this path gained world/camera/drag teardown duties beyond the
+            // UI-only cleanup — disconnects mid-cinematic or mid-drag restore a
+            // known camera shot and never strand a dragged piece.
+            DraggablePiece.CancelActiveDrag();
+            _reveal?.CancelCinematic();
+            _world?.CameraDirector?.ResetToRouteShot();
+        }
+
+        /// <summary>
+        /// Ceremony skip seam (locked pacing contract unchanged: available
+        /// after 3s, ceremony completes at 12s). The overlay button and the
+        /// PlayMode tests share this path.
+        /// </summary>
+        public bool TrySkipCeremony()
+        {
+            if (_ceremonyController == null || !_ceremonyController.CanSkip)
+            {
+                return false;
+            }
+
+            _ceremonyController.Skip();
+            return true;
         }
     }
 }

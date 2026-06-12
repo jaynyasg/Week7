@@ -107,6 +107,194 @@ namespace CareerQuest.Editor
         }
 
         // ------------------------------------------------------------------
+        // U7: Reveal Stage prefab (in-world cinematic ceremony)
+        // ------------------------------------------------------------------
+
+        private const string RevealArtFolder = "Assets/_CareerQuest/Art/Rooms/Reveal";
+        private const string WorldPrefabFolder = "Assets/_CareerQuest/Prefabs/World";
+        private const string RevealPrefabAssetPath = "Assets/_CareerQuest/Prefabs/World/RevealStage.prefab";
+        private const string RevealPrefabResourcesPath = "Assets/Resources/CareerQuest/World/RevealStage.prefab";
+        private const string RevealBackdropPath = "Assets/Resources/CareerQuest/Room/room.reveal.png";
+
+        // Mirrors CampusWorldPalette (internal to the runtime assembly).
+        private static readonly Color StagePlaza = new(1f, 0.92f, 0.64f);
+        private static readonly Color StageShadowInk = new(0.06f, 0.08f, 0.1f);
+        private static readonly Color BeamGold = new(1f, 0.9f, 0.34f);
+        private static readonly Color BeamBlue = new(0.55f, 0.85f, 1f);
+
+        [MenuItem("Career Quest/World/Build Reveal Stage Prefab")]
+        public static void BuildRevealStageInteractive()
+        {
+            BuildRevealStageCore(exitWhenDone: false);
+        }
+
+        /// <summary>Headless entry point: composes and saves the reveal stage prefab, then exits 0/1.</summary>
+        public static void BuildRevealStage()
+        {
+            BuildRevealStageCore(exitWhenDone: true);
+        }
+
+        private static void BuildRevealStageCore(bool exitWhenDone)
+        {
+            GameObject root = null;
+            try
+            {
+                GenerateRevealStageArt();
+                root = ComposeRevealStage();
+
+                EnsureFolder(WorldPrefabFolder);
+                PrefabUtility.SaveAsPrefabAsset(root, RevealPrefabAssetPath);
+
+                EnsureFolder(PrefabResourcesFolder);
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(RevealPrefabResourcesPath) != null)
+                {
+                    AssetDatabase.DeleteAsset(RevealPrefabResourcesPath);
+                }
+
+                if (!AssetDatabase.CopyAsset(RevealPrefabAssetPath, RevealPrefabResourcesPath))
+                {
+                    throw new InvalidOperationException($"Failed to copy '{RevealPrefabAssetPath}' to '{RevealPrefabResourcesPath}'.");
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log($"CQ_ROOM_PREFAB BuildRevealStage: saved '{RevealPrefabAssetPath}' (+ runtime copy '{RevealPrefabResourcesPath}').");
+                ExitIfHeadless(exitWhenDone, 0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"CQ_ROOM_PREFAB BuildRevealStage failed: {exception}");
+                ExitIfHeadless(exitWhenDone, 1);
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
+            }
+        }
+
+        /// <summary>
+        /// P7 faked stage lighting art: glow sprites and gradient overlays only —
+        /// no URP/2D lights. Idempotent (rebuild overwrites). Beam/spot/ring
+        /// textures are white with baked alpha falloff; the SpriteRenderer color
+        /// supplies the tint AND the dim start alpha the light-sweep beat ramps.
+        /// </summary>
+        private static void GenerateRevealStageArt()
+        {
+            Directory.CreateDirectory(RevealArtFolder);
+
+            // Stage platform: warm rounded deck with a lighter top inset.
+            var platform = DrawWithPixels(520, 100, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, h / 2, w / 2 - 2, h / 2 - 2, StagePlaza);
+                FillEllipse(pixels, w, h, w / 2, h / 2 + 8, w / 2 - 16, h / 2 - 14, Color.Lerp(StagePlaza, Color.white, 0.28f));
+            });
+            WritePng(platform, $"{RevealArtFolder}/reveal_platform.png");
+            UnityEngine.Object.DestroyImmediate(platform);
+
+            // Soft radial contact shadow under the platform.
+            var shadow = DrawWithPixels(280, 60, (pixels, w, h) =>
+                FillRadialGlow(pixels, w, h, StageShadowInk, 0.5f));
+            WritePng(shadow, $"{RevealArtFolder}/reveal_platform_shadow.png");
+            UnityEngine.Object.DestroyImmediate(shadow);
+
+            // Light beam: vertical gradient (bright at the source above, fading
+            // toward the stage) with soft parabolic horizontal edges.
+            var beam = DrawWithPixels(64, 256, FillBeamGradient);
+            WritePng(beam, $"{RevealArtFolder}/reveal_glow_beam.png");
+            UnityEngine.Object.DestroyImmediate(beam);
+
+            // Stage spot pool: radial gradient overlay.
+            var spot = DrawWithPixels(220, 110, (pixels, w, h) =>
+                FillRadialGlow(pixels, w, h, Color.white, 1f));
+            WritePng(spot, $"{RevealArtFolder}/reveal_glow_spot.png");
+            UnityEngine.Object.DestroyImmediate(spot);
+
+            // Token slot pedestal: small plaza plinth with a darker base band.
+            var pedestal = DrawWithPixels(96, 46, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 2, 2, w - 4, h - 4, 8, StagePlaza);
+                FillRect(pixels, w, h, 6, 2, w - 12, 8, Color.Lerp(StagePlaza, Color.black, 0.14f));
+                FillRect(pixels, w, h, 6, h - 10, w - 12, 6, Color.Lerp(StagePlaza, Color.white, 0.3f));
+            });
+            WritePng(pedestal, $"{RevealArtFolder}/reveal_pedestal.png");
+            UnityEngine.Object.DestroyImmediate(pedestal);
+
+            // Token slot ring: soft glow annulus marking where a token lands.
+            var ring = DrawWithPixels(128, 128, (pixels, w, h) =>
+                FillRingGlow(pixels, w, h, Color.white, 0.72f, 0.26f));
+            WritePng(ring, $"{RevealArtFolder}/reveal_slot_ring.png");
+            UnityEngine.Object.DestroyImmediate(ring);
+
+            AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Structure and names mirror CampusRoomScenes.BuildFallbackRevealStage
+        /// (the code-built stage used when this prefab is missing) and the
+        /// RevealStageLayout single coordinate truth: backdrop 200, shadow 206,
+        /// platform 208, spot 212, pedestals 214, rings 215, beams 360 (so the
+        /// sweep reads over stage and characters). The hero avatar is NOT baked:
+        /// CampusRoomScenes creates it in code for both paths (P15 hook).
+        /// </summary>
+        private static GameObject ComposeRevealStage()
+        {
+            var root = new GameObject(RevealStageLayout.StageRootName);
+
+            // Camera shot anchors exported as data on the prefab root.
+            root.AddComponent<RevealStageAnchors>().SetData(
+                RevealStageLayout.FallbackWideShot,
+                RevealStageLayout.FallbackStageShot);
+
+            AddSprite(root.transform, "RevealRoomBackdrop", LoadSprite(RevealBackdropPath), new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 200);
+            AddSprite(root.transform, "RevealStageShadow", RevealSprite("reveal_platform_shadow.png"), new Vector2(0f, -0.9f), new Vector2(5.6f, 1.2f), 206);
+            AddSprite(root.transform, "RevealStagePlatform", RevealSprite("reveal_platform.png"), new Vector2(0f, -0.76f), new Vector2(5.2f, 1f), 208);
+
+            // P7 faked lighting. Start alphas/rotations ARE the light-sweep
+            // beat's from-state: RevealCinematicDirector ramps renderer alpha
+            // toward 1 and rotates the beams toward vertical.
+            var spot = AddSprite(
+                root.transform,
+                RevealStageLayout.GlowSpotName,
+                RevealSprite("reveal_glow_spot.png"),
+                new Vector2(RevealStageLayout.StageCenter.x, RevealStageLayout.StageCenter.y - 0.35f),
+                new Vector2(4.2f, 2.1f),
+                212);
+            TintSprite(spot, BeamGold, 0.3f);
+
+            var beamLeft = AddSprite(root.transform, RevealStageLayout.GlowBeamLeftName, RevealSprite("reveal_glow_beam.png"), new Vector2(-1.1f, 0.65f), new Vector2(0.5f, 3.7f), 360);
+            TintSprite(beamLeft, BeamGold, 0.25f);
+            beamLeft.transform.localRotation = Quaternion.Euler(0f, 0f, -26f);
+
+            var beamRight = AddSprite(root.transform, RevealStageLayout.GlowBeamRightName, RevealSprite("reveal_glow_beam.png"), new Vector2(1.1f, 0.65f), new Vector2(0.5f, 3.7f), 360);
+            TintSprite(beamRight, BeamBlue, 0.25f);
+            beamRight.transform.localRotation = Quaternion.Euler(0f, 0f, 26f);
+
+            for (var i = 0; i < RevealStageLayout.SlotCount; i++)
+            {
+                var slot = RevealStageLayout.SlotPosition(i);
+                AddSprite(root.transform, $"RevealSlotPedestal{i}", RevealSprite("reveal_pedestal.png"), new Vector2(slot.x, slot.y - 0.52f), new Vector2(0.72f, 0.34f), 214);
+                var ring = AddSprite(root.transform, $"RevealSlotRing{i}", RevealSprite("reveal_slot_ring.png"), slot, new Vector2(0.78f, 0.78f), 215);
+                TintSprite(ring, BeamGold, 0.35f);
+                AddAnchor(root.transform, RevealStageLayout.SlotAnchorPrefix + i, slot);
+            }
+
+            return root;
+        }
+
+        private static Sprite RevealSprite(string fileName)
+        {
+            return LoadSprite($"{RevealArtFolder}/{fileName}");
+        }
+
+        private static void TintSprite(GameObject spriteObject, Color color, float alpha)
+        {
+            spriteObject.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, alpha);
+        }
+
+        // ------------------------------------------------------------------
         // Helper art (idempotent — rebuild overwrites)
         // ------------------------------------------------------------------
 
@@ -310,6 +498,72 @@ namespace CareerQuest.Editor
                     {
                         pixels[y * width + x] = Blend(pixels[y * width + x], color);
                     }
+                }
+            }
+        }
+
+        /// <summary>Radial alpha falloff glow (P7 faked-lighting overlays).</summary>
+        private static void FillRadialGlow(Color[] pixels, int width, int height, Color color, float peakAlpha)
+        {
+            var centerX = (width - 1) * 0.5f;
+            var centerY = (height - 1) * 0.5f;
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var nx = (x - centerX) / (width * 0.5f);
+                    var ny = (y - centerY) / (height * 0.5f);
+                    var distance = Mathf.Sqrt(nx * nx + ny * ny);
+                    if (distance >= 1f)
+                    {
+                        continue;
+                    }
+
+                    var alpha = peakAlpha * Mathf.Pow(1f - distance, 1.6f);
+                    pixels[y * width + x] = Blend(pixels[y * width + x], new Color(color.r, color.g, color.b, alpha));
+                }
+            }
+        }
+
+        /// <summary>Soft glow annulus: alpha peaks at ringRadius (normalized) and fades both ways.</summary>
+        private static void FillRingGlow(Color[] pixels, int width, int height, Color color, float ringRadius, float ringWidth)
+        {
+            var centerX = (width - 1) * 0.5f;
+            var centerY = (height - 1) * 0.5f;
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var nx = (x - centerX) / (width * 0.5f);
+                    var ny = (y - centerY) / (height * 0.5f);
+                    var distance = Mathf.Sqrt(nx * nx + ny * ny);
+                    var band = 1f - Mathf.Abs(distance - ringRadius) / ringWidth;
+                    if (band <= 0f)
+                    {
+                        continue;
+                    }
+
+                    pixels[y * width + x] = Blend(pixels[y * width + x], new Color(color.r, color.g, color.b, band * band));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Light-beam gradient: bright at the source (texture top), fading toward
+        /// the stage, with soft parabolic horizontal edges.
+        /// </summary>
+        private static void FillBeamGradient(Color[] pixels, int width, int height)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var vertical = Mathf.Lerp(0.22f, 1f, (float)y / (height - 1));
+                for (var x = 0; x < width; x++)
+                {
+                    var nx = Mathf.Abs((x - (width - 1) * 0.5f) / (width * 0.5f));
+                    var horizontal = Mathf.Max(0f, 1f - nx * nx);
+                    pixels[y * width + x] = new Color(1f, 1f, 1f, vertical * horizontal);
                 }
             }
         }

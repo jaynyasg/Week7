@@ -2,421 +2,398 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace CareerQuest
 {
+    /// <summary>
+    /// U7 rewrite: the reveal is a world event. The camera moves to the
+    /// authored stage, badge tokens travel to slots, the light sweep and unlock
+    /// burst play in-world (RevealCinematicDirector owns the beats); the UI is
+    /// reduced to result copy + actions, mounted ONLY after the sequence
+    /// resolves or skip fires.
+    ///
+    /// Locked branch (&lt;3 unique badges — R22 gate semantics unchanged): short
+    /// settle shot, locked slots showing the earned/3 state, no Skip button, no
+    /// full cinematic. A client whose synced unique-game count is stale renders
+    /// the locked branch and self-corrects on the next state change.
+    ///
+    /// Every exit path (skip → exit actions, natural completion, Campus/Gallery
+    /// action, CancelCeremony on disconnect) routes through the single
+    /// <see cref="CancelCinematic"/> teardown: beats stop, an active drag is
+    /// cancelled, and the camera restores via CameraDirector (P23).
+    /// </summary>
     public class CareerRevealController : MonoBehaviour
     {
-        private Coroutine _stageAnimation;
+        public const string SkipButtonName = "RevealSkipButton";
+
+        private GameSession _session;
+        private CareerQuestApp _app;
+        private CampusWorldController _world;
+        private CameraDirector _cameraDirector;
+        private RevealCinematicDirector _director;
+        private RectTransform _panel;
+        private Button _skipButton;
+        private bool _mounted;
+        private bool _lockedBranchShown;
+        private bool _sessionSubscribed;
+        private bool _upgradeQueued;
+
+        /// <summary>Test/QA seam: the live beat sequencer (null before first render).</summary>
+        public RevealCinematicDirector Director => _director;
+
+        public bool IsCinematicActive => _director != null && _director.IsRunning;
 
         public void Render(Transform parent, GameSession session, CareerQuestApp app)
         {
-            if (_stageAnimation != null)
+            CancelCinematic(); // idempotent — fresh render always starts clean
+
+            _session = session;
+            _app = app;
+            _world = CampusWorldController.Ensure();
+            _cameraDirector = _world.CameraDirector;
+            _director = GetComponent<RevealCinematicDirector>();
+            if (_director == null)
             {
-                StopCoroutine(_stageAnimation);
-                _stageAnimation = null;
+                _director = gameObject.AddComponent<RevealCinematicDirector>();
             }
 
-            var panel = UiBuilder.FullPanel(parent, "CareerRevealPanel", QuestStageUi.StageNight);
-            QuestStageUi.MountStageBackdrop(panel, session.RevealReady);
+            _mounted = true;
 
-            var passport = UiBuilder.Panel(panel, "RevealPassportCard", QuestStageUi.Paper);
-            UiBuilder.Place(passport, 0f, 20f, 860f, 520f);
+            // World-first: the panel is a transparent container so the stage
+            // diorama carries the screen (non-blocking per the U6 defaults).
+            _panel = UiBuilder.FullPanel(parent, "CareerRevealPanel", Color.clear);
 
-            var stripe = UiBuilder.Panel(passport, "RevealPassportStripe", QuestStageUi.PathGold);
-            UiBuilder.Place(stripe, 0f, 232f, 860f, 12f);
+            // Stale-count guard (R22): readiness is checked against the synced
+            // unique-game count at trigger time. GameSession reads the network
+            // read model on clients, so a stale snapshot lands in the locked
+            // branch and self-corrects when the next state change arrives.
+            if (_session.RevealReady)
+            {
+                BeginUnlockedCinematic();
+            }
+            else
+            {
+                BeginLockedBranch();
+            }
+        }
+
+        /// <summary>UI button + test seam share this guarded path (skip after 3s, per-client).</summary>
+        public bool TrySkipReveal()
+        {
+            return _director != null && _director.TrySkip();
+        }
+
+        /// <summary>
+        /// THE single teardown. Stops beats, cancels any active drag, restores
+        /// the camera via CameraDirector, and drops subscriptions. Routed from
+        /// every exit: CareerQuestApp.ResetRoot (all route changes, including
+        /// the disconnect path) and CancelCeremony.
+        /// </summary>
+        public void CancelCinematic()
+        {
+            // Camera restoration applies only when beats are mid-flight (skip,
+            // disconnect, early route change). After the sequence resolves, the
+            // next route's SetRouteShot is the restoration guarantee (U3) — a
+            // blind reset here would cancel the camera state the new route just
+            // mounted (e.g. the hub follow that ShowCampus begins before
+            // ResetRoot runs).
+            var cinematicMidFlight = _director != null && _director.IsRunning;
+
+            if (_director != null)
+            {
+                _director.StopImmediate();
+            }
+
+            DraggablePiece.CancelActiveDrag();
+
+            if (cinematicMidFlight && _cameraDirector != null)
+            {
+                _cameraDirector.ResetToRouteShot();
+            }
+
+            UnsubscribeSessionChanged();
+            _mounted = false;
+            _lockedBranchShown = false;
+            _upgradeQueued = false;
+            _skipButton = null;
+            _panel = null;
+        }
+
+        private void Update()
+        {
+            if (_skipButton != null && _director != null)
+            {
+                _skipButton.interactable = _director.CanSkip;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeSessionChanged();
+        }
+
+        // ------------------------------------------------------------------
+        // Unlocked branch — full in-world cinematic
+        // ------------------------------------------------------------------
+
+        private void BeginUnlockedCinematic()
+        {
+            _lockedBranchShown = false;
+
+            // Skip control is the only UI during the cinematic; it arms after
+            // 3 seconds (Update polls CanSkip) and acts per-client.
+            _skipButton = UiBuilder.Button(_panel, SkipButtonName, "Skip", () => TrySkipReveal());
+            UiBuilder.Place(_skipButton.GetComponent<RectTransform>(), 0f, -310f, 180f, 48f);
+            QuestStageUi.StyleSecondaryButton(_skipButton);
+            _skipButton.interactable = false;
+
+            _director.Begin(new RevealCinematicContext
+            {
+                Unlocked = true,
+                EarnedCount = Mathf.Clamp(_session.UniqueCompletedGames, 0, RevealStageLayout.SlotCount),
+                EarnedEntries = EarnedEntries(),
+                WorldRoot = _world.WorldRoot,
+                Camera = _cameraDirector,
+                StageShot = RevealStageAnchors.ResolveStageShot(),
+                SettleShot = RevealStageLayout.SettleShot,
+                IsStageMounted = () => _world == null || !_world.IsRoomVeilActive,
+                RequireRevealStartSync = RequiresRevealStartSync(),
+                HasRevealStartSync = () =>
+                {
+                    var state = CampusSessionState.Instance;
+                    return state == null || state.RevealStartCount > 0;
+                },
+                OnResolved = MountUnlockedResultCopy
+            });
+        }
+
+        /// <summary>
+        /// The host-synced start moment matters only on connected clients: the
+        /// host announces as it shows the reveal, and solo play has no peer to
+        /// wait for. The latch is max(sync observed, local stage mounted).
+        /// </summary>
+        private static bool RequiresRevealStartSync()
+        {
+            var network = NetworkManager.Singleton;
+            return network != null
+                && network.IsConnectedClient
+                && !network.IsServer
+                && CampusSessionState.Instance != null;
+        }
+
+        /// <summary>
+        /// Earned badge entries for token art. On multiplayer clients results
+        /// live host-side, so this list may be shorter than the synced count —
+        /// the director falls back to generic badge art for missing entries.
+        /// </summary>
+        private IReadOnlyList<CatalogEntry> EarnedEntries()
+        {
+            return CareerQuestCatalog.All
+                .Where(entry => _session.GetBestResult(entry.Id) != null)
+                .Take(RevealStageLayout.SlotCount)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Result copy + exit actions — mounted only after the sequence
+        /// resolves or skip fires (R12/R13; copy stays strength-based — R22).
+        /// </summary>
+        private void MountUnlockedResultCopy()
+        {
+            if (!_mounted || _panel == null)
+            {
+                return;
+            }
+
+            if (_skipButton != null)
+            {
+                Destroy(_skipButton.gameObject);
+                _skipButton = null;
+            }
+
+            // Lower-third card: the stage (tokens in slots, glow at full sweep)
+            // stays the hero of the shot.
+            var card = UiBuilder.Panel(_panel, "RevealResultCard", QuestStageUi.Paper);
+            UiBuilder.Place(card, 0f, -188f, 1020f, 320f);
+
+            var stripe = UiBuilder.Panel(card, "RevealResultStripe", QuestStageUi.PathGold);
+            UiBuilder.Place(stripe, 0f, 152f, 1020f, 10f);
+
+            var banner = UiBuilder.Text(
+                card,
+                "RevealUnlockBanner",
+                "REVEAL UNLOCKED!",
+                30,
+                TextAnchor.MiddleCenter,
+                QuestStageUi.WorkshopTeal,
+                TypeRole.Display,
+                TypeWeight.Bold);
+            UiBuilder.Place(banner.rectTransform, 0f, 112f, 560f, 42f);
+
+            var matches = _session.CoLeadMatches();
+            var names = string.Join("  +  ", matches.Select(match => match.Career.DisplayName));
+            var lead = UiBuilder.Text(card, "RevealLead", names, 36, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f), TypeRole.Display, TypeWeight.SemiBold);
+            UiBuilder.Place(lead.rectTransform, 0f, 62f, 940f, 50f);
+
+            var confidence = UiBuilder.Text(card, "RevealConfidence", _session.ConfidencePhrase(), 24, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
+            UiBuilder.Place(confidence.rectTransform, 0f, 18f, 640f, 34f);
+
+            var top = _session.CareerMatches().FirstOrDefault();
+            var tagline = top?.Career.Tagline ?? "A path worth exploring.";
+            var body = UiBuilder.Text(
+                card,
+                "RevealBody",
+                tagline + "\nThis is a strength clue from your quest badges — not a life assignment.",
+                20,
+                TextAnchor.MiddleCenter,
+                QuestStageUi.Ink);
+            UiBuilder.Place(body.rectTransform, 0f, -42f, 920f, 68f);
+
+            MountExitActions(card, -118f);
+        }
+
+        // ------------------------------------------------------------------
+        // Locked branch — settle shot, earned/3 state, no Skip
+        // ------------------------------------------------------------------
+
+        private void BeginLockedBranch()
+        {
+            _lockedBranchShown = true;
+            SubscribeSessionChanged();
+
+            _director.Begin(new RevealCinematicContext
+            {
+                Unlocked = false,
+                EarnedCount = Mathf.Clamp(_session.UniqueCompletedGames, 0, RevealStageLayout.SlotCount),
+                EarnedEntries = EarnedEntries(),
+                WorldRoot = _world.WorldRoot,
+                Camera = _cameraDirector,
+                StageShot = RevealStageAnchors.ResolveStageShot(),
+                SettleShot = RevealStageLayout.SettleShot,
+                IsStageMounted = () => _world == null || !_world.IsRoomVeilActive,
+                RequireRevealStartSync = false, // locked progress is always local-visible
+                OnResolved = MountLockedCard
+            });
+        }
+
+        private void MountLockedCard()
+        {
+            if (!_mounted || _panel == null)
+            {
+                return;
+            }
+
+            var card = UiBuilder.Panel(_panel, "RevealLockedCard", QuestStageUi.Paper);
+            UiBuilder.Place(card, 0f, -110f, 920f, 430f);
+
+            var stripe = UiBuilder.Panel(card, "RevealLockedStripe", QuestStageUi.PathGold);
+            UiBuilder.Place(stripe, 0f, 207f, 920f, 10f);
 
             var title = UiBuilder.Text(
-                passport,
+                card,
                 "RevealTitle",
-                session.RevealReady ? "Your Future Paths!" : "Career Reveal Stage",
-                48,
+                "Career Reveal Stage",
+                34,
                 TextAnchor.MiddleCenter,
                 QuestStageUi.Ink,
                 TypeRole.Display,
                 TypeWeight.Bold);
-            UiBuilder.Place(title.rectTransform, 0f, 170f, 780f, 64f);
+            UiBuilder.Place(title.rectTransform, 0f, 168f, 700f, 48f);
 
-            QuestStageUi.MountBadgeSlots(passport, session, 40f);
+            // Locked badge slots + the clear "X/3 badges" state (DESIGN: Gallery
+            // And Reveal). Counts read the synced unique-game count.
+            QuestStageUi.MountBadgeSlots(card, _session, 60f);
 
-            if (!session.RevealReady)
-            {
-                var locked = UiBuilder.Text(
-                    passport,
-                    "RevealLocked",
-                    "Complete 3 unique quest badges to unlock your career reveal.\n" + session.ConfidencePhrase() + ".",
-                    24,
-                    TextAnchor.MiddleCenter,
-                    QuestStageUi.Ink);
-                UiBuilder.Place(locked.rectTransform, 0f, -120f, 720f, 90f);
+            var locked = UiBuilder.Text(
+                card,
+                "RevealLocked",
+                "Complete 3 unique quest badges to unlock your career reveal.\n" + _session.ConfidencePhrase() + ".",
+                22,
+                TextAnchor.MiddleCenter,
+                QuestStageUi.Ink);
+            UiBuilder.Place(locked.rectTransform, 0f, -98f, 760f, 70f);
 
-                var hint = UiBuilder.Text(
-                    passport,
-                    "RevealHint",
-                    "Walk to another career door on campus to earn your next badge.",
-                    18,
-                    TextAnchor.MiddleCenter,
-                    new Color(0.22f, 0.32f, 0.36f));
-                UiBuilder.Place(hint.rectTransform, 0f, -175f, 680f, 40f);
-            }
-            else
-            {
-                var unlockBanner = UiBuilder.Text(
-                    passport,
-                    "RevealUnlockBanner",
-                    "REVEAL UNLOCKED!",
-                    32,
-                    TextAnchor.MiddleCenter,
-                    QuestStageUi.WorkshopTeal,
-                    TypeRole.Display,
-                    TypeWeight.Bold);
-                UiBuilder.Place(unlockBanner.rectTransform, 0f, 115f, 520f, 44f);
-                SetGraphicAlpha(unlockBanner, 0f);
+            var hint = UiBuilder.Text(
+                card,
+                "RevealHint",
+                "Walk to another career door on campus to earn your next badge.",
+                17,
+                TextAnchor.MiddleCenter,
+                new Color(0.22f, 0.32f, 0.36f));
+            UiBuilder.Place(hint.rectTransform, 0f, -140f, 700f, 34f);
 
-                var matches = session.CoLeadMatches();
-                var names = string.Join("  +  ", matches.Select(match => match.Career.DisplayName));
-                var lead = UiBuilder.Text(passport, "RevealLead", names, 40, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f), TypeRole.Display, TypeWeight.SemiBold);
-                UiBuilder.Place(lead.rectTransform, 0f, -95f, 760f, 56f);
-                SetGraphicAlpha(lead, 0f);
+            MountExitActions(card, -180f);
+        }
 
-                var confidence = UiBuilder.Text(passport, "RevealConfidence", session.ConfidencePhrase(), 26, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
-                UiBuilder.Place(confidence.rectTransform, 0f, -145f, 640f, 36f);
-                SetGraphicAlpha(confidence, 0f);
-
-                var top = session.CareerMatches().FirstOrDefault();
-                var tagline = top?.Career.Tagline ?? "A path worth exploring.";
-                var body = UiBuilder.Text(
-                    passport,
-                    "RevealBody",
-                    tagline + "\nThis is a strength clue from your quest badges — not a life assignment.",
-                    22,
-                    TextAnchor.MiddleCenter,
-                    QuestStageUi.Ink);
-                UiBuilder.Place(body.rectTransform, 0f, -205f, 740f, 72f);
-                SetGraphicAlpha(body, 0f);
-
-                MountCareerCards(passport, matches);
-            }
-
-            var gallery = UiBuilder.Button(panel, "RevealGalleryButton", "Gallery", app.ShowGallery);
-            UiBuilder.Place(gallery.GetComponent<RectTransform>(), -150f, -285f, 220f, 58f);
+        private void MountExitActions(RectTransform parent, float y)
+        {
+            var gallery = UiBuilder.Button(parent, "RevealGalleryButton", "Gallery", () => _app.ShowGallery());
+            UiBuilder.Place(gallery.GetComponent<RectTransform>(), -130f, y, 220f, 54f);
             QuestStageUi.StyleSecondaryButton(gallery);
 
-            var campus = UiBuilder.Button(panel, "RevealCampusButton", "Campus", app.ShowCampus);
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 150f, -285f, 220f, 58f);
+            var campus = UiBuilder.Button(parent, "RevealCampusButton", "Campus", () => _app.ShowCampus());
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 130f, y, 220f, 54f);
             QuestStageUi.StylePrimaryButton(campus);
-
-            _stageAnimation = StartCoroutine(PlayStageSequence(panel, passport, session));
         }
 
-        private IEnumerator PlayStageSequence(RectTransform panel, RectTransform passport, GameSession session)
+        // ------------------------------------------------------------------
+        // Stale-count self-correction
+        // ------------------------------------------------------------------
+
+        private void SubscribeSessionChanged()
         {
-            passport.localScale = Vector3.one * (session.RevealReady ? 0.88f : 1f);
-
-            if (!session.RevealReady)
-            {
-                yield return PulseLockedProgress(passport, session);
-                yield break;
-            }
-
-            yield return AnimateSpotlightSweep(panel, 0.45f);
-            yield return ScaleRect(passport, 0.88f, 1f, 0.28f, EaseOutBack);
-            yield return PunchBadgeSlots(passport, session.UniqueCompletedGames);
-            yield return RevealUnlockedContent(passport);
-            SpawnConfettiBurst(panel);
-            yield return DriftConfetti(panel, 0.55f);
-        }
-
-        private static IEnumerator PulseLockedProgress(RectTransform passport, GameSession session)
-        {
-            var fill = passport.Find("RevealProgressFill") as RectTransform;
-            if (fill == null)
-            {
-                yield break;
-            }
-
-            var baseWidth = Mathf.Max(24f, 420f * (session.UniqueCompletedGames / 3f));
-            for (var pulse = 0; pulse < 2; pulse++)
-            {
-                yield return ScaleRect(fill, 1f, 1.08f, 0.18f, EaseOutQuad);
-                yield return ScaleRect(fill, 1.08f, 1f, 0.18f, EaseInQuad);
-            }
-
-            fill.localScale = Vector3.one;
-            _ = baseWidth;
-        }
-
-        private static IEnumerator AnimateSpotlightSweep(RectTransform panel, float duration)
-        {
-            var beamLeft = panel.Find("StageBeamLeft") as RectTransform;
-            var beamRight = panel.Find("StageBeamRight") as RectTransform;
-            var spot = panel.Find("StageSpot") as RectTransform;
-            if (beamLeft == null || beamRight == null)
-            {
-                yield break;
-            }
-
-            SetRectAlpha(beamLeft, 0f);
-            SetRectAlpha(beamRight, 0f);
-            var leftImage = beamLeft.GetComponent<Image>();
-            var rightImage = beamRight.GetComponent<Image>();
-
-            var elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                var t = Mathf.Clamp01(elapsed / duration);
-                var alpha = EaseOutQuad(0f, 1f, t);
-                if (leftImage != null)
-                {
-                    leftImage.color = new Color(QuestStageUi.Spotlight.r, QuestStageUi.Spotlight.g, QuestStageUi.Spotlight.b, QuestStageUi.Spotlight.a * alpha);
-                }
-
-                if (rightImage != null)
-                {
-                    rightImage.color = new Color(QuestStageUi.Spotlight.r, QuestStageUi.Spotlight.g, QuestStageUi.Spotlight.b, QuestStageUi.Spotlight.a * alpha);
-                }
-
-                beamLeft.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(28f, 12f, t));
-                beamRight.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-28f, -12f, t));
-                yield return null;
-            }
-
-            if (spot != null)
-            {
-                yield return ScaleRect(spot, 0.6f, 1f, 0.2f, EaseOutBack);
-            }
-        }
-
-        private static IEnumerator PunchBadgeSlots(RectTransform passport, int earnedCount)
-        {
-            for (var slot = 0; slot < 3; slot++)
-            {
-                var ring = passport.Find($"RevealBadgeSlot{slot}Ring") as RectTransform;
-                if (ring == null)
-                {
-                    continue;
-                }
-
-                if (slot < earnedCount)
-                {
-                    yield return ScaleRect(ring, 0.5f, 1.15f, 0.12f, EaseOutBack);
-                    yield return ScaleRect(ring, 1.15f, 1f, 0.1f, EaseInQuad);
-                }
-            }
-        }
-
-        private static IEnumerator RevealUnlockedContent(RectTransform passport)
-        {
-            var banner = passport.Find("RevealUnlockBanner")?.GetComponent<TextMeshProUGUI>();
-            var lead = passport.Find("RevealLead")?.GetComponent<TextMeshProUGUI>();
-            var confidence = passport.Find("RevealConfidence")?.GetComponent<TextMeshProUGUI>();
-            var body = passport.Find("RevealBody")?.GetComponent<TextMeshProUGUI>();
-            var cards = new List<RectTransform>();
-            for (var i = 0; i < 3; i++)
-            {
-                var card = passport.Find($"RevealCareerCard{i}") as RectTransform;
-                if (card != null)
-                {
-                    card.localScale = Vector3.zero;
-                    cards.Add(card);
-                }
-            }
-
-            if (banner != null)
-            {
-                yield return FadeGraphic(banner, 0f, 1f, 0.22f);
-                yield return ScaleRect(banner.rectTransform, 0.7f, 1f, 0.18f, EaseOutBack);
-            }
-
-            for (var i = 0; i < cards.Count; i++)
-            {
-                yield return ScaleRect(cards[i], 0f, 1f, 0.16f, EaseOutBack);
-            }
-
-            if (lead != null)
-            {
-                yield return FadeGraphic(lead, 0f, 1f, 0.2f);
-            }
-
-            if (confidence != null)
-            {
-                yield return FadeGraphic(confidence, 0f, 1f, 0.18f);
-            }
-
-            if (body != null)
-            {
-                yield return FadeGraphic(body, 0f, 1f, 0.18f);
-            }
-        }
-
-        private static void SpawnConfettiBurst(RectTransform panel)
-        {
-            var palette = new[]
-            {
-                QuestStageUi.PathGold,
-                QuestStageUi.WorkshopTeal,
-                QuestStageUi.Paper,
-                new Color(0.95f, 0.45f, 0.35f)
-            };
-
-            for (var i = 0; i < 14; i++)
-            {
-                var color = palette[i % palette.Length];
-                var piece = UiBuilder.Circle(panel, $"RevealConfetti{i}", color, 0f, 40f, 14f, 14f);
-                piece.gameObject.AddComponent<RevealConfettiPiece>().Launch();
-            }
-        }
-
-        private static IEnumerator DriftConfetti(RectTransform panel, float duration)
-        {
-            var elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            for (var i = 0; i < 14; i++)
-            {
-                var piece = panel.Find($"RevealConfetti{i}");
-                if (piece != null)
-                {
-                    Destroy(piece.gameObject);
-                }
-            }
-        }
-
-        private static void MountCareerCards(RectTransform passport, IReadOnlyList<CareerMatch> matches)
-        {
-            var startX = matches.Count switch
-            {
-                1 => 0f,
-                2 => -120f,
-                _ => -200f
-            };
-
-            for (var i = 0; i < matches.Count && i < 3; i++)
-            {
-                var match = matches[i];
-                var x = startX + i * 200f;
-                var card = UiBuilder.Panel(passport, $"RevealCareerCard{i}", new Color(0.98f, 0.99f, 1f, 0.96f));
-                UiBuilder.Place(card, x, -55f, 170f, 110f);
-                card.localScale = Vector3.zero;
-
-                var accent = UiBuilder.Panel(card, $"RevealCareerAccent{i}", QuestStageUi.PathGold);
-                UiBuilder.Place(accent, 0f, 48f, 170f, 8f);
-
-                var name = UiBuilder.Text(card, $"RevealCareerName{i}", match.Career.DisplayName, 20, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.Medium);
-                UiBuilder.Place(name.rectTransform, 0f, 10f, 150f, 32f);
-
-                var score = UiBuilder.Text(card, $"RevealCareerScore{i}", "Top match", 14, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
-                UiBuilder.Place(score.rectTransform, 0f, -24f, 140f, 24f);
-            }
-        }
-
-        private static IEnumerator ScaleRect(RectTransform target, float from, float to, float duration, System.Func<float, float, float, float> ease)
-        {
-            if (target == null)
-            {
-                yield break;
-            }
-
-            var elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                var t = ease(0f, 1f, Mathf.Clamp01(elapsed / duration));
-                var scale = Mathf.Lerp(from, to, t);
-                target.localScale = new Vector3(scale, scale, 1f);
-                yield return null;
-            }
-
-            target.localScale = new Vector3(to, to, 1f);
-        }
-
-        private static IEnumerator FadeGraphic(Graphic graphic, float from, float to, float duration)
-        {
-            if (graphic == null)
-            {
-                yield break;
-            }
-
-            var elapsed = 0f;
-            var color = graphic.color;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                var t = EaseOutQuad(0f, 1f, Mathf.Clamp01(elapsed / duration));
-                color.a = Mathf.Lerp(from, to, t);
-                graphic.color = color;
-                yield return null;
-            }
-
-            color.a = to;
-            graphic.color = color;
-        }
-
-        private static void SetGraphicAlpha(Graphic graphic, float alpha)
-        {
-            if (graphic == null)
+            if (_sessionSubscribed || _session == null)
             {
                 return;
             }
 
-            var color = graphic.color;
-            color.a = alpha;
-            graphic.color = color;
+            _session.Changed += HandleSessionChanged;
+            _sessionSubscribed = true;
         }
 
-        private static void SetRectAlpha(RectTransform rect, float alpha)
+        private void UnsubscribeSessionChanged()
         {
-            var image = rect.GetComponent<Image>();
-            if (image == null)
+            if (!_sessionSubscribed || _session == null)
+            {
+                _sessionSubscribed = false;
+                return;
+            }
+
+            _session.Changed -= HandleSessionChanged;
+            _sessionSubscribed = false;
+        }
+
+        private void HandleSessionChanged()
+        {
+            if (!_mounted || !_lockedBranchShown || _upgradeQueued || _session == null || _app == null)
             {
                 return;
             }
 
-            var color = image.color;
-            color.a = alpha;
-            image.color = color;
-        }
-
-        private static float EaseOutQuad(float from, float to, float t) => Mathf.Lerp(from, to, 1f - (1f - t) * (1f - t));
-        private static float EaseInQuad(float from, float to, float t) => Mathf.Lerp(from, to, t * t);
-        private static float EaseOutBack(float from, float to, float t)
-        {
-            const float c1 = 1.70158f;
-            const float c3 = c1 + 1f;
-            var eased = 1f + c3 * Mathf.Pow(t - 1f, 3f) + c1 * Mathf.Pow(t - 1f, 2f);
-            return Mathf.Lerp(from, to, eased);
-        }
-
-        private sealed class RevealConfettiPiece : MonoBehaviour
-        {
-            private Vector2 _velocity;
-            private float _spin;
-            private RectTransform _rect;
-
-            public void Launch()
+            if (!_session.RevealReady || _app.CurrentRoute != ActivityRoute.Reveal)
             {
-                _rect = GetComponent<RectTransform>();
-                _velocity = new Vector2(Random.Range(-420f, 420f), Random.Range(220f, 480f));
-                _spin = Random.Range(-240f, 240f);
+                return;
             }
 
-            private void Update()
-            {
-                if (_rect == null)
-                {
-                    return;
-                }
+            // The synced count crossed the gate while we showed the locked
+            // branch — re-render into the unlocked cinematic. Deferred one
+            // frame: the change may arrive inside a network callback.
+            _upgradeQueued = true;
+            StartCoroutine(DeferredUpgradeToUnlocked());
+        }
 
-                _velocity.y -= 620f * Time.deltaTime;
-                _rect.anchoredPosition += _velocity * Time.deltaTime;
-                _rect.localRotation *= Quaternion.Euler(0f, 0f, _spin * Time.deltaTime);
+        private IEnumerator DeferredUpgradeToUnlocked()
+        {
+            yield return null;
+            _upgradeQueued = false;
+
+            if (_mounted && _session != null && _app != null
+                && _session.RevealReady && _app.CurrentRoute == ActivityRoute.Reveal)
+            {
+                _app.ShowReveal();
             }
         }
     }
