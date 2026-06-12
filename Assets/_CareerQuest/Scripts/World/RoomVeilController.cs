@@ -44,6 +44,9 @@ namespace CareerQuest
             Cancel();
             _builder.ClearWorld();
             SceneWipe.CreateCover(_builder.Root);
+            // U8: one paper-wipe swish per room transition (the per-cue
+            // throttle in the director also guards rapid route changes).
+            AudioCueCatalog.TryPlay(AudioCueIds.RoomWipe);
             IsVeilActive = true;
             _veilRoutine = _host.StartCoroutine(RevealRoom(buildRoom));
         }

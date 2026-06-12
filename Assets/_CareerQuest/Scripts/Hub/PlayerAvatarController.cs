@@ -9,6 +9,13 @@ namespace CareerQuest
     [RequireComponent(typeof(AvatarRuntimeView))]
     public class PlayerAvatarController : MonoBehaviour
     {
+        /// <summary>
+        /// P11 footstep cadence: one step cue per interval while walking (the
+        /// gameplay tier adds ±8% pitch variation per step, so a single curated
+        /// clip never machine-guns). First step lands immediately on move start.
+        /// </summary>
+        public const float FootstepIntervalSeconds = 0.34f;
+
         [SerializeField] private float moveSpeed = 3.2f;
         [SerializeField] private Vector2 minBounds = new(-5.25f, -2.45f);
         [SerializeField] private Vector2 maxBounds = new(5.25f, 0.55f);
@@ -16,6 +23,7 @@ namespace CareerQuest
         private IReadOnlyList<BuildingEntrance> _entrances = Array.Empty<BuildingEntrance>();
         private Action<ActivityRoute> _onDestination;
         private AvatarRuntimeView _avatarView;
+        private float _footstepCountdown;
 
         private void Awake()
         {
@@ -43,11 +51,13 @@ namespace CareerQuest
             {
                 Move(move * moveSpeed * Time.deltaTime);
                 _avatarView.SetLocomotion(true, move.x);
+                TickFootsteps(Time.deltaTime);
             }
             else
             {
                 // Facing is flipX-based now (U5); passing 0 keeps the last facing.
                 _avatarView.SetLocomotion(false, 0f);
+                _footstepCountdown = 0f; // next move starts on a fresh step
             }
 
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.E))
@@ -82,7 +92,7 @@ namespace CareerQuest
                 return false;
             }
 
-            _onDestination?.Invoke(entrance.Route);
+            EnterRoute(entrance.Route);
             return true;
         }
 
@@ -94,8 +104,28 @@ namespace CareerQuest
                 return false;
             }
 
-            _onDestination?.Invoke(entrance.Route);
+            EnterRoute(entrance.Route);
             return true;
+        }
+
+        /// <summary>U8: every door entry (key or click) shares the door cue.</summary>
+        private void EnterRoute(ActivityRoute route)
+        {
+            AudioCueCatalog.TryPlay(AudioCueIds.DoorEnter);
+            _onDestination?.Invoke(route);
+        }
+
+        /// <summary>P11 cadence — only ticks while the walk state is active.</summary>
+        private void TickFootsteps(float deltaSeconds)
+        {
+            _footstepCountdown -= deltaSeconds;
+            if (_footstepCountdown > 0f)
+            {
+                return;
+            }
+
+            _footstepCountdown = FootstepIntervalSeconds;
+            AudioCueCatalog.TryPlay(AudioCueIds.Footstep);
         }
 
         private BuildingEntrance NearestEntrance(Vector2 worldPosition)

@@ -228,7 +228,9 @@ namespace CareerQuest
                 }
             }
 
-            AudioCueCatalog.TryPlay(EnsureAudio(), "drop_reject");
+            // P21 reject response: fires on the submitting client only (the
+            // reject event lands on the sender; partners hear nothing).
+            AudioCueCatalog.TryPlay(AudioCueIds.DropReject);
             RaiseRejected(pieceId);
         }
 
@@ -325,7 +327,7 @@ namespace CareerQuest
                 _networkState.SetHeldPiece(pieceId); // P17 plumbing
             }
 
-            AudioCueCatalog.TryPlay(EnsureAudio(), "drag_pickup");
+            AudioCueCatalog.TryPlay(AudioCueIds.DragPickup);
         }
 
         public void NotifyRelease(string pieceId)
@@ -610,7 +612,7 @@ namespace CareerQuest
             if (celebrate)
             {
                 CheerBuilderNpc();
-                AudioCueCatalog.TryPlay(EnsureAudio(), "drop_accept");
+                AudioCueCatalog.TryPlay(AudioCueIds.DropAccept);
             }
         }
 
@@ -700,17 +702,6 @@ namespace CareerQuest
         private void RaiseRejected(string pieceId)
         {
             DropRejected?.Invoke(pieceId);
-        }
-
-        private AudioSource EnsureAudio()
-        {
-            var audio = GetComponent<AudioSource>();
-            if (audio == null)
-            {
-                audio = gameObject.AddComponent<AudioSource>();
-            }
-
-            return audio;
         }
 
         private void UnsubscribeNetwork()

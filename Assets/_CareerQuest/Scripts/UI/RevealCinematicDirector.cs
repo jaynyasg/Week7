@@ -369,6 +369,7 @@ namespace CareerQuest
             {
                 token.Transform.position = token.To;
                 ParticlePoof.Burst(token.To, BurstGold, 8);
+                AudioCueCatalog.TryPlay(AudioCueIds.RevealToken); // U8 arrival poof
                 AdvanceTokenOrSweep();
             }
         }
@@ -392,6 +393,7 @@ namespace CareerQuest
         {
             CurrentBeat = RevealCinematicBeat.LightSweep;
             _beatElapsed = 0f;
+            AudioCueCatalog.TryPlay(AudioCueIds.RevealSweep); // U8 sweep rise
         }
 
         private void TickLightSweep()
@@ -414,6 +416,7 @@ namespace CareerQuest
             var center = new Vector3(RevealStageLayout.StageCenter.x, RevealStageLayout.StageCenter.y, 0f);
             ParticlePoof.Burst(center, BurstGold, 26);
             ParticlePoof.Burst(center + new Vector3(0f, 0.35f, 0f), BurstTeal, 16);
+            AudioCueCatalog.TryPlay(AudioCueIds.RevealUnlock); // U8 unlock burst
             TriggerHeroCelebrate();
         }
 

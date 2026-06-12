@@ -50,6 +50,8 @@ namespace CareerQuest
         private readonly List<GameObject> _ceremonyConfetti = new();
         private TextMeshProUGUI _instructionStripText;
         private bool _sessionChangedSubscribed;
+        private AudioDirector _audioDirector;
+        private CeremonySubPhase _lastCeremonySubPhase;
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
@@ -65,6 +67,9 @@ namespace CareerQuest
             _root = _canvas.GetComponent<RectTransform>();
             _world = CampusWorldController.Ensure();
             _hub = PlayableHubController.Ensure();
+            // U8: the three-tier audio system rides the app object so it
+            // survives ClearWorld — route changes crossfade, never cut.
+            _audioDirector = AudioDirector.AttachTo(gameObject);
 
             _networkBootstrap = GetComponent<NetworkBootstrap>();
             _entry = GetComponent<EntryScreenController>();
@@ -961,17 +966,16 @@ namespace CareerQuest
             _ceremonyController = new CeremonyController(result);
             BuildCeremonyOverlay(presentation);
 
-            var audio = GetComponent<AudioSource>();
-            if (audio == null)
-            {
-                audio = gameObject.AddComponent<AudioSource>();
-            }
-
-            AudioCueCatalog.TryPlay(audio, presentation.CueId);
+            // U8: the fanfare rides the director's dedicated stoppable source —
+            // skip (and any cancel path) ducks it via TearDownCeremonyOverlay.
+            _audioDirector ??= AudioDirector.AttachTo(gameObject);
+            _audioDirector.PlayFanfare(presentation.CueId);
+            _lastCeremonySubPhase = CeremonySubPhase.Celebration;
 
             while (!_ceremonyController.IsComplete)
             {
                 _ceremonyController.Tick(Time.unscaledDeltaTime);
+                PlayCeremonySubPhaseCues();
                 UpdateCeremonyOverlay(presentation);
                 if (_ceremonySkipButton != null)
                 {
@@ -1052,6 +1056,23 @@ namespace CareerQuest
                 new Vector3(shot.x + 2.7f, shot.y - 1.8f, 0f), presentation.AccentColor, QuestStageUi.PathGold, 36));
         }
 
+        /// <summary>U8: the badge-stamp thunk lands as the Feedback subphase begins.</summary>
+        private void PlayCeremonySubPhaseCues()
+        {
+            if (_ceremonyController == null)
+            {
+                return;
+            }
+
+            var subPhase = _ceremonyController.CurrentSubPhase;
+            if (subPhase != _lastCeremonySubPhase && subPhase == CeremonySubPhase.Feedback)
+            {
+                AudioCueCatalog.TryPlay(AudioCueIds.BadgeStamp);
+            }
+
+            _lastCeremonySubPhase = subPhase;
+        }
+
         private void UpdateCeremonyOverlay(CeremonyPresentation presentation)
         {
             if (_ceremonyController == null || _ceremonyMessageText == null)
@@ -1076,6 +1097,10 @@ namespace CareerQuest
 
         private void TearDownCeremonyOverlay()
         {
+            // U8: any ceremony end (natural, skip, cancel/disconnect) ducks a
+            // still-playing fanfare — the next screen never inherits it.
+            _audioDirector?.StopFanfare();
+
             if (_ceremonyOverlay != null)
             {
                 Destroy(_ceremonyOverlay);

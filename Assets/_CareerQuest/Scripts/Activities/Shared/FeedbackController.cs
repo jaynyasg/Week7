@@ -46,7 +46,7 @@ namespace CareerQuest
                 message,
                 $"{activity.BadgeName} · {tierLabel}",
                 accent,
-                $"ceremony_{result.ActivityId}_{(earnedDegree ? "success" : "practice")}");
+                AudioCueIds.CeremonyCue(result.ActivityId, earnedDegree));
         }
 
         private static Color AccentForActivity(string activityId)

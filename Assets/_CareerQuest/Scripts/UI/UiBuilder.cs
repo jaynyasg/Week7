@@ -124,7 +124,13 @@ namespace CareerQuest
             image.color = new Color(0.09f, 0.31f, 0.42f);
 
             var button = buttonObject.GetComponent<Button>();
-            button.onClick.AddListener(() => onClick?.Invoke());
+            button.onClick.AddListener(() =>
+            {
+                // U8: every factory button presses with the same UI-tier cue
+                // (silent no-op when the clip is absent — never blocks clicks).
+                AudioDirector.Ensure().PlayUi(AudioCueIds.UiPress);
+                onClick?.Invoke();
+            });
 
             var labelText = Text(buttonObject.transform, $"{name}Label", label, TypeStyles.ButtonLabel, TextAnchor.MiddleCenter, Color.white, TypeRole.Body, TypeWeight.SemiBold);
             Stretch(labelText.rectTransform);

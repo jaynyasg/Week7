@@ -77,32 +77,32 @@ namespace CareerQuest
 
         public void ShowDesignBuild(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowDesignBuild(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowDesignBuild(_builder, session), AudioCueIds.AmbientDesignBuild);
         }
 
         public void ShowClinic(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowClinic(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowClinic(_builder, session), AudioCueIds.AmbientHealthHero);
         }
 
         public void ShowCourt(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowCourt(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowCourt(_builder, session), AudioCueIds.AmbientLogicCourt);
         }
 
         public void ShowGallery(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session), AudioCueIds.AmbientGallery);
         }
 
         public void ShowOptionalRoom(GameSession session, CatalogEntry entry)
         {
-            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry));
+            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry), AudioCueIds.AmbientOptional);
         }
 
         public void ShowReveal(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowReveal(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowReveal(_builder, session), AudioCueIds.AmbientReveal);
         }
 
         public void ClearWorld()
@@ -120,16 +120,22 @@ namespace CareerQuest
             // can never wipe or pollute the world this route mounts.
             CancelBoot();
             _cameraDirector.SetRouteShot(CameraShot.Default);
+            // P4: every hub-style route restores campus ambience + music loop
+            // (~1s crossfade; the director no-ops if it is already the target).
+            AudioDirector.Ensure().SetAmbience(AudioCueIds.AmbientCampus, AudioCueIds.MusicCampus);
             _hubBoot.BuildCampus(name);
         }
 
-        private void BeginRoom(System.Action buildRoom)
+        private void BeginRoom(System.Action buildRoom, string ambientCueId)
         {
             EnsureSetup();
             // P24: starting a room route cancels pending hub decor and any
             // previous room's pending reveal — no orphaned hub decor in rooms.
             CancelBoot();
             _cameraDirector.SetRouteShot(CameraShot.Default);
+            // P4: per-room ambient flavor; campus music fades out so the room
+            // flavor never fights the hub loop.
+            AudioDirector.Ensure().SetAmbience(ambientCueId, null);
             _roomVeil.ShowRoom(buildRoom);
         }
 
