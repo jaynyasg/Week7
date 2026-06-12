@@ -17,6 +17,10 @@ namespace CareerQuest
 
         public void ClearWorld()
         {
+            // Teardown safety (U6): a world clear mid-drag must cancel the active
+            // drag before destroying its hierarchy — no exceptions, no orphan.
+            DraggablePiece.CancelActiveDrag();
+
             for (var i = Root.childCount - 1; i >= 0; i--)
             {
                 Object.DestroyImmediate(Root.GetChild(i).gameObject);
@@ -38,26 +42,6 @@ namespace CareerQuest
         public void AddPath(Vector2 position, Vector2 size, float rotation)
         {
             AddShape($"Path_{position.x}_{position.y}", CampusSpriteKind.Square, position, size, CampusWorldPalette.Path, 1, rotation);
-        }
-
-        public void AddBuildTable()
-        {
-            AddShape("BuildTable", CampusSpriteKind.Square, new Vector2(0f, -0.45f), new Vector2(6.6f, 1.05f), CampusWorldPalette.Plaza, 3);
-            AddSkylineLot("Clinic", -2.45f, -0.35f, CampusWorldPalette.Mint);
-            AddSkylineLot("Court", -1.2f, -0.35f, CampusWorldPalette.Gold);
-            AddSkylineLot("Studio", 0f, -0.35f, CampusWorldPalette.Coral);
-            AddSkylineLot("Lab", 1.2f, -0.35f, CampusWorldPalette.SkyBlue);
-            AddSkylineLot("Art", 2.45f, -0.35f, CampusWorldPalette.Lilac);
-            AddShape("CraneMast", CampusSpriteKind.Square, new Vector2(4.35f, 0.65f), new Vector2(0.14f, 2.4f), CampusWorldPalette.TealRoof, 4);
-            AddShape("CraneArm", CampusSpriteKind.Square, new Vector2(3.55f, 1.72f), new Vector2(1.8f, 0.14f), CampusWorldPalette.TealRoof, 4);
-            AddShape("CraneHook", CampusSpriteKind.Square, new Vector2(2.78f, 1.35f), new Vector2(0.1f, 0.74f), CampusWorldPalette.CoralRoof, 4);
-        }
-
-        public void AddSkylineLot(string label, float x, float y, Color body)
-        {
-            AddShape($"{label}Pad", CampusSpriteKind.Circle, new Vector2(x, y - 0.52f), new Vector2(0.95f, 0.22f), CampusWorldPalette.Shadow, 4);
-            AddCatalogSprite($"{label}PieceSprite", PropAssetIdFor(label), new Vector2(x, y + 0.08f), new Vector2(0.95f, 0.95f), 5);
-            AddLabel($"{label}LotLabel", label, x, y - 0.86f, ItemLabelSize, CampusWorldPalette.Ink, 8);
         }
 
         public void AddNetworkProof(float x, float y, string label, Color color)
@@ -198,19 +182,6 @@ namespace CareerQuest
             var renderer = labelObject.GetComponent<MeshRenderer>();
             renderer.sortingOrder = order;
             return label;
-        }
-
-        public static string PropAssetIdFor(string label)
-        {
-            return label switch
-            {
-                "Clinic" => "prop.city_piece_clinic",
-                "Court" => "prop.city_piece_court",
-                "Studio" => "prop.city_piece_studio",
-                "Lab" => "prop.city_piece_lab",
-                "Art" => "prop.city_piece_art_tower",
-                _ => "prop.blueprint"
-            };
         }
 
         public static string BadgeAssetIdFor(string label)

@@ -961,6 +961,10 @@ namespace CareerQuest
         {
             var overlayRect = UiBuilder.FullPanel(_root, "CeremonyOverlay", QuestStageUi.StageNight);
             _ceremonyOverlay = overlayRect.gameObject;
+            // Modal opt-in: the ceremony overlay DOES block pointer raycasts so
+            // the room beneath (drag pieces, exit buttons) is unreachable while
+            // the ceremony plays (UiBuilder panels default non-blocking in U6).
+            _ceremonyOverlay.GetComponent<UnityEngine.UI.Image>().raycastTarget = true;
 
             QuestStageUi.MountStageBackdrop(overlayRect, unlocked: true);
 

@@ -108,19 +108,24 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(appObject);
         }
 
+        /// <summary>
+        /// U6 migration: Design Build is a drag room — completion is driven
+        /// through the TrySubmitDrop seam (the route emitter → ceremony → router
+        /// contract is unchanged). Health Hero / Logic Court stay button-driven
+        /// until their U10 conversion.
+        /// </summary>
         private static void CompleteDesignBuildRoom(GameObject appObject)
         {
-            var reviewButton = FindButton("ReviewBlueprintButton");
-            var helperButton = FindButton("PatternHelperButton");
-            reviewButton.onClick.Invoke();
-            helperButton.onClick.Invoke();
+            var controller = appObject.GetComponent<DesignBuildController>();
+            Assert.That(controller, Is.Not.Null, "DesignBuildController should exist after ShowDesignBuild.");
 
             foreach (var pieceId in new[] { "clinic", "court", "studio", "lab", "art_tower" })
             {
-                FindButton($"{pieceId}Button").onClick.Invoke();
+                Assert.That(
+                    controller.TrySubmitDrop(pieceId, pieceId),
+                    Is.EqualTo(DropSubmitResult.Accepted),
+                    $"Drop of '{pieceId}' should be accepted.");
             }
-
-            FindButton("DesignBuildCompleteButton").onClick.Invoke();
         }
 
         private static void CompleteHealthHeroRoom()

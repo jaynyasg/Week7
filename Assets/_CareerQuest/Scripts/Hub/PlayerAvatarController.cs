@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace CareerQuest
 {
@@ -54,7 +55,7 @@ namespace CareerQuest
                 TryEnterNearest();
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && !IsPointerOverEventSystemTarget())
             {
                 var camera = CameraDirector.Ensure().Camera;
                 if (camera != null)
@@ -102,6 +103,18 @@ namespace CareerQuest
             return _entrances
                 .OrderBy(entrance => Vector2.Distance(entrance.transform.position, worldPosition))
                 .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Pointer-over guard (U6): once the Physics2DRaycaster joins the
+        /// EventSystem, a click on a UI button, hub toy, or drag piece must not
+        /// ALSO fire click-to-enter. IsPointerOverGameObject covers every
+        /// registered raycaster (uGUI GraphicRaycaster and Physics2DRaycaster).
+        /// </summary>
+        private static bool IsPointerOverEventSystemTarget()
+        {
+            var eventSystem = EventSystem.current;
+            return eventSystem != null && eventSystem.IsPointerOverGameObject();
         }
 
         private static Vector2 ReadMove()

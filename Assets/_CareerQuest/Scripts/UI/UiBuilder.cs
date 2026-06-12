@@ -47,7 +47,12 @@ namespace CareerQuest
             rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
-            panel.GetComponent<Image>().color = new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.22f));
+            var image = panel.GetComponent<Image>();
+            image.color = new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.22f));
+            // U6 raycast policy: full-screen washes never block world drags — the
+            // known "drag doesn't work at all" failure. Modal overlays (ceremony)
+            // explicitly opt back in at their call site.
+            image.raycastTarget = false;
             return rect;
         }
 
@@ -55,7 +60,11 @@ namespace CareerQuest
         {
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);
-            panel.GetComponent<Image>().color = color;
+            var image = panel.GetComponent<Image>();
+            image.color = color;
+            // U6 raycast policy: decorative panels/shapes default non-blocking;
+            // Buttons (their own Image) stay blocking.
+            image.raycastTarget = false;
             return panel.GetComponent<RectTransform>();
         }
 
@@ -101,6 +110,9 @@ namespace CareerQuest
             text.color = color;
             text.textWrappingMode = TextWrappingModes.Normal;
             text.overflowMode = TextOverflowModes.Overflow;
+            // U6 raycast policy: text never blocks pointer raycasts (button
+            // labels pass through to the Button image beneath).
+            text.raycastTarget = false;
             return text;
         }
 

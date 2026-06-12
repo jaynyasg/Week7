@@ -23,6 +23,16 @@ namespace CareerQuest
             }
         }
 
+        /// <summary>World content root — room playfields (drag pieces/zones) mount here.</summary>
+        public Transform WorldRoot
+        {
+            get
+            {
+                EnsureSetup();
+                return _root;
+            }
+        }
+
         public static CampusWorldController Ensure()
         {
             var existing = FindFirstObjectByType<CampusWorldController>();

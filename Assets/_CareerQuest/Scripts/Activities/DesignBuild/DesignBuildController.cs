@@ -1,45 +1,252 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CareerQuest
 {
-    public class DesignBuildController : ActivityRoomController
+    public enum DropSubmitResult
     {
-        private FutureCityBlueprint _blueprint;
-        private int _acceptedPlacements;
-        private string _feedback = "Place city pieces into the future skyline.";
+        Accepted,
+        Pending,
+        RejectedWrongSlot,
+        RejectedOccupied,
+        RejectedLocked,
+        RejectedUnknownPiece
+    }
 
-        public FutureCityBlueprint Blueprint => _blueprint ??= FutureCityBlueprint.CreateDefault();
+    /// <summary>
+    /// Design Build Studio — the flagship drag-and-drop room (U6).
+    ///
+    /// All gameplay flows through the programmatic seams (<see cref="TrySubmitDrop"/>,
+    /// <see cref="IsPieceAccepted"/>, <see cref="IsDragLocked"/>, <see cref="DropRejected"/>);
+    /// the pointer shell (DraggablePiece/DropZone) is a thin layer over them, and
+    /// tests drive the seams directly — never synthetic pointer events.
+    ///
+    /// P22: in multiplayer, slot rendering AND result accuracy derive from the
+    /// shared <see cref="DesignBuildNetworkState"/> (the old optimistic local
+    /// dual-write is deleted). Solo keeps the local blueprint rules.
+    /// P21: host rejects arrive on the sender only; handling defers one frame
+    /// (the host's own rejects invoke synchronously inside the submit call) and
+    /// a stale reject (old submission id) never bounces a newer drag.
+    /// </summary>
+    public class DesignBuildController : ActivityRoomController, IDragDropHost
+    {
+        public const string GentleWrongSlotFeedback = "Almost! That piece fits a different lot. Try another spot.";
+        public const string GentleOccupiedFeedback = "That lot is already built. Try another contribution.";
+        public const string GentleLockedFeedback = "The city is celebrating! Building starts again after the ceremony.";
+        public const string GentleNoZoneFeedback = "No lot there. Drop a piece onto its matching lot.";
+
+        private static readonly Color DesignAccent = new(0.969f, 0.424f, 0.369f); // Creative Coral
+
+        private static readonly string[] BuilderCheers =
+        {
+            "Great fit!",
+            "The city is growing!",
+            "Perfect placement!",
+            "Builders at work!",
+            "Skyline complete!"
+        };
+
+        private readonly DesignBuildRoomState _state = new();
+        private readonly Dictionary<string, DraggablePiece> _pieces = new();
+        private readonly Dictionary<string, DropZone> _zones = new();
+        private readonly HashSet<string> _renderedAccepted = new();
+
+        private GameSession _session;
+        private CareerQuestApp _app;
+        private ResultSource _source;
+        private DesignBuildNetworkState _networkState;
+        private bool _networkSubscribed;
+
+        private TextMeshProUGUI _feedbackText;
+        private TextMeshProUGUI _statusText;
+        private Coroutine _playfieldRoutine;
+        private AvatarRuntimeView _builderNpc;
+        private SpeechBubble _builderBubble;
+
+        public DesignBuildRoomState State => _state;
+        public FutureCityBlueprint Blueprint => _state.Blueprint;
+
         public event Action<MiniGameResult> Completed;
+
+        /// <summary>Fired on the submitting client when a drop is rejected (pieceId).</summary>
+        public event Action<string> DropRejected;
+
+        /// <summary>
+        /// Single drag-lock flag: raised by attempt completion and by the
+        /// ceremony. Drag handlers check it client-side; the host submission
+        /// guard (completion check in the network state) covers the server side.
+        /// </summary>
+        public bool IsDragLocked =>
+            _state.ResultEmitted
+            || AuthoritativeComplete
+            || (_app != null && _app.IsCeremonyActive);
+
+        private bool UsesNetworkState =>
+            _source == ResultSource.Multiplayer && _networkState != null && _networkState.IsSpawned;
+
+        private bool AuthoritativeComplete =>
+            UsesNetworkState ? _networkState.Complete : _state.Blueprint.Complete;
+
+        private int AuthoritativeAcceptedCount =>
+            UsesNetworkState ? _networkState.AcceptedCount : _state.AcceptedPlacements;
 
         public void ResetActivity()
         {
-            _blueprint = FutureCityBlueprint.CreateDefault();
-            _acceptedPlacements = 0;
-            _feedback = "Place city pieces into the future skyline.";
+            _state.ResetForAttempt();
+            _renderedAccepted.Clear();
         }
 
+        /// <summary>Local blueprint rules — the same path the buttons called.</summary>
         public bool TryPlacePiece(string pieceId)
         {
-            var placed = Blueprint.TryPlace(pieceId);
-            if (placed)
+            var placed = _state.TryPlaceLocal(pieceId);
+            SetFeedback(placed
+                ? $"Accepted {pieceId.Replace('_', ' ')} into the Future City."
+                : "That spot is already solved. Try another contribution.");
+            return placed;
+        }
+
+        public bool IsPieceAccepted(string pieceId)
+        {
+            if (UsesNetworkState)
             {
-                _acceptedPlacements++;
-                _feedback = $"Accepted {pieceId.Replace('_', ' ')} into the Future City.";
-            }
-            else
-            {
-                _feedback = "That spot is already solved. Try another contribution.";
+                return _networkState.IsAccepted(pieceId);
             }
 
-            return placed;
+            foreach (var slot in _state.Blueprint.Slots)
+            {
+                if (slot.RequiredPieceId == pieceId)
+                {
+                    return slot.Filled;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Test/QA seam: the live piece object for a piece id (post-mount).</summary>
+        public DraggablePiece PieceFor(string pieceId)
+        {
+            return _pieces.TryGetValue(pieceId, out var piece) ? piece : null;
+        }
+
+        /// <summary>Test/QA seam: the live drop zone for a zone id (post-mount).</summary>
+        public DropZone ZoneFor(string zoneId)
+        {
+            return _zones.TryGetValue(zoneId, out var zone) ? zone : null;
+        }
+
+        /// <summary>
+        /// THE drop seam. Drops resolve here in solo and multiplayer; the pointer
+        /// shell and the tests both call it.
+        /// </summary>
+        public DropSubmitResult TrySubmitDrop(string pieceId, string slotId)
+        {
+            if (IsDragLocked)
+            {
+                SetFeedback(GentleLockedFeedback);
+                RaiseRejected(pieceId);
+                return DropSubmitResult.RejectedLocked;
+            }
+
+            if (DesignBuildNetworkState.PieceIndexFor(pieceId) < 0)
+            {
+                RaiseRejected(pieceId);
+                return DropSubmitResult.RejectedUnknownPiece;
+            }
+
+            if (!string.Equals(pieceId, slotId, StringComparison.Ordinal))
+            {
+                // Wrong-piece slot is deterministic content — bounce locally with
+                // gentle teaching copy (never punish exploration).
+                SetFeedback(GentleWrongSlotFeedback);
+                RaiseRejected(pieceId);
+                return DropSubmitResult.RejectedWrongSlot;
+            }
+
+            if (IsPieceAccepted(pieceId))
+            {
+                SetFeedback(GentleOccupiedFeedback);
+                RaiseRejected(pieceId);
+                return DropSubmitResult.RejectedOccupied;
+            }
+
+            if (UsesNetworkState)
+            {
+                var submissionId = _state.BeginSubmission(pieceId);
+                _networkState.SubmitPlacement(pieceId, submissionId);
+
+                // On the host the server RPC runs inline — the accept may have
+                // already landed by the time SubmitPlacement returns.
+                if (IsPieceAccepted(pieceId))
+                {
+                    _state.CompleteSubmission(pieceId);
+                    return DropSubmitResult.Accepted;
+                }
+
+                return DropSubmitResult.Pending;
+            }
+
+            if (!TryPlacePiece(pieceId))
+            {
+                RaiseRejected(pieceId);
+                return DropSubmitResult.RejectedOccupied;
+            }
+
+            HandlePieceAccepted(pieceId, celebrate: true);
+            UpdateProgress();
+            TryAutoComplete();
+            return DropSubmitResult.Accepted;
+        }
+
+        /// <summary>
+        /// Reject-channel handler core (public seam — the stale-reject scenario
+        /// drives it directly). A reject only bounces the piece when it echoes
+        /// that piece's CURRENT submission id.
+        /// </summary>
+        public void ProcessRejectedPlacement(string pieceId, int submissionId, DesignBuildRejectReason reason)
+        {
+            if (string.IsNullOrEmpty(pieceId) || !_state.IsCurrentSubmission(pieceId, submissionId))
+            {
+                return; // stale — a newer drag of the piece is in flight
+            }
+
+            _state.CompleteSubmission(pieceId);
+            SetFeedback(reason == DesignBuildRejectReason.AlreadyPlaced
+                ? GentleOccupiedFeedback
+                : GentleWrongSlotFeedback);
+
+            if (_pieces.TryGetValue(pieceId, out var piece) && piece != null)
+            {
+                piece.IsAwaitingResult = false;
+                if (!piece.IsDragging)
+                {
+                    piece.SnapToHome();
+                }
+            }
+
+            AudioCueCatalog.TryPlay(EnsureAudio(), "drop_reject");
+            RaiseRejected(pieceId);
         }
 
         public MiniGameResult CreateResult(ResultSource source)
         {
-            var tier = Blueprint.Complete ? CompletionTier.Degree : CompletionTier.Practice;
-            var accuracy = Blueprint.Slots.Count == 0 ? 0f : (float)_acceptedPlacements / Blueprint.Slots.Count;
+            var totalSlots = _state.Blueprint.Slots.Count;
+            var acceptedCount = _state.AcceptedPlacements;
+            var complete = _state.Blueprint.Complete;
+
+            // P22: in multiplayer, result accuracy derives from network state.
+            if (source == ResultSource.Multiplayer && _networkState != null && _networkState.IsSpawned)
+            {
+                acceptedCount = _networkState.AcceptedCount;
+                complete = _networkState.Complete;
+            }
+
+            var tier = complete ? CompletionTier.Degree : CompletionTier.Practice;
+            var accuracy = totalSlots == 0 ? 0f : (float)acceptedCount / totalSlots;
             return new MiniGameResult(
                 CareerConfig.DesignBuildId,
                 "Future City Design Build",
@@ -63,119 +270,463 @@ namespace CareerQuest
         public void Render(Transform parent, GameSession session, CareerQuestApp app, ResultSource source)
         {
             BeginRoom(CareerConfig.DesignBuildId);
-            ResetActivity();
-            var panel = UiBuilder.FullPanel(parent, "DesignBuildPanel", new Color(0.88f, 0.95f, 1f, 0.04f));
-            var blueprintReviewed = false;
-            var helperUsed = false;
-            RectTransform tray = null;
+            _session = session;
+            _app = app;
+            _source = source;
 
-            var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", ActivityRoomChrome.DesignPaper);
-            UiBuilder.Place(briefing, -300f, 282f, 620f, 94f);
+            UnsubscribeNetwork();
+            _networkState = FindAnyObjectByType<DesignBuildNetworkState>();
 
-            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, ActivityRoomChrome.DesignInk, TypeRole.Display, TypeWeight.SemiBold);
-            UiBuilder.Place(title.rectTransform, -132f, 26f, 340f, 24f);
+            _state.ResetForAttempt();
+            _renderedAccepted.Clear();
+            _pieces.Clear();
+            _zones.Clear();
+            _builderNpc = null;
+            _builderBubble = null;
 
-            var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 13, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));
-            UiBuilder.Place(feedback.rectTransform, -132f, 0f, 380f, 22f);
-
-            var progress = UiBuilder.Text(briefing, "DesignBuildProgress", "Step 1: review the blueprint.", 12, TextAnchor.MiddleLeft, new Color(0.08f, 0.16f, 0.2f));
-            UiBuilder.Place(progress.rectTransform, -132f, -26f, 380f, 20f);
-
-            var review = UiBuilder.Button(briefing, "ReviewBlueprintButton", "Review", () =>
+            if (UsesNetworkState)
             {
-                blueprintReviewed = true;
-                _feedback = "Blueprint reviewed: every career building needs its matching lot.";
-                feedback.text = _feedback;
-                progress.text = "Step 2: ask the helper.";
-            });
-            UiBuilder.Place(review.GetComponent<RectTransform>(), 242f, 18f, 96f, 30f);
-            ActivityRoomChrome.StyleButton(review, ActivityRoomChrome.ButtonPrimary, 15);
-
-            var helper = UiBuilder.Button(briefing, "PatternHelperButton", "Helper", () =>
-            {
-                if (!blueprintReviewed)
-                {
-                    _feedback = "Review the blueprint first so the helper clue makes sense.";
-                    feedback.text = _feedback;
-                    return;
-                }
-
-                helperUsed = true;
-                _feedback = "Helper clue: care, fairness, art, science, invention.";
-                feedback.text = _feedback;
-                progress.text = "Step 3: place all five pieces.";
-                tray.gameObject.SetActive(true);
-            });
-            UiBuilder.Place(helper.GetComponent<RectTransform>(), 242f, -22f, 96f, 30f);
-            ActivityRoomChrome.StyleButton(helper, ActivityRoomChrome.ButtonPrimary, 15);
-
-            tray = UiBuilder.Panel(panel, "DesignBuildToolTray", new Color(0.95f, 0.99f, 1f, 0.74f));
-            UiBuilder.Place(tray, -280f, -322f, 610f, 46f);
-            tray.gameObject.SetActive(false);
-
-            var trayLabel = UiBuilder.Text(tray, "DesignBuildTrayLabel", "Place", 12, TextAnchor.MiddleCenter, ActivityRoomChrome.DesignInk);
-            UiBuilder.Place(trayLabel.rectTransform, -282f, 0f, 48f, 22f);
-
-            var index = 0;
-            foreach (var piece in Blueprint.Pieces)
-            {
-                var pieceButton = UiBuilder.Button(tray, $"{piece.Id}Button", piece.DisplayName, () =>
-                {
-                    if (!blueprintReviewed || !helperUsed)
-                    {
-                        _feedback = "Prepare first: review the blueprint and use the Pattern Helper.";
-                        feedback.text = _feedback;
-                        return;
-                    }
-
-                    var networkState = FindAnyObjectByType<DesignBuildNetworkState>();
-                    if (source == ResultSource.Multiplayer && networkState != null && networkState.IsSpawned)
-                    {
-                        networkState.SubmitPlacement(piece.Id);
-                    }
-
-                    TryPlacePiece(piece.Id);
-                    feedback.text = _feedback;
-                    progress.text = $"{_acceptedPlacements}/5 city pieces placed.";
-
-                    if (Blueprint.Complete)
-                    {
-                        progress.text = "City complete. Finish to add your badge.";
-                    }
-                });
-
-                UiBuilder.Place(pieceButton.GetComponent<RectTransform>(), -224f + index * 106f, 0f, 94f, 28f);
-                ActivityRoomChrome.StyleButton(pieceButton, ActivityRoomChrome.ButtonPrimary, 12);
-                index++;
+                // Attempt lifecycle: fresh attempt after a completed one; joining
+                // a partner's in-progress attempt never wipes it.
+                _networkState.BeginAttempt();
+                _state.SyncedAttemptNumber = _networkState.AttemptNumber;
+                _networkState.Changed += HandleNetworkChanged;
+                _networkState.PlacementRejected += HandleNetworkRejected;
+                _networkSubscribed = true;
             }
 
-            var complete = UiBuilder.Button(panel, "DesignBuildCompleteButton", "Finish Build", () =>
+            BuildHud(parent);
+
+            if (_playfieldRoutine != null)
             {
-                if (!Blueprint.Complete)
-                {
-                    _feedback = $"Place all five city pieces first. Current progress: {_acceptedPlacements}/5.";
-                    feedback.text = _feedback;
-                    return;
-                }
+                StopCoroutine(_playfieldRoutine);
+            }
 
-                var networkState = FindAnyObjectByType<DesignBuildNetworkState>();
-                if (source == ResultSource.Multiplayer && networkState != null && networkState.IsSpawned && !networkState.Complete)
-                {
-                    _feedback = "Wait for both players to place all city pieces.";
-                    feedback.text = _feedback;
-                    return;
-                }
+            _playfieldRoutine = StartCoroutine(MountPlayfieldWhenRoomRevealed());
+        }
 
-                var result = CreateResult(source);
-                Completed?.Invoke(result);
-                TryCompleteRoom(session, app, result);
-            });
-            UiBuilder.Place(complete.GetComponent<RectTransform>(), 438f, -322f, 136f, 34f);
-            ActivityRoomChrome.StyleButton(complete, ActivityRoomChrome.ButtonReady, 14);
+        // ------------------------------------------------------------------
+        // IDragDropHost — the pointer shell delegates every decision here.
+        // ------------------------------------------------------------------
 
-            var campus = UiBuilder.Button(panel, "DesignBuildCampusButton", "Campus", () => ExitToCampus(app));
+        public bool CanBeginDrag(string pieceId)
+        {
+            return !IsDragLocked && !IsPieceAccepted(pieceId);
+        }
+
+        public void NotifyPickUp(string pieceId)
+        {
+            // A new pickup invalidates any in-flight submission so a late reject
+            // for the old submission reads as stale.
+            _state.InvalidatePendingSubmission(pieceId);
+
+            if (UsesNetworkState)
+            {
+                _networkState.SetHeldPiece(pieceId); // P17 plumbing
+            }
+
+            AudioCueCatalog.TryPlay(EnsureAudio(), "drag_pickup");
+        }
+
+        public void NotifyRelease(string pieceId)
+        {
+            if (UsesNetworkState)
+            {
+                _networkState.ClearHeldPiece(); // P17 plumbing
+            }
+        }
+
+        public void HandleDrop(DraggablePiece piece, DropZone zone)
+        {
+            if (piece == null)
+            {
+                return;
+            }
+
+            if (zone == null)
+            {
+                SetFeedback(GentleNoZoneFeedback);
+                piece.SnapToHome();
+                return;
+            }
+
+            var result = TrySubmitDrop(piece.PieceId, zone.ZoneId);
+            switch (result)
+            {
+                case DropSubmitResult.Accepted:
+                    // Visuals were applied by the accept path (local or network).
+                    break;
+                case DropSubmitResult.Pending:
+                    piece.IsAwaitingResult = true;
+                    break;
+                default:
+                    piece.SnapToHome();
+                    break;
+            }
+        }
+
+        public bool WouldAcceptDrop(string pieceId, string zoneId)
+        {
+            return string.Equals(pieceId, zoneId, StringComparison.Ordinal)
+                && !IsPieceAccepted(pieceId)
+                && !IsDragLocked;
+        }
+
+        // ------------------------------------------------------------------
+        // Internals
+        // ------------------------------------------------------------------
+
+        private void BuildHud(Transform parent)
+        {
+            UiBuilder.FullPanel(parent, "DesignBuildPanel", new Color(0.88f, 0.95f, 1f, 0.04f));
+
+            var refs = ActivityRoomChrome.MountQuestHud(
+                parent,
+                "DesignBuild",
+                ActivityRoomChrome.DesignPaper,
+                DesignAccent,
+                "Future City Workshop",
+                _state.Feedback,
+                DesignBuildRoomState.DefaultProgress);
+            _feedbackText = refs.Prompt;
+            _statusText = refs.Status;
+
+            var campus = UiBuilder.Button(parent, "DesignBuildCampusButton", "Campus", () => ExitToCampus(_app));
             UiBuilder.Place(campus.GetComponent<RectTransform>(), 568f, -322f, 106f, 34f);
             ActivityRoomChrome.StyleButton(campus, ActivityRoomChrome.ButtonPrimary, 14);
+        }
+
+        private IEnumerator MountPlayfieldWhenRoomRevealed()
+        {
+            var world = CampusWorldController.Ensure();
+            var safety = 0;
+            while (world.IsRoomVeilActive && _feedbackText != null && safety++ < 600)
+            {
+                yield return null;
+            }
+
+            if (_feedbackText == null)
+            {
+                _playfieldRoutine = null;
+                yield break; // route changed before the room revealed
+            }
+
+            BuildPlayfield(world.WorldRoot);
+            _playfieldRoutine = null;
+        }
+
+        private void BuildPlayfield(Transform worldRoot)
+        {
+            if (worldRoot == null)
+            {
+                return;
+            }
+
+            DraggablePiece.EnsureInputShell();
+
+            var existing = worldRoot.Find(DesignBuildStudioLayout.PlayfieldName);
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+            }
+
+            var playfield = new GameObject(DesignBuildStudioLayout.PlayfieldName).transform;
+            playfield.SetParent(worldRoot, false);
+
+            _pieces.Clear();
+            _zones.Clear();
+            _renderedAccepted.Clear();
+
+            var pieces = _state.Blueprint.Pieces;
+            for (var i = 0; i < pieces.Count; i++)
+            {
+                var pieceId = pieces[i].Id;
+                var slotPosition = AnchorPosition(
+                    worldRoot,
+                    DesignBuildStudioLayout.SlotAnchorPrefix + pieceId,
+                    DesignBuildStudioLayout.SlotPosition(i));
+                var trayPosition = AnchorPosition(
+                    worldRoot,
+                    DesignBuildStudioLayout.TrayAnchorPrefix + i,
+                    DesignBuildStudioLayout.TrayPosition(i));
+
+                var zoneObject = new GameObject($"DropZone_{pieceId}", typeof(BoxCollider2D), typeof(DropZone));
+                zoneObject.transform.SetParent(playfield, false);
+                zoneObject.transform.localPosition = slotPosition;
+                var zoneCollider = zoneObject.GetComponent<BoxCollider2D>();
+                zoneCollider.size = new Vector2(1.05f, 0.95f);
+                var zone = zoneObject.GetComponent<DropZone>();
+                zone.Configure(pieceId, 320);
+                _zones[pieceId] = zone;
+
+                var pieceObject = new GameObject($"Piece_{pieceId}", typeof(SpriteRenderer));
+                pieceObject.transform.SetParent(playfield, false);
+                pieceObject.transform.localPosition = trayPosition;
+                var renderer = pieceObject.GetComponent<SpriteRenderer>();
+                renderer.sprite = AssetCatalog.SpriteFor($"prop.city_piece_{pieceId}");
+                renderer.sortingOrder = 330; // characters/props band
+                ApplyWorldSize(pieceObject.transform, renderer.sprite, DesignBuildStudioLayout.PieceWorldSize);
+
+                pieceObject.AddComponent<BoxCollider2D>();
+                pieceObject.AddComponent<DragFeel>();
+                var draggable = pieceObject.AddComponent<DraggablePiece>();
+                draggable.Configure(pieceId, this, pieceObject.transform.position);
+                _pieces[pieceId] = draggable;
+            }
+
+            EnsureBuilderNpc();
+            SyncVisualsFromAuthority(celebrateNew: false);
+            UpdateProgress();
+        }
+
+        private static Vector3 AnchorPosition(Transform worldRoot, string anchorName, Vector2 fallback)
+        {
+            foreach (var child in worldRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (child.name == anchorName)
+                {
+                    return child.position;
+                }
+            }
+
+            return new Vector3(fallback.x, fallback.y, 0f);
+        }
+
+        private static void ApplyWorldSize(Transform target, Sprite sprite, Vector2 worldSize)
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            var bounds = sprite.bounds.size;
+            var width = Mathf.Approximately(bounds.x, 0f) ? 1f : bounds.x;
+            var height = Mathf.Approximately(bounds.y, 0f) ? 1f : bounds.y;
+            target.localScale = new Vector3(worldSize.x / width, worldSize.y / height, 1f);
+        }
+
+        private void HandleNetworkChanged()
+        {
+            if (!_networkSubscribed)
+            {
+                return;
+            }
+
+            if (_feedbackText == null)
+            {
+                // Room torn down (route change) — drop the subscription lazily.
+                UnsubscribeNetwork();
+                return;
+            }
+
+            if (UsesNetworkState && _networkState.AttemptNumber != _state.SyncedAttemptNumber)
+            {
+                // Partner started a fresh attempt after completion — re-open the room.
+                _state.SyncedAttemptNumber = _networkState.AttemptNumber;
+                _state.ResetForAttempt();
+            }
+
+            SyncVisualsFromAuthority(celebrateNew: true);
+            UpdateProgress();
+            TryAutoComplete();
+        }
+
+        private void HandleNetworkRejected(int pieceIndex, int submissionId, DesignBuildRejectReason reason)
+        {
+            // Host's own rejects invoke synchronously inside the submit call
+            // stack — always defer one frame before reacting.
+            StartCoroutine(DeferredReject(pieceIndex, submissionId, reason));
+        }
+
+        private IEnumerator DeferredReject(int pieceIndex, int submissionId, DesignBuildRejectReason reason)
+        {
+            yield return null;
+            ProcessRejectedPlacement(DesignBuildNetworkState.PieceIdFor(pieceIndex), submissionId, reason);
+        }
+
+        /// <summary>Slot rendering derives from the authoritative source (P22).</summary>
+        private void SyncVisualsFromAuthority(bool celebrateNew)
+        {
+            foreach (var piece in _state.Blueprint.Pieces)
+            {
+                var pieceId = piece.Id;
+                var accepted = IsPieceAccepted(pieceId);
+                if (accepted && !_renderedAccepted.Contains(pieceId))
+                {
+                    _state.CompleteSubmission(pieceId);
+                    HandlePieceAccepted(pieceId, celebrateNew);
+                }
+                else if (!accepted && _renderedAccepted.Contains(pieceId))
+                {
+                    // Fresh attempt: the slot opened back up.
+                    _renderedAccepted.Remove(pieceId);
+                    if (_pieces.TryGetValue(pieceId, out var pieceView) && pieceView != null)
+                    {
+                        pieceView.UnlockAtHome();
+                    }
+
+                    if (_zones.TryGetValue(pieceId, out var zone) && zone != null)
+                    {
+                        zone.IsOccupied = false;
+                        zone.HideGhost();
+                    }
+                }
+            }
+        }
+
+        private void HandlePieceAccepted(string pieceId, bool celebrate)
+        {
+            _renderedAccepted.Add(pieceId);
+
+            Vector3 slotPosition;
+            if (_zones.TryGetValue(pieceId, out var zone) && zone != null)
+            {
+                zone.IsOccupied = true;
+                zone.HideGhost();
+                slotPosition = zone.transform.position;
+            }
+            else
+            {
+                var index = DesignBuildNetworkState.PieceIndexFor(pieceId);
+                var fallback = DesignBuildStudioLayout.SlotPosition(Mathf.Max(0, index));
+                slotPosition = new Vector3(fallback.x, fallback.y, 0f);
+            }
+
+            if (_pieces.TryGetValue(pieceId, out var piece) && piece != null)
+            {
+                piece.LockAtPosition(slotPosition);
+                if (celebrate)
+                {
+                    var feel = piece.GetComponent<DragFeel>();
+                    if (feel != null)
+                    {
+                        feel.PlayAcceptPunch(DesignAccent);
+                    }
+                }
+            }
+
+            SetFeedback($"Accepted {pieceId.Replace('_', ' ')} into the Future City.");
+
+            if (celebrate)
+            {
+                CheerBuilderNpc();
+                AudioCueCatalog.TryPlay(EnsureAudio(), "drop_accept");
+            }
+        }
+
+        private void TryAutoComplete()
+        {
+            if (_state.ResultEmitted || !AuthoritativeComplete)
+            {
+                return;
+            }
+
+            if (_session == null || _app == null)
+            {
+                return; // seam-only usage without a rendered room
+            }
+
+            _state.MarkResultEmitted(); // raises the drag lock with completion
+            SetStatus("City complete! Badge ceremony starting...");
+
+            var result = CreateResult(_source);
+            Completed?.Invoke(result);
+            TryCompleteRoom(_session, _app, result);
+        }
+
+        /// <summary>P14: the builder partner cheers on accepted placements.</summary>
+        private void CheerBuilderNpc()
+        {
+            EnsureBuilderNpc();
+            if (_builderNpc == null)
+            {
+                return;
+            }
+
+            _builderNpc.TriggerCelebrate(1.2f);
+
+            if (_builderBubble != null)
+            {
+                var index = Mathf.Clamp(AuthoritativeAcceptedCount - 1, 0, BuilderCheers.Length - 1);
+                _builderBubble.Show(BuilderCheers[index], 2.2f);
+            }
+        }
+
+        private void EnsureBuilderNpc()
+        {
+            if (_builderNpc != null)
+            {
+                return;
+            }
+
+            var npcObject = GameObject.Find(DesignBuildStudioLayout.BuilderNpcName);
+            if (npcObject == null)
+            {
+                return;
+            }
+
+            _builderNpc = npcObject.GetComponent<AvatarRuntimeView>();
+            if (_builderNpc != null && _builderBubble == null)
+            {
+                _builderBubble = SpeechBubble.Attach(npcObject.transform, new Vector3(0.15f, 1.2f, 0f), 2.4f);
+            }
+        }
+
+        private void UpdateProgress()
+        {
+            var total = _state.Blueprint.Slots.Count;
+            SetStatus(AuthoritativeComplete
+                ? "City complete! Badge ceremony starting..."
+                : $"{AuthoritativeAcceptedCount}/{total} city pieces placed.");
+        }
+
+        private void SetFeedback(string message)
+        {
+            _state.Feedback = message;
+            if (_feedbackText != null)
+            {
+                _feedbackText.text = message;
+            }
+        }
+
+        private void SetStatus(string message)
+        {
+            if (_statusText != null)
+            {
+                _statusText.text = message;
+            }
+        }
+
+        private void RaiseRejected(string pieceId)
+        {
+            DropRejected?.Invoke(pieceId);
+        }
+
+        private AudioSource EnsureAudio()
+        {
+            var audio = GetComponent<AudioSource>();
+            if (audio == null)
+            {
+                audio = gameObject.AddComponent<AudioSource>();
+            }
+
+            return audio;
+        }
+
+        private void UnsubscribeNetwork()
+        {
+            if (_networkSubscribed && _networkState != null)
+            {
+                _networkState.Changed -= HandleNetworkChanged;
+                _networkState.PlacementRejected -= HandleNetworkRejected;
+            }
+
+            _networkSubscribed = false;
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeNetwork();
         }
     }
 }

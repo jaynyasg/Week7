@@ -6,12 +6,68 @@ namespace CareerQuest
     {
         public static void ShowDesignBuild(CampusWorldBuilder builder, GameSession session)
         {
-            builder.AddCatalogSprite("DesignBuildRoomBackdrop", "room.design_build", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
-            builder.AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
-            builder.AddBuildTable();
-            builder.AddCatalogSprite("DesignBuildBlueprintProp", "prop.blueprint", new Vector2(-3.15f, -0.55f), new Vector2(0.62f, 0.62f), 7);
+            // U6: the room route mounts the authored DesignBuildStudio prefab
+            // (visual-only, no NetworkObject). When the prefab has not been built
+            // yet, a code-built diorama with EMPTY lots keeps the room playable —
+            // the controller's drag playfield supplies pieces in both paths.
+            if (!TryMountDesignBuildStudio(builder))
+            {
+                builder.AddCatalogSprite("DesignBuildRoomBackdrop", "room.design_build", new Vector2(0f, 0.12f), new Vector2(7.4f, 4.16f), 0);
+                builder.AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
+                BuildFallbackTable(builder);
+                builder.AddCatalogSprite("DesignBuildBlueprintProp", "prop.blueprint", new Vector2(-3.15f, -0.55f), new Vector2(0.62f, 0.62f), 7);
+            }
+
             builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Planner", -3.6f, -1.35f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerTeal, 0.2f, true, session?.SelectedAvatar.SpriteAssetId, false);
-            builder.AddCharacter("Builder", 3.65f, -1.33f, CampusWorldPalette.PlayerBlue, 1.7f, true, "npc.builder_partner", false);
+            AddBuilderNpc(builder);
+        }
+
+        private static bool TryMountDesignBuildStudio(CampusWorldBuilder builder)
+        {
+            var prefab = Resources.Load<GameObject>(DesignBuildStudioLayout.PrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    $"DesignBuildStudio prefab missing at Resources/{DesignBuildStudioLayout.PrefabResourcePath} — " +
+                    "run 'Career Quest/World/Build Design Build Studio Prefab' " +
+                    "(CareerQuestRoomPrefabBuilder.BuildDesignBuildStudio). Falling back to the code-built room.");
+                return false;
+            }
+
+            var instance = Object.Instantiate(prefab, builder.Root);
+            instance.name = "DesignBuildStudio";
+            return true;
+        }
+
+        /// <summary>Fallback blueprint table with EMPTY lots (pieces live in the drag tray).</summary>
+        private static void BuildFallbackTable(CampusWorldBuilder builder)
+        {
+            builder.AddShape("BuildTable", CampusSpriteKind.Square, new Vector2(0f, -0.45f), new Vector2(6.6f, 1.05f), CampusWorldPalette.Plaza, 3);
+            var blueprint = FutureCityBlueprint.CreateDefault();
+            for (var i = 0; i < blueprint.Pieces.Count; i++)
+            {
+                var lot = DesignBuildStudioLayout.SlotPosition(i);
+                builder.AddShape($"{blueprint.Pieces[i].DisplayName}LotPad", CampusSpriteKind.Circle, new Vector2(lot.x, lot.y - 0.25f), new Vector2(0.95f, 0.22f), CampusWorldPalette.Shadow, 4);
+            }
+
+            builder.AddShape("TrayBoard", CampusSpriteKind.Square, new Vector2(0f, DesignBuildStudioLayout.TrayPosition(0).y - 0.05f), new Vector2(6.2f, 1.0f), CampusWorldPalette.Plaza, 2);
+        }
+
+        /// <summary>
+        /// The builder partner NPC is created in code for both paths (prefab and
+        /// fallback) so the controller's P14 cheer hook always finds the same
+        /// AvatarRuntimeView + name.
+        /// </summary>
+        private static void AddBuilderNpc(CampusWorldBuilder builder)
+        {
+            var npcObject = new GameObject(DesignBuildStudioLayout.BuilderNpcName, typeof(SpriteRenderer), typeof(AvatarRuntimeView));
+            npcObject.transform.SetParent(builder.Root, false);
+            npcObject.transform.localPosition = new Vector3(
+                DesignBuildStudioLayout.NpcPosition.x,
+                DesignBuildStudioLayout.NpcPosition.y,
+                0f);
+            builder.AddShape("BuilderNpcShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, npcObject.transform);
+            npcObject.GetComponent<AvatarRuntimeView>().ApplySpriteAsset("npc.builder_partner");
         }
 
         public static void ShowClinic(CampusWorldBuilder builder, GameSession session)

@@ -174,31 +174,23 @@ namespace CareerQuest.Tests
             return null;
         }
 
+        /// <summary>
+        /// U6 migration: Design Build completes through the drag seam
+        /// (TrySubmitDrop), not legacy button drivers. Completion auto-routes
+        /// emitter → ceremony → router when the final piece lands.
+        /// </summary>
         private static void CompleteDesignBuildRoom()
         {
-            FindButton("ReviewBlueprintButton").onClick.Invoke();
-            FindButton("PatternHelperButton").onClick.Invoke();
+            var controller = Object.FindAnyObjectByType<DesignBuildController>();
+            Assert.That(controller, Is.Not.Null, "DesignBuildController should exist after ShowDesignBuild.");
 
             foreach (var pieceId in new[] { "clinic", "court", "studio", "lab", "art_tower" })
             {
-                FindButton($"{pieceId}Button").onClick.Invoke();
+                Assert.That(
+                    controller.TrySubmitDrop(pieceId, pieceId),
+                    Is.EqualTo(DropSubmitResult.Accepted),
+                    $"Drop of '{pieceId}' should be accepted.");
             }
-
-            FindButton("DesignBuildCompleteButton").onClick.Invoke();
-        }
-
-        private static Button FindButton(string name)
-        {
-            foreach (var button in Resources.FindObjectsOfTypeAll<Button>())
-            {
-                if (button.name == name)
-                {
-                    return button;
-                }
-            }
-
-            Assert.Fail($"{name} should exist.");
-            return null;
         }
     }
 }
