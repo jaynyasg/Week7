@@ -224,6 +224,10 @@ Suggested districts:
 
 Campus life reaction rule: completed stations should make the campus feel a little more alive beyond the city-piece skyline. Use small, derived reactions only: completed station buildings can glow, pulse, animate a sign, show the station guide waving/cheering, or add one small ambient prop near that station. Campus may show 1-2 ambient signs of progress at a time so it feels lively without clutter. Do not build a giant map rebuild, pathfinding crowd simulation, or persistent world-state system. Reactions derive from `GameSession` best results plus station metadata and should be deterministic enough for screenshots/tests.
 
+Classroom access rule: every in-plan station should be playable with a single pointer path (mouse/touch-style drag or click) and without relying on sound, color alone, hover-only cues, or fast motion. Keep keyboard support as a convenience, but the classroom-safe path should work on a shared laptop, projector, or touchscreen-style setup. Each important station cue should have at least two signals: shape/icon/position plus color, text plus icon, animation plus static highlight, or audio plus visual feedback. Add a reduced-motion / quiet-classroom mode that tones down particles, camera shakes, repeated sparkles, and nonessential audio without removing completion clarity.
+
+Facilitator controls rule: do not build a teacher dashboard, accounts, rosters, analytics, or saved profiles. Do add lightweight local-session controls that help in classrooms and demos: reset current run, return to campus, mute/quiet mode, reduced motion, and restart demo route. These controls should not persist child data, should not affect scoring semantics, and should be visible only in existing pause/debug/demo surfaces rather than becoming a separate educator product.
+
 Guided Party Run should require at least three unique activity completions before it routes to the reveal. A shorter run can return to campus or continue the sequence, but it should not bypass the existing reveal-readiness semantics. Normal play keeps the same rule: any three unique completed activities, in any order, can unlock the reveal.
 
 Reveal richness thresholds for the final 10-station build: keep the reveal unlock at 3 unique station completions, but make the ceremony richer as more stations are completed. The reveal should use one content-driven presentation resolver, not separate bespoke cinematic systems per outcome.
@@ -307,6 +311,8 @@ Replay options rule: first play should enter the default station seed with norma
 Station intro rule: every station starts with a very short theatrical beat before play begins. The intro should include one line of premise, one NPC or room reaction, a visible reward preview, and an immediate handoff to the toy challenge. Normal pacing should keep this to roughly 3-5 seconds. `Quick` pacing may compress it to a single line or skip straight to play while still showing the reward preview somewhere in the station UI.
 
 Station guide rule: every station has one tiny guide identity or mascot voice. The guide gives the intro line, first hint, escalation hint, and success line. This is not a dialogue tree. Guide copy should be safe, encouraging, short, and data-driven from the station definition. Guides can be a person, room voice, robot, tool, or playful station mascot; first pass may render them as simple portraits, icons, or room labels rather than fully animated characters.
+
+Early-reader copy rule: every kid-facing station line should be short enough to read aloud quickly in a classroom. Prefer one sentence, avoid jargon, and pair important words with icons or object labels where possible. Do not require reading a paragraph to understand what to do next. Validation should flag empty copy, overlong guide lines, overlong button labels, unsupported career jargon, and any station instruction that cannot be understood from the visible objects plus one short prompt.
 
 Shared juice pass rule: every station uses a small shared feedback kit so actions feel satisfying without bespoke animation systems. Correct actions get a small pop, sparkle, bounce, or friendly sound. Wrong actions get a gentle wobble, soft reset, or encouraging hint nudge, never a harsh buzz or shame cue. Station completion gets a short celebration. Accessory unlock gets the Accessory Spotlight cue. Combo unlock gets a distinct Combo Spark cue. Reuse shared effects/audio ids and keep station-specific flair to color, icon, guide line, and object reaction.
 
@@ -660,6 +666,7 @@ Avatar: wearing goggles + tool belt
 | Ten stations become ten bespoke network systems | Implement multiplayer at the `ToyInteractionKit` pattern level. Sync accepted actions, progress, rejects, and completion, not per-frame drag positions. |
 | Ten stations cause route/switch sprawl | Use generic station routing / catalog-driven dispatch for Party Pack stations. Validate every station has a campus entrance and route target. |
 | Auto-entry causes wrong-room or crowded hub problems | Use district layout, non-overlapping entrance radii, nearby highlight, and `WorldAnchors` overlap validation. |
+| Classroom setup makes input/audio/motion brittle | Require pointer-first station completion, non-color-only cues, quiet/reduced-motion options, and local reset/mute controls without accounts or dashboards. |
 | Campus life reactions become a simulation project | Keep reactions derived, tiny, and deterministic: glow/sign/guide/prop only, with 1-2 ambient signs visible at once. |
 | Career scoring becomes muddy | Keep trait weights simple and explainable. Add tests for expected top careers for representative trait profiles. |
 | Accessories consume too much art time | Start with simple overlays/badge-like props and only require three visible accessories by reveal time. |
@@ -767,6 +774,10 @@ Bad station data should fail loudly in validation and degrade gracefully during 
 
 This expansion must not introduce accounts, chat, matchmaking, persisted child profiles, or child-identifying analytics. Party Run state, accessory unlocks, combo cards, and reveal outputs are session-only and derived from local `GameSession` results. Copy safety is part of the threat model: career outcomes must be framed as playful possibilities, never deterministic labels or directives.
 
+Privacy posture for classroom/demo use: all Party Campus state remains local, session-scoped, and resettable. Screenshots or proof artifacts should be generated only by explicit developer/demo commands and should not include child names, rosters, free-text personal data, or network analytics. If a future follow-up adds persistence, sharing, accounts, or telemetry, that must be a separate privacy review and is outside this plan.
+
+Pretend-play safety rule: stations that touch care, diagnosis, law, weather, food needs, or community safety must stay clearly fictional and low-pressure. Vet/health stations should say "care clue," "comfort," or "practice" rather than real medical advice. Logic/legal stations should focus on fairness, evidence, and storytelling rather than real legal guidance. Weather/rescue stations should use playful preparation and helping language, not disaster fear. Food-need clues should avoid shaming, dieting, or real allergy instruction. These rules belong in the static copy validation pass.
+
 ## Acceptance Criteria
 
 - A player can complete at least five short stations in under five minutes.
@@ -794,12 +805,18 @@ This expansion must not introduce accounts, chat, matchmaking, persisted child p
 - Existing three core rooms still count toward reveal and keep current behavior.
 - Existing optional-room results still count toward reveal eligibility.
 - No new flow asks for accounts, chat, profiles, or persisted child data.
+- Kid-facing station copy is short, icon-supported where possible, and does not require paragraph reading to play.
+- Care, diagnosis, legal, weather, food-need, and rescue station copy stays fictional, low-pressure, and validation-checked.
+- Classroom/demo controls can reset the current run, return to campus, mute/quiet the experience, reduce motion, and restart the guided route without saving child data.
+- Stations are playable through a pointer-first path and do not depend on sound, color alone, hover-only cues, or fast motion.
 - Guided demo route is optional and presenter-driven; it must not force normal free-choice players into a fixed station order.
 - Campus station entry is automatic on entering the station area; final build should not require pressing E, Space, or Return to enter a mini-game.
 
 ## Testing Strategy
 
-Use definition validation plus one end-to-end PlayMode proof as the first test gate. Add EditMode tests for station definition/catalog/career/accessory/copy validation: ids align, seed ids are unique, guide identity and guide copy exist, intro premise/reaction/reward-preview copy exists, replay seed selection is valid, shared feedback cue ids are valid, asset keys exist, reward ids exist, object counts and object roles are valid, at least 4 objects per seed participate in the task or clue chain, hint ladder copy/targets exist, combo-card station ids are valid, career tags are recognized, copy avoids banned deterministic phrases, career scoring calibration profiles produce plausible top paths/families, and every playable station can produce a valid result contract.
+Use definition validation plus one end-to-end PlayMode proof as the first test gate. Add EditMode tests for station definition/catalog/career/accessory/copy validation: ids align, seed ids are unique, guide identity and guide copy exist, intro premise/reaction/reward-preview copy exists, replay seed selection is valid, shared feedback cue ids are valid, asset keys exist, reward ids exist, object counts and object roles are valid, at least 4 objects per seed participate in the task or clue chain, hint ladder copy/targets exist, combo-card station ids are valid, career tags are recognized, copy avoids banned deterministic phrases, copy stays short/readable/icon-supported where possible, care/legal/weather/food/rescue copy stays fictional and low-pressure, career scoring calibration profiles produce plausible top paths/families, and every playable station can produce a valid result contract.
+
+Add a classroom access smoke test set before final demo: pointer-first station completion works without keyboard-only steps; required station cues have non-color visual alternatives; quiet/reduced-motion mode still shows clear success/failure/reward feedback; local reset/return-to-campus/restart-demo controls clear only session state and do not create persistence or analytics.
 
 Add one PlayMode test for Robotics Rescue before multiplying content. The test should cover: station render, hint ladder escalation, toy completion, `ActivityResultEmitter` duplicate gate, normal `MiniGameResult`, derived accessory unlock, Accessory Spotlight availability, campus evolution city piece, gallery compatibility, and reveal-readiness compatibility. This is the proof that the data spine works in the real scene lifecycle, not just in static tables.
 
@@ -934,7 +951,7 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - [ ] **T1 (P1, human: ~2h / Codex: ~15min)** - Station data - Add static `PartyStationDefinition` definitions and validation tests.
   - Surfaced by: Architecture, Error Review, and grill-me content review - station ids, seed ids, asset keys, rewards, career tags, copy safety, and station content quality need a loud validation gate.
   - Files: `Assets/_CareerQuest/Scripts/Catalog`, `Assets/_CareerQuest/Scripts/Config`, `Assets/_CareerQuest/Tests/EditMode`.
-  - Verify: EditMode station/catalog/career/accessory/object-role/copy validation tests pass, every station uses the explicit `PartyStationDefinition` / `PartyStationSeedDefinition` / `PartyStationObjectDefinition` schema, every station maps to a supported `ToyPatternId`, every station has guide identity plus intro/hint/escalation/success copy, every seed has intro premise/reaction/reward-preview copy, every seed has 4-6 interactables, at least 4 objects participate in the task or clue chain, and every seed passes the Station Content Rubric.
+  - Verify: EditMode station/catalog/career/accessory/object-role/copy validation tests pass, every station uses the explicit `PartyStationDefinition` / `PartyStationSeedDefinition` / `PartyStationObjectDefinition` schema, every station maps to a supported `ToyPatternId`, every station has guide identity plus intro/hint/escalation/success copy, every seed has intro premise/reaction/reward-preview copy, copy passes early-reader and pretend-play safety checks, every seed has 4-6 interactables, at least 4 objects participate in the task or clue chain, and every seed passes the Station Content Rubric.
 - [ ] **T2 (P1, human: ~2-3h / Codex: ~15-30min)** - Station play - Add `PartyStationController` and Robotics Rescue end-to-end proof.
   - Surfaced by: First Build Checkpoint - prove one complete toy station before multiplying content.
   - Files: `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Scripts/UI/CareerQuestApp.cs`, `Assets/_CareerQuest/Tests/PlayMode`.
@@ -975,6 +992,10 @@ Synthesized from this review's findings. Each task derives from a specific findi
   - Surfaced by: Grill-me UX gap - current campus entry requires precise positioning plus E/Space/Return, which can feel fiddly.
   - Files: `Assets/_CareerQuest/Scripts/Hub/PlayerAvatarController.cs`, `Assets/_CareerQuest/Scripts/Hub/BuildingEntrance.cs`, `Assets/_CareerQuest/Scripts/UI/CareerQuestApp.cs`, hub entry tests.
   - Verify: walking into an entrance area routes to the station once after dwell, with route cooldown and return-to-campus grace; pending-station highlight appears before dwell completes; legacy press-to-enter tests/prompts are updated or replaced; campus copy no longer says "press E", "Enter doors: E", Space, or Return are required; click-to-enter remains optional only if it does not conflict.
+- [ ] **T4c (P1, human: ~1-2h / Codex: ~10-20min)** - Classroom access - Add pointer-first, quiet/reduced-motion, and local facilitator controls.
+  - Surfaced by: Brainstorm gap-fill - classroom-friendly play needs access and facilitation rules, not just more stations.
+  - Files: `Assets/_CareerQuest/Scripts/UI`, `Assets/_CareerQuest/Scripts/Core`, `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Tests/PlayMode`, `Assets/_CareerQuest/Tests/EditMode`.
+  - Verify: every in-plan station has a pointer-first completion path; cues do not rely on sound, color alone, hover-only state, or fast motion; quiet/reduced-motion mode preserves completion clarity; reset current run, return to campus, mute/quiet, reduced motion, and restart demo route are local-session controls only and introduce no accounts, dashboards, persistence, telemetry, or child-identifying data.
 - [ ] **T4b (P1, human: ~1-2h / Codex: ~10-20min)** - Campus layout - Rework campus entrances into districts with non-overlapping auto-entry zones.
   - Surfaced by: Grill-me campus gap - 10 stations plus auto-entry need readable spatial grouping and no overlap between entrance radii.
   - Files: `Assets/_CareerQuest/Scripts/World/WorldAnchors.cs`, campus prefab/build scripts, hub layout tests.
