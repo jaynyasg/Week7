@@ -881,6 +881,8 @@ Freeze status: frozen for implementation on 2026-06-12 after CEO review and gril
 
 Promote a copy of this plan into the project repo at `docs/designs/party-campus-pack.md`. Keep this `.gstack` file as the CEO/grill review artifact, but make the repo-local doc the implementation source of truth for future Codex/autoplan/work sessions.
 
+Implementation is locked in `docs/plans/2026-06-12-party-campus-pack-implementation-plan.md`. Treat that plan as the execution map for `ce-work`/autoplan sessions; its gates are sequencing checkpoints, not scope cuts.
+
 ## Not In Scope
 
 - A giant map rebuild before the station pack works.
