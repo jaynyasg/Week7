@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -71,45 +72,55 @@ namespace CareerQuest.Tests
             Object.Destroy(gameObject);
         }
 
+        /// <summary>
+        /// U10 migration: Health Hero and Logic Court are drag rooms — the button
+        /// trays are gone. The rooms render the quest HUD (top band), a Campus
+        /// exit (bottom edge), and play through their TrySubmitDrop seams; legacy
+        /// step/complete buttons must NOT come back (mirrors the Design Build
+        /// chrome guard).
+        /// </summary>
         [UnityTest]
-        public IEnumerator HealthAndLogicControlsStayInHudTrays()
+        public IEnumerator HealthAndLogicRenderDragRoomChrome()
         {
-            var gameObject = new GameObject("optional-room-layout-test");
+            var gameObject = new GameObject("core-room-chrome-test");
             var app = gameObject.AddComponent<CareerQuestApp>();
             yield return null;
 
-            app.BeginPlay();
             app.ShowHealthHero();
             yield return null;
 
             var healthHud = RectFor("HealthHeroQuestHud");
-            var healthTray = RectFor("HealthHeroToolTray");
-            var healthCheck = RectFor("HealthHeroCheckButton");
-            var healthComplete = RectFor("HealthHeroCompleteButton");
-            var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<Text>();
+            var healthCampus = RectFor("HealthHeroCampusButton");
+            var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<TextMeshProUGUI>();
 
-            Assert.That(healthHud.anchoredPosition.y, Is.GreaterThan(230f));
-            Assert.That(Top(healthTray), Is.LessThan(-280f));
-            Assert.That(healthCheck.sizeDelta.y, Is.LessThanOrEqualTo(38f));
-            Assert.That(healthComplete.sizeDelta.y, Is.LessThanOrEqualTo(44f));
+            Assert.That(healthHud.anchoredPosition.y, Is.GreaterThan(220f));
+            Assert.That(healthCampus.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(healthCampus.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(healthPrompt.fontSize, Is.LessThanOrEqualTo(18));
+            Assert.That(healthPrompt.text, Does.Contain("patient"));
+
+            Assert.That(GameObject.Find("HealthHeroToolTray"), Is.Null, "Drag conversion retires the button tray.");
+            Assert.That(GameObject.Find("HealthHeroCheckButton"), Is.Null);
+            Assert.That(GameObject.Find("HealthHeroCompleteButton"), Is.Null);
 
             app.ShowLogicCourt();
             yield return null;
 
             var logicHud = RectFor("LogicCourtQuestHud");
-            var logicTray = RectFor("LogicCourtEvidenceTray");
-            var logicReview = RectFor("LogicCourtReviewButton");
-            var logicClosing = RectFor("LogicCourtClosingButton");
-            var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<Text>();
+            var logicCampus = RectFor("LogicCourtCampusButton");
+            var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<TextMeshProUGUI>();
 
-            Assert.That(logicHud.anchoredPosition.y, Is.GreaterThan(230f));
-            Assert.That(Top(logicTray), Is.LessThan(-280f));
-            Assert.That(logicReview.sizeDelta.y, Is.LessThanOrEqualTo(38f));
-            Assert.That(logicClosing.sizeDelta.y, Is.LessThanOrEqualTo(44f));
+            Assert.That(logicHud.anchoredPosition.y, Is.GreaterThan(220f));
+            Assert.That(logicCampus.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(logicCampus.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(logicPrompt.fontSize, Is.LessThanOrEqualTo(18));
+            Assert.That(logicPrompt.text, Does.Contain("case"));
 
-            Object.Destroy(gameObject);
+            Assert.That(GameObject.Find("LogicCourtEvidenceTray"), Is.Null, "Drag conversion retires the button tray.");
+            Assert.That(GameObject.Find("LogicCourtReviewButton"), Is.Null);
+            Assert.That(GameObject.Find("LogicCourtClosingButton"), Is.Null);
+
+            Object.DestroyImmediate(gameObject);
         }
 
         private static RectTransform RectFor(string objectName)
@@ -117,11 +128,6 @@ namespace CareerQuest.Tests
             var gameObject = GameObject.Find(objectName);
             Assert.That(gameObject, Is.Not.Null, $"{objectName} should exist.");
             return gameObject.GetComponent<RectTransform>();
-        }
-
-        private static float Top(RectTransform rectTransform)
-        {
-            return rectTransform.anchoredPosition.y + rectTransform.sizeDelta.y * 0.5f;
         }
 
         private static void CompleteOptionalRoom(string panelPrefix)

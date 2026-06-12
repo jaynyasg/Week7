@@ -1,6 +1,7 @@
 using System.Collections;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -76,6 +77,38 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
+        public IEnumerator AvatarSelectionShowsCuratedCharacterArtOnPassportCards()
+        {
+            var gameObject = new GameObject("avatar-curated-art-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            app.ShowAvatarSelectionForPlay();
+            yield return null;
+
+            // R6: the curated Kenney characters carry the passport-card layout —
+            // generated character art is retired from the player-facing path.
+            foreach (var avatar in AvatarConfig.Avatars)
+            {
+                var preview = GameObject.Find($"{avatar.Id}Preview");
+                Assert.That(preview, Is.Not.Null, $"{avatar.Id}Preview should exist.");
+                var sprite = preview.GetComponent<Image>().sprite;
+                Assert.That(AssetCatalog.IsFinalArtSprite(sprite), Is.True,
+                    $"{avatar.Id} must show curated final art — run CareerQuestCharacterArtCurator.Curate.");
+            }
+
+            var selectedPreview = GameObject.Find("SelectedAvatarPreview").GetComponent<Image>();
+            Assert.That(AssetCatalog.IsFinalArtSprite(selectedPreview.sprite), Is.True,
+                "The selected-avatar preview must show curated final art.");
+
+            // Same identity carries through selection → campus.
+            app.ChooseAvatar("art_inventor");
+            Assert.That(app.Session.SelectedAvatar.SpriteAssetId, Is.EqualTo("avatar.art_inventor"));
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
         public IEnumerator AvatarSelectionScreenKeepsControlsReadable()
         {
             var gameObject = new GameObject("avatar-layout-test");
@@ -108,14 +141,14 @@ namespace CareerQuest.Tests
         {
             var textObject = GameObject.Find(objectName);
             Assert.That(textObject, Is.Not.Null, $"{objectName} should exist.");
-            Assert.That(textObject.GetComponent<Text>().text, Is.EqualTo(expected));
+            Assert.That(textObject.GetComponent<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
 
         private static void AssertButtonText(string buttonName, string expected)
         {
             var buttonObject = GameObject.Find(buttonName);
             Assert.That(buttonObject, Is.Not.Null, $"{buttonName} should exist.");
-            Assert.That(buttonObject.GetComponentInChildren<Text>().text, Is.EqualTo(expected));
+            Assert.That(buttonObject.GetComponentInChildren<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
 
         private static RectTransform RectFor(string objectName)

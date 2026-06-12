@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +17,7 @@ namespace CareerQuest
 
         public readonly struct QuestHudRefs
         {
-            public QuestHudRefs(RectTransform panel, Text title, Text prompt, Text status)
+            public QuestHudRefs(RectTransform panel, TextMeshProUGUI title, TextMeshProUGUI prompt, TextMeshProUGUI status)
             {
                 Panel = panel;
                 Title = title;
@@ -25,9 +26,9 @@ namespace CareerQuest
             }
 
             public RectTransform Panel { get; }
-            public Text Title { get; }
-            public Text Prompt { get; }
-            public Text Status { get; }
+            public TextMeshProUGUI Title { get; }
+            public TextMeshProUGUI Prompt { get; }
+            public TextMeshProUGUI Status { get; }
         }
 
         public static void StyleButton(Button button, Color color, int fontSize)
@@ -38,15 +39,15 @@ namespace CareerQuest
                 image.color = color;
             }
 
-            var label = button.GetComponentInChildren<Text>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
                 label.color = Color.white;
+                label.font = TypeStyles.Resolve(TypeRole.Body, TypeWeight.SemiBold);
                 label.fontSize = fontSize;
-                label.fontStyle = FontStyle.Bold;
-                label.resizeTextForBestFit = true;
-                label.resizeTextMinSize = 10;
-                label.resizeTextMaxSize = fontSize;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 10;
+                label.fontSizeMax = fontSize;
             }
         }
 
@@ -64,7 +65,7 @@ namespace CareerQuest
             UiBuilder.Place(questHud, -286f, 282f, 664f, 96f);
             UiBuilder.Shape(questHud, $"{prefix}HudStripe", stripe, stripeX, 0f, 14f, 96f);
 
-            var titleText = UiBuilder.Text(questHud, $"{prefix}Title", title, 22, TextAnchor.MiddleLeft, InkDefault);
+            var titleText = UiBuilder.Text(questHud, $"{prefix}Title", title, 22, TextAnchor.MiddleLeft, InkDefault, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(titleText.rectTransform, 4f, 27f, 560f, 26f);
 
             var promptText = UiBuilder.Text(questHud, $"{prefix}Prompt", prompt, 15, TextAnchor.MiddleLeft, InkDefault);

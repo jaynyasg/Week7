@@ -1,5 +1,6 @@
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,42 +28,45 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(gameObject);
         }
 
+        /// <summary>
+        /// U6 migration: the button rows are gone — the room renders a quest HUD
+        /// (top band), a Campus exit (bottom edge), and everything plays through
+        /// the TrySubmitDrop seam. Legacy piece/review/helper buttons must NOT
+        /// come back.
+        /// </summary>
         [Test]
-        public void DesignBuildRenderKeepsControlsOffTheSkyline()
+        public void DesignBuildRenderShowsDragRoomChrome()
         {
             var appObject = new GameObject("design-build-ui-test");
             var app = appObject.AddComponent<CareerQuestApp>();
 
             app.ShowDesignBuild(false);
 
-            var clinicButton = FindRectTransform("clinicButton");
-            var tray = FindRectTransform("DesignBuildToolTray");
-            var briefing = GameObject.Find("DesignBuildBriefing").GetComponent<RectTransform>();
-            var completeButton = GameObject.Find("DesignBuildCompleteButton").GetComponent<RectTransform>();
-            var reviewButton = GameObject.Find("ReviewBlueprintButton").GetComponent<Button>();
-            var helperButton = GameObject.Find("PatternHelperButton").GetComponent<Button>();
-            var title = GameObject.Find("DesignBuildTitle").GetComponent<Text>();
-            var titleRect = title.GetComponent<RectTransform>();
-            var feedbackRect = GameObject.Find("DesignBuildFeedback").GetComponent<RectTransform>();
-            var progressRect = GameObject.Find("DesignBuildProgress").GetComponent<RectTransform>();
-            var reviewRect = reviewButton.GetComponent<RectTransform>();
-            var helperRect = helperButton.GetComponent<RectTransform>();
+            var questHud = FindRectTransform("DesignBuildQuestHud");
+            var campusButton = GameObject.Find("DesignBuildCampusButton").GetComponent<RectTransform>();
+            var title = FindTmp("DesignBuildTitle");
+            var feedback = FindTmp("DesignBuildPrompt");
+            var status = FindTmp("DesignBuildStatus");
 
-            Assert.That(tray.gameObject.activeSelf, Is.False);
-            Assert.That(tray.anchoredPosition.y, Is.LessThan(-280f));
-            Assert.That(briefing.anchoredPosition.y, Is.GreaterThan(220f));
-            Assert.That(clinicButton.sizeDelta.y, Is.LessThanOrEqualTo(36f));
-            Assert.That(completeButton.sizeDelta.y, Is.LessThanOrEqualTo(44f));
-            Assert.That(reviewRect.sizeDelta.y, Is.LessThanOrEqualTo(36f));
+            // HUD stays off the skyline: quest band at the top, exit at the bottom edge.
+            Assert.That(questHud.anchoredPosition.y, Is.GreaterThan(220f));
+            Assert.That(campusButton.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(campusButton.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(title.fontSize, Is.LessThanOrEqualTo(28));
-            Assert.That(Bottom(titleRect), Is.GreaterThan(Top(feedbackRect)));
-            Assert.That(Bottom(feedbackRect), Is.GreaterThan(Top(progressRect)));
-            Assert.That(Left(reviewRect), Is.GreaterThan(Right(feedbackRect)));
-            Assert.That(Left(helperRect), Is.GreaterThan(Right(progressRect)));
+            Assert.That(feedback.text, Does.Contain("Drag"));
 
-            reviewButton.onClick.Invoke();
-            helperButton.onClick.Invoke();
-            Assert.That(tray.gameObject.activeSelf, Is.True);
+            // The legacy button interaction is retired (R10 — drag-and-drop room).
+            Assert.That(GameObject.Find("ReviewBlueprintButton"), Is.Null);
+            Assert.That(GameObject.Find("PatternHelperButton"), Is.Null);
+            Assert.That(GameObject.Find("clinicButton"), Is.Null);
+            Assert.That(GameObject.Find("DesignBuildCompleteButton"), Is.Null);
+
+            // The seam is live immediately after Render and drives the HUD text.
+            var controller = appObject.GetComponent<DesignBuildController>();
+            Assert.That(controller.TrySubmitDrop("clinic", "clinic"), Is.EqualTo(DropSubmitResult.Accepted));
+            Assert.That(controller.IsPieceAccepted("clinic"), Is.True);
+            Assert.That(feedback.text, Does.Contain("Accepted"));
+            Assert.That(status.text, Does.Contain("1/5"));
 
             Object.DestroyImmediate(appObject);
         }
@@ -81,24 +85,18 @@ namespace CareerQuest.Tests
             return null;
         }
 
-        private static float Left(RectTransform rectTransform)
+        private static TextMeshProUGUI FindTmp(string name)
         {
-            return rectTransform.anchoredPosition.x - rectTransform.sizeDelta.x * 0.5f;
-        }
+            foreach (var text in Resources.FindObjectsOfTypeAll<TextMeshProUGUI>())
+            {
+                if (text.name == name)
+                {
+                    return text;
+                }
+            }
 
-        private static float Right(RectTransform rectTransform)
-        {
-            return rectTransform.anchoredPosition.x + rectTransform.sizeDelta.x * 0.5f;
-        }
-
-        private static float Top(RectTransform rectTransform)
-        {
-            return rectTransform.anchoredPosition.y + rectTransform.sizeDelta.y * 0.5f;
-        }
-
-        private static float Bottom(RectTransform rectTransform)
-        {
-            return rectTransform.anchoredPosition.y - rectTransform.sizeDelta.y * 0.5f;
+            Assert.Fail($"{name} should exist.");
+            return null;
         }
     }
 }

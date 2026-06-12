@@ -34,27 +34,35 @@ namespace CareerQuest
             gameObject.SetActive(true);
             Clear();
 
-            AddEntrance("DesignBuildEntrance", "Design Build", ActivityRoute.DesignBuild, new Vector2(-3f, -0.26f), new Color(0.94f, 0.34f, 0.28f));
-            AddEntrance("HealthHeroEntrance", "Health Hero", ActivityRoute.HealthHero, new Vector2(0f, -0.18f), new Color(0.36f, 0.78f, 0.6f));
-            AddEntrance("LogicCourtEntrance", "Logic Court", ActivityRoute.LogicCourt, new Vector2(3f, -0.26f), new Color(0.96f, 0.62f, 0.18f));
-            AddEntrance("AiLabEntrance", "AI Lab", ActivityRoute.AiLab, new Vector2(-4.45f, -1.75f), new Color(0.28f, 0.66f, 0.94f));
-            AddEntrance("MusicStudioEntrance", "Music Studio", ActivityRoute.MusicStudio, new Vector2(-2.05f, -2f), new Color(0.62f, 0.52f, 0.86f));
-            AddEntrance("RoboticsEntrance", "Robotics", ActivityRoute.RoboticsGarage, new Vector2(2.05f, -2f), new Color(0.13f, 0.55f, 0.58f));
-            AddEntrance("KitchenEntrance", "Kitchen", ActivityRoute.CommunityKitchen, new Vector2(4.45f, -1.75f), new Color(0.55f, 0.82f, 0.5f));
+            // Entrances come from the authored prefab's WorldAnchors export
+            // (live instance, then prefab asset, then hard fallback constants).
+            var anchors = WorldAnchors.ResolveActive();
+            foreach (var entranceAnchor in WorldAnchors.ActiveEntrances)
+            {
+                AddEntrance(entranceAnchor);
+            }
 
+            var playerSpawn = anchors != null ? anchors.PlayerSpawn : WorldAnchors.FallbackPlayerSpawn;
             var playerObject = new GameObject("HubPlayer", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(PlayerAvatarController));
             playerObject.transform.SetParent(transform, false);
-            playerObject.transform.position = new Vector3(0f, -1.55f, 0f);
+            playerObject.transform.position = new Vector3(playerSpawn.x, playerSpawn.y, 0f);
             _player = playerObject.GetComponent<PlayerAvatarController>();
             _player.Configure(session, _entrances, EnterRoute);
 
+            var guideSpawn = anchors != null ? anchors.GuideSpawn : WorldAnchors.FallbackGuideSpawn;
             var guideObject = new GameObject("CampusGuide", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(CampusGuideController));
             guideObject.transform.SetParent(transform, false);
-            guideObject.transform.position = new Vector3(1.65f, -1.55f, 0f);
-            guideObject.GetComponent<CampusGuideController>().Configure("Move to a door, then press E.");
+            guideObject.transform.position = new Vector3(guideSpawn.x, guideSpawn.y, 0f);
+            var guide = guideObject.GetComponent<CampusGuideController>();
+            guide.Configure("Move to a door, then press E.");
+
+            // P10: first hub entry of the session — greet by avatar name and
+            // pulse the nearest unplayed door. No-ops on later hub entries.
+            var firstRunBeat = guideObject.AddComponent<FirstRunGuideBeat>();
+            firstRunBeat.TryBegin(session, guide, _entrances, playerSpawn);
 
             _cameraRig = gameObject.GetComponent<HubCameraRig>() ?? gameObject.AddComponent<HubCameraRig>();
-            _cameraRig.Configure(Camera.main, playerObject.transform);
+            _cameraRig.Configure(CameraDirector.Ensure(), playerObject.transform);
         }
 
         public void Hide()
@@ -75,18 +83,22 @@ namespace CareerQuest
             return true;
         }
 
-        private void AddEntrance(string name, string label, ActivityRoute route, Vector2 position, Color color)
+        private void AddEntrance(WorldAnchorEntrance anchor)
         {
-            var entranceObject = new GameObject(name, typeof(BuildingEntrance));
+            var entranceObject = new GameObject($"{anchor.Route}Entrance", typeof(BuildingEntrance));
             entranceObject.transform.SetParent(transform, false);
-            entranceObject.transform.position = new Vector3(position.x, position.y, 0f);
+            entranceObject.transform.position = new Vector3(anchor.Position.x, anchor.Position.y, 0f);
 
             var entrance = entranceObject.GetComponent<BuildingEntrance>();
-            entrance.Configure(route, label, 0.72f, EnterRoute);
+            entrance.Configure(anchor.Route, anchor.Label, anchor.Radius, EnterRoute);
             _entrances.Add(entrance);
 
-            AddEntranceMarker(entranceObject.transform, $"{name}Marker", color);
-            AddEntranceLabel(entranceObject.transform, $"{name}Label", label);
+            AddEntranceMarker(entranceObject.transform, $"{anchor.Route}EntranceMarker", anchor.AccentColor);
+
+            // Door label is world-space TMP (DoorSign pattern) — the hub
+            // TextMesh labels died in U4 per plan.
+            var sign = entranceObject.AddComponent<DoorSign>();
+            sign.Configure(anchor.Label, anchor.AccentColor, -0.62f, 330);
         }
 
         private static void AddEntranceMarker(Transform parent, string name, Color color)
@@ -99,25 +111,7 @@ namespace CareerQuest
             var renderer = marker.GetComponent<SpriteRenderer>();
             renderer.sprite = AssetCatalog.SpriteFor("ui.confirm");
             renderer.color = new Color(color.r, color.g, color.b, 0.62f);
-            renderer.sortingOrder = 18;
-        }
-
-        private static void AddEntranceLabel(Transform parent, string name, string label)
-        {
-            var labelObject = new GameObject(name, typeof(TextMesh));
-            labelObject.transform.SetParent(parent, false);
-            labelObject.transform.localPosition = new Vector3(0f, -0.62f, 0f);
-
-            var text = labelObject.GetComponent<TextMesh>();
-            text.text = label;
-            text.anchor = TextAnchor.MiddleCenter;
-            text.alignment = TextAlignment.Center;
-            text.characterSize = 0.032f;
-            text.fontSize = 28;
-            text.color = new Color(0.05f, 0.09f, 0.11f);
-
-            var renderer = labelObject.GetComponent<MeshRenderer>();
-            renderer.sortingOrder = 22;
+            renderer.sortingOrder = 305;
         }
 
         private void EnterRoute(ActivityRoute route)

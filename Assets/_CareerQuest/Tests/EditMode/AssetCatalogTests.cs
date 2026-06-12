@@ -16,6 +16,99 @@ namespace CareerQuest.Tests
             Assert.That(badge.Category, Is.EqualTo(AssetCategory.Badge));
         }
 
+        /// <summary>
+        /// U11: every CareerQuestCatalog badge art key — including the four
+        /// optional rooms — resolves to a cataloged Badge definition that the
+        /// fallback gate polices.
+        /// </summary>
+        [Test]
+        public void EveryCatalogBadgeArtKeyIsACatalogedPlayerFacingBadge()
+        {
+            foreach (var entry in CareerQuestCatalog.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(entry.BadgeArtKey, out var definition), Is.True, entry.BadgeArtKey);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Badge), entry.BadgeArtKey);
+                Assert.That(definition.RequiredInFirstPlayable, Is.True, entry.BadgeArtKey);
+                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.True, entry.BadgeArtKey);
+            }
+        }
+
+        [Test]
+        public void OptionalRoomBadgeDefinitionsExistWithDistinctCareerColors()
+        {
+            var badgeIds = new[]
+            {
+                "badge.ai_lab",
+                "badge.music_studio",
+                "badge.robotics_garage",
+                "badge.community_kitchen"
+            };
+
+            var colors = new System.Collections.Generic.List<Color>();
+            foreach (var badgeId in badgeIds)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(badgeId, out var definition), Is.True, badgeId);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Badge), badgeId);
+                colors.Add(definition.PrimaryColor);
+            }
+
+            // Career identity: the four badges must not share a ring color.
+            for (var a = 0; a < colors.Count; a++)
+            {
+                for (var b = a + 1; b < colors.Count; b++)
+                {
+                    Assert.That(colors[a] != colors[b], Is.True,
+                        $"{badgeIds[a]} and {badgeIds[b]} must use distinct career identity colors.");
+                }
+            }
+        }
+
+        [Test]
+        public void OptionalRoomInteriorAndCityPieceDefinitionsExist()
+        {
+            foreach (var roomId in new[] { "room.ai_lab", "room.music_studio", "room.robotics_garage", "room.community_kitchen" })
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(roomId, out var room), Is.True, roomId);
+                Assert.That(room.Category, Is.EqualTo(AssetCategory.Room), roomId);
+            }
+
+            foreach (var propId in new[] { "prop.city_piece_garage", "prop.city_piece_kitchen" })
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(propId, out var prop), Is.True, propId);
+                Assert.That(prop.Category, Is.EqualTo(AssetCategory.Prop), propId);
+            }
+        }
+
+        [Test]
+        public void FrameSetResolvesContiguousCuratedFrames()
+        {
+            // U5 frame-set convention: Resources/CareerQuest/{Category}/{id}.{state}{n}.png.
+            var walkFrames = AssetCatalog.FrameSetFor("avatar.sky_builder", AssetCatalog.FrameStateWalk);
+            Assert.That(walkFrames.Count, Is.GreaterThanOrEqualTo(2),
+                "Curated walk frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+            Assert.That(walkFrames, Is.All.Not.Null);
+
+            var celebrateFrames = AssetCatalog.FrameSetFor("avatar.sky_builder", AssetCatalog.FrameStateCelebrate);
+            Assert.That(celebrateFrames.Count, Is.GreaterThanOrEqualTo(2),
+                "Curated celebrate (cheer) frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+
+            var guideCelebrate = AssetCatalog.FrameSetFor("npc.campus_guide", AssetCatalog.FrameStateCelebrate);
+            Assert.That(guideCelebrate.Count, Is.GreaterThanOrEqualTo(2),
+                "NPC celebrate frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+        }
+
+        [Test]
+        public void FrameSetIsSafeForMissingIdsAndStates()
+        {
+            // The fallback contract: missing frames yield an empty set, never throw.
+            Assert.That(AssetCatalog.FrameSetFor(null, AssetCatalog.FrameStateWalk), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("avatar.sky_builder", null), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("not.a.catalog.id", AssetCatalog.FrameStateWalk), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("avatar.sky_builder", "unknown_state"), Is.Empty);
+            // Props have no frame sets — empty, not an error.
+            Assert.That(AssetCatalog.FrameSetFor("prop.blueprint", AssetCatalog.FrameStateWalk), Is.Empty);
+        }
+
         [Test]
         public void MissingAssetReturnsVisibleFallbackSprite()
         {

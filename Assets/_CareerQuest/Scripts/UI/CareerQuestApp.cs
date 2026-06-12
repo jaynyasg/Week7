@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -35,18 +37,25 @@ namespace CareerQuest
         private CampusWorldController _world;
         private PlayableHubController _hub;
         private SceneFlowRouter _router;
-        private Text _connectionStatusText;
+        private TextMeshProUGUI _connectionStatusText;
         private bool _ceremonyActive;
         private CeremonyController _ceremonyController;
         private Coroutine _ceremonyCoroutine;
         private GameObject _ceremonyOverlay;
-        private Text _ceremonyTitleText;
-        private Text _ceremonyMessageText;
-        private Text _ceremonyBadgeText;
+        private TextMeshProUGUI _ceremonyTitleText;
+        private TextMeshProUGUI _ceremonyMessageText;
+        private TextMeshProUGUI _ceremonyBadgeText;
         private RectTransform _ceremonyBadgeStamp;
         private Button _ceremonySkipButton;
-        private Text _instructionStripText;
+        private readonly List<GameObject> _ceremonyConfetti = new();
+        private TextMeshProUGUI _instructionStripText;
         private bool _sessionChangedSubscribed;
+        private AudioDirector _audioDirector;
+        private PauseMenuController _pauseMenu;
+        private CeremonySubPhase _lastCeremonySubPhase;
+        // P19: session-scoped memory of which city pieces already played their
+        // arrival fanfare — one fanfare per piece per app session.
+        private readonly HashSet<string> _cityPieceFanfares = new();
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
@@ -55,11 +64,21 @@ namespace CareerQuest
         private void Awake()
         {
             _session = new GameSession();
+            // Fresh app session — the P10 first-run guide beat may play again.
+            FirstRunGuideBeat.ResetSessionFlag();
             _router = new SceneFlowRouter();
             _canvas = UiBuilder.EnsureCanvas();
             _root = _canvas.GetComponent<RectTransform>();
             _world = CampusWorldController.Ensure();
             _hub = PlayableHubController.Ensure();
+            // U8: the three-tier audio system rides the app object so it
+            // survives ClearWorld — route changes crossfade, never cut.
+            _audioDirector = AudioDirector.AttachTo(gameObject);
+
+            // U13: the Escape pause menu rides the app object too (UI-overlay
+            // only — it never touches Time.timeScale in a networked session).
+            _pauseMenu = PauseMenuController.AttachTo(gameObject);
+            _pauseMenu.Bind(this, _audioDirector);
 
             _networkBootstrap = GetComponent<NetworkBootstrap>();
             _entry = GetComponent<EntryScreenController>();
@@ -110,6 +129,77 @@ namespace CareerQuest
             if (TryStartCommandLineSmoke())
             {
                 return;
+            }
+
+            ShowEntry();
+        }
+
+        private void Update()
+        {
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+            {
+                TogglePauseMenu();
+            }
+        }
+
+        /// <summary>
+        /// U13 Escape seam (the key handler and the PlayMode tests share it).
+        /// Toggles the pause menu in the hub and in rooms. During the ceremony
+        /// overlay and the reveal cinematic beats Escape is IGNORED (not
+        /// deferred): a deferred open would pop the menu at an unpredictable
+        /// later moment (kid-confusing), the cinematic owns the camera so a
+        /// competing modal must not mount over it, and both states already show
+        /// their own control (Skip). Pressing Escape again after the beat ends
+        /// works normally. Returns true when the toggle acted.
+        /// </summary>
+        public bool TogglePauseMenu()
+        {
+            if (_pauseMenu == null)
+            {
+                return false;
+            }
+
+            if (_pauseMenu.IsOpen)
+            {
+                _pauseMenu.Close();
+                return true;
+            }
+
+            if (IsPauseSuppressed)
+            {
+                return false;
+            }
+
+            _pauseMenu.Open(_root);
+            return _pauseMenu.IsOpen;
+        }
+
+        /// <summary>Escape suppression window: ceremony overlay + reveal cinematic beats.</summary>
+        public bool IsPauseSuppressed =>
+            _ceremonyActive || (_reveal != null && _reveal.IsCinematicActive);
+
+        /// <summary>Test/QA seam for the pause shell.</summary>
+        public PauseMenuController PauseMenu => _pauseMenu;
+
+        /// <summary>
+        /// U13 Exit to Title: routes through the EXISTING teardown paths — the
+        /// same duties HandleClientConnectionLost carries (ceremony/cinematic/
+        /// drag cancel, session-flag reset, network unbind + shutdown) — then
+        /// re-routes to the entry title via the normal world API. Never a raw
+        /// scene reload.
+        /// </summary>
+        public void ExitToTitle()
+        {
+            CancelCeremony(); // safe no-op when idle; tears down drag/cinematic/camera
+            FirstRunGuideBeat.ResetSessionFlag();
+            UnbindCampusSessionState();
+
+            if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
+            {
+                // Intentional shutdown — the local disconnect callback must not
+                // bounce the player to the "host disconnected" error screen.
+                _networkBootstrap?.SuppressLocalDisconnectNotice();
+                networkManager.Shutdown();
             }
 
             ShowEntry();
@@ -252,7 +342,7 @@ namespace CareerQuest
             UiBuilder.Place(panel, 0f, 12f, 920f, 548f);
 
             UiBuilder.Shape(panel, "ConnectionHeaderBand", new Color(0.06f, 0.25f, 0.34f, 0.95f), 0f, 226f, 920f, 96f);
-            var title = UiBuilder.Text(panel, "ConnectionTitle", "Start Game", 38, TextAnchor.MiddleCenter, Color.white);
+            var title = UiBuilder.Text(panel, "ConnectionTitle", "Start Game", TypeStyles.ScreenTitle, TextAnchor.MiddleCenter, Color.white, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 242f, 860f, 48f);
 
             var subtitle = UiBuilder.Text(panel, "ConnectionSubtitle", "Play solo now, or use local multiplayer when testing two players.", 18, TextAnchor.MiddleCenter, new Color(0.88f, 0.97f, 1f));
@@ -406,10 +496,13 @@ namespace CareerQuest
 
         private void HandleClientConnectionLost()
         {
-            if (_ceremonyActive)
-            {
-                CancelCeremony();
-            }
+            // U7: CancelCeremony now carries world/camera/drag teardown duties,
+            // so it runs unconditionally (it is a safe no-op when idle) — a
+            // disconnect mid-reveal-cinematic or mid-drag tears down cleanly.
+            CancelCeremony();
+
+            // Session-scoped flags reset on disconnect (System-Wide Impact note).
+            FirstRunGuideBeat.ResetSessionFlag();
 
             UnbindCampusSessionState();
             if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))
@@ -430,21 +523,18 @@ namespace CareerQuest
             _router.ShowCampus(_session);
             _world.ShowCampus(_session);
             _hub.Show(_session, this);
+            // R18/P19: earned-badge city pieces join the skyline on every
+            // campus entry; pieces that are new this session arrive with the
+            // fanfare (sparkle + cue + camera nudge) exactly once.
+            CampusEvolutionController.Mount(
+                _world.WorldRoot,
+                _session,
+                _cityPieceFanfares,
+                _world.CameraDirector,
+                () => _hub != null && _hub.Player != null ? _hub.Player.transform : null);
             ResetRoot();
-            var hud = UiBuilder.Panel(_root, "CampusHud", new Color(0.93f, 0.98f, 0.95f, 0.78f));
-            UiBuilder.Place(hud, 0f, 286f, 1050f, 78f);
-
-            var title = UiBuilder.Text(hud, "CampusTitle", "Free Campus", 30, TextAnchor.MiddleLeft, new Color(0.08f, 0.2f, 0.13f));
-            UiBuilder.Place(title.rectTransform, -365f, 14f, 260f, 36f);
-
-            var mode = UiBuilder.Text(hud, "CampusMode", $"Mode: {_session.Mode} / {_session.ConnectionMode}", 17, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.14f));
-            UiBuilder.Place(mode.rectTransform, -365f, -18f, 340f, 28f);
-
-            var controls = UiBuilder.Text(hud, "CampusControls", "Move: WASD / arrows     Enter: E / Space     Click a door to enter", 17, TextAnchor.MiddleCenter, new Color(0.1f, 0.2f, 0.14f));
-            UiBuilder.Place(controls.rectTransform, 110f, 12f, 590f, 30f);
-
-            var labels = UiBuilder.Text(hud, "FutureLabels", "Future: " + string.Join(" / ", CareerConfig.FutureBuildingLabels), 15, TextAnchor.MiddleCenter, new Color(0.15f, 0.25f, 0.18f));
-            UiBuilder.Place(labels.rectTransform, 110f, -18f, 590f, 26f);
+            MountCampusHud();
+            MountEmoteBar();
 
             if (UsesPlayInstructionStrip)
             {
@@ -470,6 +560,106 @@ namespace CareerQuest
             AttachDebug();
         }
 
+        /// <summary>
+        /// U13 (U9 owner-review fold): the campus top HUD is a DESIGN.md paper
+        /// card — compact, player-facing only: avatar identity chip (sprite +
+        /// name + role vibe), the badge progress meter (three chips + count),
+        /// and ONE short controls hint. Utility/debug text ('Free Campus',
+        /// 'Mode: Play / None', the Future-buildings list) is gone from the
+        /// player HUD; mode/connection state lives in DemoDebugOverlay
+        /// (BackQuote), where debug info belongs.
+        /// </summary>
+        private void MountCampusHud()
+        {
+            var hud = UiBuilder.Panel(_root, "CampusHud", QuestStageUi.Paper);
+            UiBuilder.Place(hud, 0f, 288f, 1000f, 74f);
+
+            // Path Gold base stripe grounds the card (DESIGN quest-card stripe).
+            UiBuilder.Shape(hud, "CampusHudStripe", QuestStageUi.PathGold, 0f, -33f, 1000f, 4f);
+
+            // --- Avatar identity chip (left) ---
+            var avatar = _session.SelectedAvatar;
+            UiBuilder.Circle(hud, "CampusAvatarRing", avatar.AccentColor, -448f, 0f, 56f, 56f);
+            var avatarSprite = AssetCatalog.SpriteFor(avatar.SpriteAssetId);
+            if (avatarSprite != null)
+            {
+                var iconObject = new GameObject("CampusAvatarIcon", typeof(RectTransform), typeof(Image));
+                iconObject.transform.SetParent(hud, false);
+                var icon = iconObject.GetComponent<Image>();
+                icon.sprite = avatarSprite;
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                UiBuilder.Place(iconObject.GetComponent<RectTransform>(), -448f, 2f, 46f, 46f);
+            }
+
+            var avatarName = UiBuilder.Text(hud, "CampusAvatarName", avatar.DisplayName, 24, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
+            UiBuilder.Place(avatarName.rectTransform, -290f, 12f, 250f, 32f);
+
+            var avatarRole = UiBuilder.Text(hud, "CampusAvatarRole", avatar.Role, 14, TextAnchor.MiddleLeft, new Color(0.27f, 0.36f, 0.4f));
+            UiBuilder.Place(avatarRole.rectTransform, -290f, -14f, 250f, 22f);
+
+            // --- Badge progress meter (center): three chips + count ---
+            var earnedCount = Mathf.Clamp(_session.UniqueCompletedGames, 0, 3);
+            for (var slot = 0; slot < 3; slot++)
+            {
+                var filled = slot < earnedCount;
+                var x = -20f + slot * 40f;
+                UiBuilder.Circle(hud, $"CampusBadgeChip{slot}Ring", filled ? QuestStageUi.PathGold : QuestStageUi.PaperShadow, x, 2f, 30f, 30f);
+                UiBuilder.Circle(hud, $"CampusBadgeChip{slot}", filled ? QuestStageUi.PathGold : QuestStageUi.Paper, x, 2f, 22f, 22f);
+            }
+
+            var badgeLabel = UiBuilder.Text(hud, "CampusBadgeMeterLabel", $"{earnedCount}/3 badges", 16, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Body, TypeWeight.SemiBold);
+            UiBuilder.Place(badgeLabel.rectTransform, 130f, 2f, 130f, 26f);
+
+            // --- ONE short controls hint (right); details live in the pause menu/strip ---
+            var controls = UiBuilder.Text(hud, "CampusControlsHint", "Move: WASD · Enter doors: E", 15, TextAnchor.MiddleRight, new Color(0.27f, 0.36f, 0.4f));
+            UiBuilder.Place(controls.rectTransform, 332f, 0f, 300f, 26f);
+        }
+
+        /// <summary>
+        /// P16 emote bar: three kid-large icon buttons (heart/star/wave) that
+        /// send FIXED emote IDs through EmoteRelay — no text exists anywhere in
+        /// the path (no-chat privacy boundary). Visible only when networked:
+        /// in solo there is no partner to wave at, so the bar is hidden (hub
+        /// toys carry solo delight). Mounted with the campus HUD, so it lives
+        /// and dies with the hub route (rooms never show it).
+        /// </summary>
+        private void MountEmoteBar()
+        {
+            var relay = EmoteRelay.Instance;
+            var networked = networkManager != null && (networkManager.IsHost || networkManager.IsConnectedClient);
+            if (relay == null || !relay.IsSpawned || !networked)
+            {
+                return;
+            }
+
+            var bar = UiBuilder.Panel(_root, "EmoteBar", new Color(0.93f, 0.98f, 0.95f, 0.78f));
+            UiBuilder.Place(bar, -494f, -224f, 252f, 96f);
+
+            var label = UiBuilder.Text(bar, "EmoteBarLabel", "Send a cheer!", 14, TextAnchor.MiddleCenter, new Color(0.1f, 0.2f, 0.14f));
+            UiBuilder.Place(label.rectTransform, 0f, 36f, 240f, 22f);
+
+            AddEmoteButton(bar, EmoteId.Heart, -80f);
+            AddEmoteButton(bar, EmoteId.Star, 0f);
+            AddEmoteButton(bar, EmoteId.Wave, 80f);
+        }
+
+        private static void AddEmoteButton(RectTransform bar, EmoteId emote, float x)
+        {
+            var button = UiBuilder.Button(bar, $"Emote{emote}Button", string.Empty, () => EmoteRelay.Instance?.SendEmote(emote));
+            UiBuilder.Place(button.GetComponent<RectTransform>(), x, -10f, 64f, 64f); // kid-large (≥44px)
+            button.GetComponent<Image>().color = new Color(1f, 0.969f, 0.878f, 0.95f); // DESIGN Paper
+
+            var iconObject = new GameObject($"Emote{emote}Icon", typeof(RectTransform), typeof(Image));
+            iconObject.transform.SetParent(button.transform, false);
+            var icon = iconObject.GetComponent<Image>();
+            icon.sprite = EmoteBubble.SpriteFor(emote);
+            icon.color = EmoteBubble.IconTint(emote);
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            UiBuilder.Place(iconObject.GetComponent<RectTransform>(), 0f, 0f, 48f, 48f);
+        }
+
         public void ShowShowcaseProofBeat()
         {
             _hub.Hide();
@@ -477,7 +667,7 @@ namespace CareerQuest
             _world.ShowProof(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ShowcaseProofPanel", new Color(0.86f, 0.91f, 1f));
-            var title = UiBuilder.Text(panel, "ProofTitle", "Two-Client Proof", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f));
+            var title = UiBuilder.Text(panel, "ProofTitle", "Two-Client Proof", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f), TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 220f, 900f, 60f);
 
             var split = UiBuilder.Text(panel, "ProofBody", "Showcase simulates two local players for reliability.\nQA still proves real Netcode host/client movement.", 26, TextAnchor.MiddleCenter, new Color(0.1f, 0.14f, 0.24f));
@@ -597,8 +787,28 @@ namespace CareerQuest
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
+            AnnounceRevealStartIfHost();
             _reveal.Render(_root, _session, this);
             AttachDebug();
+        }
+
+        /// <summary>
+        /// U7 sync moment: the host announces the reveal start through
+        /// CampusSessionState. Only clients already on the reveal route consume
+        /// it (as one input of their start latch) — nobody is force-navigated.
+        /// </summary>
+        private void AnnounceRevealStartIfHost()
+        {
+            if (!_session.RevealReady)
+            {
+                return;
+            }
+
+            var state = CampusSessionState.Instance;
+            if (state != null && networkManager != null && networkManager.IsServer)
+            {
+                state.ServerAnnounceRevealStart();
+            }
         }
 
         public void QuitGame()
@@ -637,20 +847,26 @@ namespace CareerQuest
         private static void StyleConnectionButton(Button button, Color color, int fontSize)
         {
             button.GetComponent<Image>().color = color;
-            var label = button.GetComponentInChildren<Text>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label == null)
             {
                 return;
             }
 
             label.fontSize = fontSize;
-            label.resizeTextForBestFit = true;
-            label.resizeTextMinSize = 16;
-            label.resizeTextMaxSize = fontSize;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 16;
+            label.fontSizeMax = fontSize;
         }
 
         private void ResetRoot()
         {
+            // U7 single-teardown chokepoint: every route change (exit actions,
+            // disconnect → connection screen, re-renders) flows through here,
+            // so a live reveal cinematic always stops, active drags cancel, and
+            // the camera restores before the next screen mounts.
+            _reveal?.CancelCinematic();
+
             UiBuilder.Clear(_root);
             _instructionStripText = null;
         }
@@ -765,7 +981,10 @@ namespace CareerQuest
 
             if (shown && !string.IsNullOrWhiteSpace(screenshotPath))
             {
-                var waitSeconds = state.Contains("reveal", System.StringComparison.OrdinalIgnoreCase) ? 3.5f : 2f;
+                // U7: the reveal is now an in-world cinematic (~5.6s of beats
+                // after the stage mounts) — wait past resolve so the screenshot
+                // captures the result copy over the lit stage, not mid-beat.
+                var waitSeconds = state.Contains("reveal", System.StringComparison.OrdinalIgnoreCase) ? 7.5f : 2f;
                 yield return new WaitForSeconds(waitSeconds);
                 yield return new WaitForEndOfFrame();
                 var directory = Path.GetDirectoryName(screenshotPath);
@@ -924,17 +1143,16 @@ namespace CareerQuest
             _ceremonyController = new CeremonyController(result);
             BuildCeremonyOverlay(presentation);
 
-            var audio = GetComponent<AudioSource>();
-            if (audio == null)
-            {
-                audio = gameObject.AddComponent<AudioSource>();
-            }
-
-            AudioCueCatalog.TryPlay(audio, presentation.CueId);
+            // U8: the fanfare rides the director's dedicated stoppable source —
+            // skip (and any cancel path) ducks it via TearDownCeremonyOverlay.
+            _audioDirector ??= AudioDirector.AttachTo(gameObject);
+            _audioDirector.PlayFanfare(presentation.CueId);
+            _lastCeremonySubPhase = CeremonySubPhase.Celebration;
 
             while (!_ceremonyController.IsComplete)
             {
                 _ceremonyController.Tick(Time.unscaledDeltaTime);
+                PlayCeremonySubPhaseCues();
                 UpdateCeremonyOverlay(presentation);
                 if (_ceremonySkipButton != null)
                 {
@@ -955,6 +1173,10 @@ namespace CareerQuest
         {
             var overlayRect = UiBuilder.FullPanel(_root, "CeremonyOverlay", QuestStageUi.StageNight);
             _ceremonyOverlay = overlayRect.gameObject;
+            // Modal opt-in: the ceremony overlay DOES block pointer raycasts so
+            // the room beneath (drag pieces, exit buttons) is unreachable while
+            // the ceremony plays (UiBuilder panels default non-blocking in U6).
+            _ceremonyOverlay.GetComponent<UnityEngine.UI.Image>().raycastTarget = true;
 
             QuestStageUi.MountStageBackdrop(overlayRect, unlocked: true);
 
@@ -964,7 +1186,7 @@ namespace CareerQuest
             var stripe = UiBuilder.Panel(card, "CeremonyStripe", presentation.AccentColor);
             UiBuilder.Place(stripe, 0f, 198f, 780f, 10f);
 
-            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 40, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 40, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.Bold);
             UiBuilder.Place(_ceremonyTitleText.rectTransform, 0f, 150f, 700f, 52f);
 
             _ceremonyBadgeStamp = UiBuilder.Circle(card, "CeremonyBadgeStamp", presentation.AccentColor, 0f, 40f, 120f, 120f);
@@ -985,6 +1207,47 @@ namespace CareerQuest
             UiBuilder.Place(_ceremonySkipButton.GetComponent<RectTransform>(), 0f, -165f, 200f, 48f);
             QuestStageUi.StyleSecondaryButton(_ceremonySkipButton);
             _ceremonySkipButton.interactable = false;
+
+            SpawnCeremonyConfetti(presentation);
+        }
+
+        /// <summary>
+        /// P1: the ceremony celebration moment uses a real ParticleSystem (no
+        /// hand-rolled confetti). The bursts live in world space flanking the
+        /// ceremony card; the overlay's full-screen backdrop is alpha-clamped
+        /// translucent (UiBuilder.FullPanel), so they read through it. Tracked so
+        /// the single teardown can drop them early on skip/cancel.
+        /// </summary>
+        private void SpawnCeremonyConfetti(CeremonyPresentation presentation)
+        {
+            var director = _world != null ? _world.CameraDirector : null;
+            if (director == null)
+            {
+                return;
+            }
+
+            var shot = director.Camera.transform.position;
+            _ceremonyConfetti.Add(ParticlePoof.ConfettiBurst(
+                new Vector3(shot.x - 2.7f, shot.y - 1.8f, 0f), QuestStageUi.PathGold, presentation.AccentColor));
+            _ceremonyConfetti.Add(ParticlePoof.ConfettiBurst(
+                new Vector3(shot.x + 2.7f, shot.y - 1.8f, 0f), presentation.AccentColor, QuestStageUi.PathGold, 36));
+        }
+
+        /// <summary>U8: the badge-stamp thunk lands as the Feedback subphase begins.</summary>
+        private void PlayCeremonySubPhaseCues()
+        {
+            if (_ceremonyController == null)
+            {
+                return;
+            }
+
+            var subPhase = _ceremonyController.CurrentSubPhase;
+            if (subPhase != _lastCeremonySubPhase && subPhase == CeremonySubPhase.Feedback)
+            {
+                AudioCueCatalog.TryPlay(AudioCueIds.BadgeStamp);
+            }
+
+            _lastCeremonySubPhase = subPhase;
         }
 
         private void UpdateCeremonyOverlay(CeremonyPresentation presentation)
@@ -1011,11 +1274,28 @@ namespace CareerQuest
 
         private void TearDownCeremonyOverlay()
         {
+            // U8: any ceremony end (natural, skip, cancel/disconnect) ducks a
+            // still-playing fanfare — the next screen never inherits it.
+            _audioDirector?.StopFanfare();
+
             if (_ceremonyOverlay != null)
             {
                 Destroy(_ceremonyOverlay);
                 _ceremonyOverlay = null;
             }
+
+            // Confetti systems self-destroy after 3s; an early teardown
+            // (skip/cancel/disconnect) must not leave them playing over the
+            // next screen.
+            foreach (var confetti in _ceremonyConfetti)
+            {
+                if (confetti != null)
+                {
+                    Destroy(confetti);
+                }
+            }
+
+            _ceremonyConfetti.Clear();
 
             _ceremonyTitleText = null;
             _ceremonyMessageText = null;
@@ -1035,6 +1315,29 @@ namespace CareerQuest
             TearDownCeremonyOverlay();
             _ceremonyActive = false;
             _ceremonyController = null;
+
+            // U7: this path gained world/camera/drag teardown duties beyond the
+            // UI-only cleanup — disconnects mid-cinematic or mid-drag restore a
+            // known camera shot and never strand a dragged piece.
+            DraggablePiece.CancelActiveDrag();
+            _reveal?.CancelCinematic();
+            _world?.CameraDirector?.ResetToRouteShot();
+        }
+
+        /// <summary>
+        /// Ceremony skip seam (locked pacing contract unchanged: available
+        /// after 3s, ceremony completes at 12s). The overlay button and the
+        /// PlayMode tests share this path.
+        /// </summary>
+        public bool TrySkipCeremony()
+        {
+            if (_ceremonyController == null || !_ceremonyController.CanSkip)
+            {
+                return false;
+            }
+
+            _ceremonyController.Skip();
+            return true;
         }
     }
 }

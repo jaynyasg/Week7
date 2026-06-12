@@ -1,9 +1,9 @@
 using System.Collections;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.UI;
 
 namespace CareerQuest.Tests
 {
@@ -70,6 +70,35 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
+        public IEnumerator EntryIsATitleMomentOverTheLiveCampus()
+        {
+            var gameObject = new GameObject("entry-title-moment-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            // P8: the wordmark renders over a live hub-style world (the authored
+            // prefab when built, otherwise the safe fallback ground), and the
+            // entry panel no longer hides the world behind an opaque fill.
+            AssertText("Title", "Career Quest Campus");
+            Assert.That(
+                GameObject.Find("CampusHub") != null || GameObject.Find("CampusGrass") != null,
+                Is.True,
+                "The entry screen should render over a live campus world.");
+
+            var panel = GameObject.Find("EntryPanel");
+            Assert.That(panel, Is.Not.Null);
+            Assert.That(panel.GetComponent<UnityEngine.UI.Image>().color.a, Is.LessThan(0.01f),
+                "The entry panel must stay clear so the diorama carries the screen.");
+
+            // Play → avatar select routing unchanged.
+            app.ShowAvatarSelectionForPlay();
+            yield return null;
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.AvatarSelection));
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
         public IEnumerator VisualQaStatesRouteToNamedScreens()
         {
             var gameObject = new GameObject("visual-qa-state-test");
@@ -102,14 +131,14 @@ namespace CareerQuest.Tests
         {
             var textObject = GameObject.Find(objectName);
             Assert.That(textObject, Is.Not.Null, $"{objectName} should exist.");
-            Assert.That(textObject.GetComponent<Text>().text, Is.EqualTo(expected));
+            Assert.That(textObject.GetComponent<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
 
         private static void AssertButtonText(string buttonName, string expected)
         {
             var buttonObject = GameObject.Find(buttonName);
             Assert.That(buttonObject, Is.Not.Null, $"{buttonName} should exist.");
-            Assert.That(buttonObject.GetComponentInChildren<Text>().text, Is.EqualTo(expected));
+            Assert.That(buttonObject.GetComponentInChildren<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
     }
 }

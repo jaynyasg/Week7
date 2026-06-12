@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -7,25 +8,9 @@ namespace CareerQuest
 {
     public static class UiBuilder
     {
-        private static Font _font;
-
-        public static Font DefaultFont
+        public static TMP_FontAsset FontFor(TypeRole role, TypeWeight weight)
         {
-            get
-            {
-                if (_font != null)
-                {
-                    return _font;
-                }
-
-                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                if (_font == null)
-                {
-                    _font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                }
-
-                return _font;
-            }
+            return TypeStyles.Resolve(role, weight);
         }
 
         public static Canvas EnsureCanvas()
@@ -62,7 +47,12 @@ namespace CareerQuest
             rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
-            panel.GetComponent<Image>().color = new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.22f));
+            var image = panel.GetComponent<Image>();
+            image.color = new Color(color.r, color.g, color.b, Mathf.Min(color.a, 0.22f));
+            // U6 raycast policy: full-screen washes never block world drags — the
+            // known "drag doesn't work at all" failure. Modal overlays (ceremony)
+            // explicitly opt back in at their call site.
+            image.raycastTarget = false;
             return rect;
         }
 
@@ -70,7 +60,11 @@ namespace CareerQuest
         {
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);
-            panel.GetComponent<Image>().color = color;
+            var image = panel.GetComponent<Image>();
+            image.color = color;
+            // U6 raycast policy: decorative panels/shapes default non-blocking;
+            // Buttons (their own Image) stay blocking.
+            image.raycastTarget = false;
             return panel.GetComponent<RectTransform>();
         }
 
@@ -96,18 +90,29 @@ namespace CareerQuest
             return circle;
         }
 
-        public static Text Text(Transform parent, string name, string value, int fontSize, TextAnchor anchor, Color color)
+        public static TextMeshProUGUI Text(
+            Transform parent,
+            string name,
+            string value,
+            int fontSize,
+            TextAnchor anchor,
+            Color color,
+            TypeRole role = TypeRole.Body,
+            TypeWeight weight = TypeWeight.Regular)
         {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             textObject.transform.SetParent(parent, false);
-            var text = textObject.GetComponent<Text>();
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.font = TypeStyles.Resolve(role, weight);
             text.text = value;
-            text.font = DefaultFont;
             text.fontSize = fontSize;
-            text.alignment = anchor;
+            text.alignment = ToAlignment(anchor);
             text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Overflow;
+            // U6 raycast policy: text never blocks pointer raycasts (button
+            // labels pass through to the Button image beneath).
+            text.raycastTarget = false;
             return text;
         }
 
@@ -119,9 +124,15 @@ namespace CareerQuest
             image.color = new Color(0.09f, 0.31f, 0.42f);
 
             var button = buttonObject.GetComponent<Button>();
-            button.onClick.AddListener(() => onClick?.Invoke());
+            button.onClick.AddListener(() =>
+            {
+                // U8: every factory button presses with the same UI-tier cue
+                // (silent no-op when the clip is absent — never blocks clicks).
+                AudioDirector.Ensure().PlayUi(AudioCueIds.UiPress);
+                onClick?.Invoke();
+            });
 
-            var labelText = Text(buttonObject.transform, $"{name}Label", label, 24, TextAnchor.MiddleCenter, Color.white);
+            var labelText = Text(buttonObject.transform, $"{name}Label", label, TypeStyles.ButtonLabel, TextAnchor.MiddleCenter, Color.white, TypeRole.Body, TypeWeight.SemiBold);
             Stretch(labelText.rectTransform);
             return button;
         }
@@ -129,7 +140,7 @@ namespace CareerQuest
         public static Button SmallButton(Transform parent, string name, string label, Action onClick)
         {
             var button = Button(parent, name, label, onClick);
-            var labelText = button.GetComponentInChildren<Text>();
+            var labelText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (labelText != null)
             {
                 labelText.fontSize = 16;
@@ -138,19 +149,120 @@ namespace CareerQuest
             return button;
         }
 
-        public static InputField Input(Transform parent, string name, string value)
+        /// <summary>
+        /// U13 paper-styled horizontal slider (0..1). Follows the factory
+        /// conventions: TMP-free composition (label is the caller's job),
+        /// kid-large hit area (size the root ≥ 44px tall via Place), and the
+        /// raycast policy — track + handle stay raycast targets (they ARE the
+        /// control), the fill never blocks. Track is paper-shadow, fill is
+        /// Path Gold, handle is a Workshop Teal circle.
+        /// </summary>
+        public static Slider Slider(Transform parent, string name, float initialValue, Action<float> onValueChanged)
         {
-            var inputObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(InputField));
+            var sliderObject = new GameObject(name, typeof(RectTransform), typeof(Slider));
+            sliderObject.transform.SetParent(parent, false);
+
+            // Track (background): full-width band, vertically centered.
+            var background = new GameObject($"{name}Track", typeof(RectTransform), typeof(Image));
+            background.transform.SetParent(sliderObject.transform, false);
+            var backgroundImage = background.GetComponent<Image>();
+            backgroundImage.color = new Color(0.851f, 0.714f, 0.435f, 0.85f); // DESIGN Paper Shadow
+            var backgroundRect = background.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = new Vector2(0f, 0.5f);
+            backgroundRect.anchorMax = new Vector2(1f, 0.5f);
+            backgroundRect.offsetMin = new Vector2(0f, -7f);
+            backgroundRect.offsetMax = new Vector2(0f, 7f);
+
+            // Fill area + fill: progress reads as Path Gold.
+            var fillArea = new GameObject($"{name}FillArea", typeof(RectTransform));
+            fillArea.transform.SetParent(sliderObject.transform, false);
+            var fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0f, 0.5f);
+            fillAreaRect.anchorMax = new Vector2(1f, 0.5f);
+            fillAreaRect.offsetMin = new Vector2(0f, -7f);
+            fillAreaRect.offsetMax = new Vector2(0f, 7f);
+
+            var fill = new GameObject($"{name}Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            var fillImage = fill.GetComponent<Image>();
+            fillImage.color = new Color(0.953f, 0.769f, 0.357f); // DESIGN Path Gold
+            fillImage.raycastTarget = false;
+            var fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            // Handle slide area + kid-large circular handle (≥ 36px visual,
+            // the whole root rect is the drag surface).
+            var handleArea = new GameObject($"{name}HandleArea", typeof(RectTransform));
+            handleArea.transform.SetParent(sliderObject.transform, false);
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero;
+            handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = new Vector2(18f, 0f);
+            handleAreaRect.offsetMax = new Vector2(-18f, 0f);
+
+            var handle = new GameObject($"{name}Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            var handleImage = handle.GetComponent<Image>();
+            handleImage.sprite = CircleSprite;
+            handleImage.color = new Color(0.055f, 0.42f, 0.435f); // DESIGN Workshop Teal
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(36f, 36f);
+
+            var slider = sliderObject.GetComponent<Slider>();
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.SetValueWithoutNotify(Mathf.Clamp01(initialValue));
+            if (onValueChanged != null)
+            {
+                slider.onValueChanged.AddListener(value => onValueChanged(value));
+            }
+
+            return slider;
+        }
+
+        public static TMP_InputField Input(Transform parent, string name, string value)
+        {
+            var inputObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
             inputObject.transform.SetParent(parent, false);
             inputObject.GetComponent<Image>().color = Color.white;
 
-            var text = Text(inputObject.transform, $"{name}Text", value, 20, TextAnchor.MiddleLeft, Color.black);
-            Stretch(text.rectTransform, 12f, 4f);
+            var viewportObject = new GameObject($"{name}Viewport", typeof(RectTransform), typeof(RectMask2D));
+            viewportObject.transform.SetParent(inputObject.transform, false);
+            var viewport = viewportObject.GetComponent<RectTransform>();
+            Stretch(viewport, 12f, 4f);
 
-            var input = inputObject.GetComponent<InputField>();
+            var text = Text(viewportObject.transform, $"{name}Text", value, 20, TextAnchor.MiddleLeft, Color.black);
+            Stretch(text.rectTransform);
+
+            var input = inputObject.GetComponent<TMP_InputField>();
+            input.textViewport = viewport;
             input.textComponent = text;
             input.text = value;
             return input;
+        }
+
+        public static TextAlignmentOptions ToAlignment(TextAnchor anchor)
+        {
+            return anchor switch
+            {
+                TextAnchor.UpperLeft => TextAlignmentOptions.TopLeft,
+                TextAnchor.UpperCenter => TextAlignmentOptions.Top,
+                TextAnchor.UpperRight => TextAlignmentOptions.TopRight,
+                TextAnchor.MiddleLeft => TextAlignmentOptions.Left,
+                TextAnchor.MiddleCenter => TextAlignmentOptions.Center,
+                TextAnchor.MiddleRight => TextAlignmentOptions.Right,
+                TextAnchor.LowerLeft => TextAlignmentOptions.BottomLeft,
+                TextAnchor.LowerCenter => TextAlignmentOptions.Bottom,
+                TextAnchor.LowerRight => TextAlignmentOptions.BottomRight,
+                _ => TextAlignmentOptions.Center
+            };
         }
 
         public static void Place(RectTransform rect, float x, float y, float width, float height)

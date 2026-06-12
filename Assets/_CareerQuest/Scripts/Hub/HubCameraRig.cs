@@ -2,37 +2,38 @@ using UnityEngine;
 
 namespace CareerQuest
 {
+    /// <summary>
+    /// Follow-mode client of the CameraDirector. The legacy per-frame camera
+    /// writer moved into the director; this rig only requests hub follow framing
+    /// (CameraFollowSettings.HubDefault preserves the old clamp/lerp math) and
+    /// releases the camera back to the route shot when the hub hides.
+    /// </summary>
     public class HubCameraRig : MonoBehaviour
     {
-        private Camera _camera;
+        private CameraDirector _director;
         private Transform _target;
 
-        public void Configure(Camera camera, Transform target)
+        public void Configure(CameraDirector director, Transform target)
         {
-            _camera = camera;
+            _director = director;
             _target = target;
 
-            if (_camera == null)
+            if (_director == null || _target == null)
             {
                 return;
             }
 
-            _camera.orthographic = true;
-            _camera.orthographicSize = 4.15f;
+            _director.BeginFollow(_target, CameraFollowSettings.HubDefault);
         }
 
-        private void LateUpdate()
+        private void OnDisable()
         {
-            if (_camera == null || _target == null)
+            if (_director == null)
             {
                 return;
             }
 
-            var targetPosition = new Vector3(
-                Mathf.Clamp(_target.position.x * 0.2f, -0.8f, 0.8f),
-                0f,
-                -10f);
-            _camera.transform.position = Vector3.Lerp(_camera.transform.position, targetPosition, 4f * Time.deltaTime);
+            _director.EndFollow(_target);
         }
     }
 }

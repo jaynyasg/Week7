@@ -71,6 +71,66 @@ The first repeatable sprite kit is generated in-project by `Assets/_CareerQuest/
 - Characters include head, hair, face, torso, arms, legs, outfit/accent details, and transparent backgrounds.
 - This pass is acceptable as a first generated game-art baseline, but it is not a final illustrator polish pass. Future art can replace the PNGs without changing gameplay code as long as IDs stay stable.
 
+## Imported-Assets-First Pass - 2026-06-11
+
+The Wow Quality Pass reverses the generator-first pipeline. Decision log: see
+DESIGN.md 2026-06-11 entry.
+
+- **Primary art source:** Kenney CC0 packs, curated under
+  `Assets/_CareerQuest/Art/Kenney/<Pack>/` (review/curation location). Only
+  curated, catalog-ID-named copies move to `Assets/Resources/CareerQuest/`
+  as later units land — the `AssetCatalog` stable-ID pipeline is unchanged.
+- **Fonts:** Fredoka (display) + Lexend (body) static TTFs under
+  `Assets/Fonts/` with their OFL.txt licenses; baked into TMP SDF assets in
+  the typography unit.
+- **Buildings:** upgraded owned art styled to the Kenney palette (Kenney has
+  no 2D cartoon town buildings). Direction sample:
+  `docs/references/building-direction-sample.png`.
+- **Import settings:** `CareerQuestTexturePostprocessor` enforces
+  Sprite/Single, 100 PPU, bilinear, no mipmaps, uncompressed for everything
+  under the CareerQuest art paths — no manual inspector edits.
+- **Generator status:** `CareerQuestSpriteKitGenerator` and
+  `SpriteFallbackFactory` remain as the QA fallback layer only. Fallback art
+  visible in player-facing screenshots still fails a milestone.
+- **Quality bar:** `docs/references/` is the standing side-by-side review
+  anchor (Toca Boca World, Khan Academy Kids, Skillsville, Kenney previews).
+
+## Final State — Wow Quality Pass Landed - 2026-06-12
+
+The imported-assets-first pipeline is fully landed; every player-facing
+surface ships curated art, verified by the extended zero-fallback gate over
+the full catalog (EditMode suite). Where each art surface stands:
+
+- **Characters (avatars + NPCs):** Kenney Toon Characters with code-driven
+  frame animation (walk/idle, `flipX` facing) — the generated character art
+  is retired from the player-facing path.
+- **Campus hub:** authored prefab diorama (`CampusHub.prefab`) — parallax
+  bands, Kenney props/foliage, ambient motion (clouds, flag, butterflies),
+  interactive toys; upgraded owned buildings styled to the Kenney palette
+  per the affirmed `docs/references/building-direction-sample.png`.
+- **Activity rooms:** authored room prefabs (Design Build workshop, Health
+  Hero clinic, Logic Court) with drag interaction; the four optional rooms
+  carry the at-bar art pass with simpler interactions by design.
+- **Badges and gallery:** all badge IDs (core + ai_lab, music_studio,
+  robotics_garage, community_kitchen) exist as real art; the gallery is a
+  passport/sticker book.
+- **Reveal:** in-world stage prefab with faked 2D lighting (glow/gradient
+  sprites) and a scripted-camera cinematic.
+- **Typography:** TextMeshPro everywhere — Fredoka display, Lexend body
+  (SDF assets baked from static TTFs); the zero-legacy-`Text` scan enforces
+  this in the suite.
+- **Audio:** 29 cue IDs (UI, gameplay, ambient/music tiers, hub toys) all
+  resolve to curated Kenney clips; coverage gate enforced in EditMode.
+- **Cursor/emotes:** Kenney Cursor Pack (grab state on drag) and Emotes
+  pack (fixed-ID 2P emotes).
+- **Generator demoted, enforced in code:** `CareerQuestSpriteKitGenerator`
+  is fallback-only — it fills missing files and never overwrites curated
+  PNGs (0 overwrites confirmed on the final ladder run). The checker
+  fallback remains the visible-breakage QA layer.
+
+Final evidence: `SubmissionBundle/screenshots/` (12 captures, 1280x720,
+packaged build) and `docs/qa/2026-06-12-wow-pass-final.md`.
+
 ## Visual Rules
 
 - Keep the campus colorful, but avoid one-color themes. Use green ground, warm paths, blue science spaces, coral creative spaces, gold logic/court spaces, and teal health/helping spaces.

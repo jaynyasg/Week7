@@ -27,17 +27,30 @@ namespace CareerQuest.Editor
         {
             EnsureDirectories();
 
+            // Wow Quality Pass (DESIGN.md 2026-06-11 decision): the generator is
+            // demoted to fallback-only. It fills MISSING catalog art and never
+            // overwrites existing files — curated Kenney art and upgraded
+            // building art are the player-facing source of truth.
+            var generated = 0;
+            var written = new List<AssetDefinition>();
             foreach (var definition in AssetCatalog.Definitions)
             {
+                if (File.Exists(ResourcePath(definition)))
+                {
+                    continue;
+                }
+
                 var texture = DrawDefinition(definition);
                 WritePng(texture, ResourcePath(definition));
                 WritePng(texture, ArtPath(definition));
                 UnityEngine.Object.DestroyImmediate(texture);
+                written.Add(definition);
+                generated++;
             }
 
             AssetDatabase.Refresh();
 
-            foreach (var definition in AssetCatalog.Definitions)
+            foreach (var definition in written)
             {
                 ConfigureTextureImporter(ResourcePath(definition));
                 ConfigureTextureImporter(ArtPath(definition));
@@ -45,7 +58,7 @@ namespace CareerQuest.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"Career Quest sprite kit generated: {AssetCatalog.Definitions.Count} sprites.");
+            Debug.Log($"Career Quest sprite kit: {generated} missing sprites generated as fallbacks; {AssetCatalog.Definitions.Count - generated} existing files untouched.");
         }
 
         private static void EnsureDirectories()

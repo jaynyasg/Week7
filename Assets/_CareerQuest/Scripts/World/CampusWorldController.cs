@@ -5,7 +5,7 @@ namespace CareerQuest
     public class CampusWorldController : MonoBehaviour
     {
         private Transform _root;
-        private Camera _camera;
+        private CameraDirector _cameraDirector;
         private CampusWorldBuilder _builder;
         private HubBootController _hubBoot;
         private RoomVeilController _roomVeil;
@@ -13,6 +13,25 @@ namespace CareerQuest
         public bool IsHubBootComplete => _hubBoot != null && _hubBoot.IsBootComplete;
         public bool IsHubDecorLoaded => _hubBoot != null && _hubBoot.IsDecorLoaded;
         public bool IsRoomVeilActive => _roomVeil != null && _roomVeil.IsVeilActive;
+
+        public CameraDirector CameraDirector
+        {
+            get
+            {
+                EnsureSetup();
+                return _cameraDirector;
+            }
+        }
+
+        /// <summary>World content root — room playfields (drag pieces/zones) mount here.</summary>
+        public Transform WorldRoot
+        {
+            get
+            {
+                EnsureSetup();
+                return _root;
+            }
+        }
 
         public static CampusWorldController Ensure()
         {
@@ -50,63 +69,73 @@ namespace CareerQuest
 
         public void ShowProof(GameSession session)
         {
-            CancelBoot();
-            _builder.ClearWorld();
-            _builder.AddSky();
-            _builder.AddGround();
-            _builder.AddPath(new Vector2(0f, -0.9f), new Vector2(7.2f, 0.42f), 0f);
-            _builder.AddBuilding("Shared Campus", 0f, 1.25f, 2.25f, 1.3f, CampusWorldPalette.Mint, CampusWorldPalette.TealRoof, 3);
+            // Hub-style world (authored diorama) with the proof characters on top.
+            BeginHub("Proof");
             _builder.AddNetworkProof(-2.6f, -0.85f, "P1 Builder", CampusWorldPalette.PlayerBlue);
             _builder.AddNetworkProof(2.6f, -0.85f, "P2 Designer", CampusWorldPalette.PlayerGold);
-            _builder.AddShape("ProofPulseA", CampusSpriteKind.Circle, new Vector2(-2.6f, -0.85f), new Vector2(1.35f, 1.35f), CampusWorldPalette.PlayerBlueSoft, 1);
-            _builder.AddShape("ProofPulseB", CampusSpriteKind.Circle, new Vector2(2.6f, -0.85f), new Vector2(1.35f, 1.35f), CampusWorldPalette.PlayerGoldSoft, 1);
         }
 
         public void ShowDesignBuild(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowDesignBuild(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowDesignBuild(_builder, session), AudioCueIds.AmbientDesignBuild);
         }
 
         public void ShowClinic(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowClinic(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowClinic(_builder, session), AudioCueIds.AmbientHealthHero);
         }
 
         public void ShowCourt(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowCourt(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowCourt(_builder, session), AudioCueIds.AmbientLogicCourt);
         }
 
         public void ShowGallery(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session), AudioCueIds.AmbientGallery);
         }
 
         public void ShowOptionalRoom(GameSession session, CatalogEntry entry)
         {
-            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry));
+            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry), AudioCueIds.AmbientOptional);
         }
 
         public void ShowReveal(GameSession session)
         {
-            BeginRoom(() => CampusRoomScenes.ShowReveal(_builder, session));
+            BeginRoom(() => CampusRoomScenes.ShowReveal(_builder, session), AudioCueIds.AmbientReveal);
         }
 
         public void ClearWorld()
         {
             CancelBoot();
             _builder?.ClearWorld();
+            _cameraDirector?.ResetToRouteShot();
         }
 
         private void BeginHub(string name)
         {
             EnsureSetup();
+            // P24: starting a hub route cancels the previous route's pending
+            // work (room veil reveal AND hub decor) so a cancelled room build
+            // can never wipe or pollute the world this route mounts.
+            CancelBoot();
+            _cameraDirector.SetRouteShot(CameraShot.Default);
+            // P4: every hub-style route restores campus ambience + music loop
+            // (~1s crossfade; the director no-ops if it is already the target).
+            AudioDirector.Ensure().SetAmbience(AudioCueIds.AmbientCampus, AudioCueIds.MusicCampus);
             _hubBoot.BuildCampus(name);
         }
 
-        private void BeginRoom(System.Action buildRoom)
+        private void BeginRoom(System.Action buildRoom, string ambientCueId)
         {
             EnsureSetup();
+            // P24: starting a room route cancels pending hub decor and any
+            // previous room's pending reveal — no orphaned hub decor in rooms.
+            CancelBoot();
+            _cameraDirector.SetRouteShot(CameraShot.Default);
+            // P4: per-room ambient flavor; campus music fades out so the room
+            // flavor never fights the hub loop.
+            AudioDirector.Ensure().SetAmbience(ambientCueId, null);
             _roomVeil.ShowRoom(buildRoom);
         }
 
@@ -124,26 +153,15 @@ namespace CareerQuest
                 _root.SetParent(transform, false);
             }
 
-            if (_camera == null)
+            if (_cameraDirector == null)
             {
-                _camera = Camera.main;
-                if (_camera == null)
-                {
-                    var cameraObject = new GameObject("CampusWorldCamera", typeof(Camera));
-                    _camera = cameraObject.GetComponent<Camera>();
-                    _camera.orthographic = true;
-                    _camera.orthographicSize = 4.5f;
-                    _camera.backgroundColor = CampusWorldPalette.Sky;
-                    _camera.clearFlags = CameraClearFlags.SolidColor;
-                    _camera.transform.position = new Vector3(0f, 0f, -10f);
-                }
+                _cameraDirector = CameraDirector.Ensure();
             }
 
             if (_builder == null)
             {
                 _builder = new CampusWorldBuilder(_root);
-                var entrances = new BuildingEntranceController(_builder);
-                _hubBoot = new HubBootController(this, _builder, entrances);
+                _hubBoot = new HubBootController(this, _builder);
                 _roomVeil = new RoomVeilController(this, _builder);
             }
         }

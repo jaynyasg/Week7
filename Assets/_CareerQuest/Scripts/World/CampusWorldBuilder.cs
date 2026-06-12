@@ -5,8 +5,6 @@ namespace CareerQuest
     internal sealed class CampusWorldBuilder
     {
         public const int WorldLabelFontSize = 28;
-        public const float BuildingLabelSize = 0.033f;
-        public const float SmallBuildingLabelSize = 0.027f;
         public const float CharacterLabelSize = 0.028f;
         public const float ItemLabelSize = 0.034f;
 
@@ -19,15 +17,14 @@ namespace CareerQuest
 
         public void ClearWorld()
         {
+            // Teardown safety (U6): a world clear mid-drag must cancel the active
+            // drag before destroying its hierarchy — no exceptions, no orphan.
+            DraggablePiece.CancelActiveDrag();
+
             for (var i = Root.childCount - 1; i >= 0; i--)
             {
                 Object.DestroyImmediate(Root.GetChild(i).gameObject);
             }
-        }
-
-        public GameObject AddFullScreenVeil()
-        {
-            return AddShape("RoomVeil", CampusSpriteKind.Square, Vector2.zero, new Vector2(12f, 9f), CampusWorldPalette.Veil, 100);
         }
 
         public void AddSky()
@@ -47,49 +44,9 @@ namespace CareerQuest
             AddShape($"Path_{position.x}_{position.y}", CampusSpriteKind.Square, position, size, CampusWorldPalette.Path, 1, rotation);
         }
 
-        public void AddPlaza(string name)
-        {
-            AddShape($"{name}PlazaShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.72f), new Vector2(1.72f, 0.72f), CampusWorldPalette.Shadow, 1);
-            AddShape($"{name}Plaza", CampusSpriteKind.Circle, new Vector2(0f, -0.62f), new Vector2(1.55f, 0.62f), CampusWorldPalette.Plaza, 2);
-        }
-
-        public void AddBuildTable()
-        {
-            AddShape("BuildTable", CampusSpriteKind.Square, new Vector2(0f, -0.45f), new Vector2(6.6f, 1.05f), CampusWorldPalette.Plaza, 3);
-            AddSkylineLot("Clinic", -2.45f, -0.35f, CampusWorldPalette.Mint);
-            AddSkylineLot("Court", -1.2f, -0.35f, CampusWorldPalette.Gold);
-            AddSkylineLot("Studio", 0f, -0.35f, CampusWorldPalette.Coral);
-            AddSkylineLot("Lab", 1.2f, -0.35f, CampusWorldPalette.SkyBlue);
-            AddSkylineLot("Art", 2.45f, -0.35f, CampusWorldPalette.Lilac);
-            AddShape("CraneMast", CampusSpriteKind.Square, new Vector2(4.35f, 0.65f), new Vector2(0.14f, 2.4f), CampusWorldPalette.TealRoof, 4);
-            AddShape("CraneArm", CampusSpriteKind.Square, new Vector2(3.55f, 1.72f), new Vector2(1.8f, 0.14f), CampusWorldPalette.TealRoof, 4);
-            AddShape("CraneHook", CampusSpriteKind.Square, new Vector2(2.78f, 1.35f), new Vector2(0.1f, 0.74f), CampusWorldPalette.CoralRoof, 4);
-        }
-
-        public void AddBuilding(string label, float x, float y, float width, float height, Color body, Color roof, int order)
-        {
-            AddShape($"{label}Shadow", CampusSpriteKind.Square, new Vector2(x + 0.08f, y - 0.08f), new Vector2(width + 0.25f, height + 0.15f), CampusWorldPalette.Shadow, order - 1);
-            AddCatalogSprite($"{label}Sprite", CampusAssetIdFor(label), new Vector2(x, y + 0.02f), new Vector2(width + 0.28f, height + 0.28f), order);
-            AddLabel($"{label}Label", ShortBuildingLabel(label), x, y - height * 0.66f, BuildingLabelSize, CampusWorldPalette.Ink, order + 5);
-        }
-
-        public void AddSmallBuilding(string label, float x, float y, Color body)
-        {
-            AddShape($"{label}SmallShadow", CampusSpriteKind.Square, new Vector2(x + 0.06f, y - 0.06f), new Vector2(1.28f, 0.82f), CampusWorldPalette.Shadow, 2);
-            AddCatalogSprite($"{label}SmallSprite", CampusAssetIdFor(label), new Vector2(x, y + 0.04f), new Vector2(1.28f, 0.96f), 3);
-            AddLabel($"{label}SmallLabel", label, x, y - 0.58f, SmallBuildingLabelSize, CampusWorldPalette.Ink, 8);
-        }
-
-        public void AddSkylineLot(string label, float x, float y, Color body)
-        {
-            AddShape($"{label}Pad", CampusSpriteKind.Circle, new Vector2(x, y - 0.52f), new Vector2(0.95f, 0.22f), CampusWorldPalette.Shadow, 4);
-            AddCatalogSprite($"{label}PieceSprite", PropAssetIdFor(label), new Vector2(x, y + 0.08f), new Vector2(0.95f, 0.95f), 5);
-            AddLabel($"{label}LotLabel", label, x, y - 0.86f, ItemLabelSize, CampusWorldPalette.Ink, 8);
-        }
-
         public void AddNetworkProof(float x, float y, string label, Color color)
         {
-            AddShape($"{label}Ring", CampusSpriteKind.Circle, new Vector2(x, y - 0.2f), new Vector2(1.4f, 0.46f), CampusWorldPalette.Plaza, 2);
+            AddShape($"{label}Ring", CampusSpriteKind.Circle, new Vector2(x, y - 0.2f), new Vector2(1.4f, 0.46f), CampusWorldPalette.Plaza, 302);
             AddCharacter(label, x, y, color, x, true, label.Contains("Join") ? "avatar.logic_spark" : "avatar.sky_builder");
         }
 
@@ -110,25 +67,27 @@ namespace CareerQuest
             group.transform.SetParent(Root, false);
             group.transform.position = new Vector3(x, y, 0f);
 
-            AddShape($"{label}Shadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 7, 0f, group.transform);
+            // Characters live in the 300-399 sorting band (above the authored
+            // world band 200-299) per the U4 sorting-order banding decision.
+            AddShape($"{label}Shadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, group.transform);
 
             if (!string.IsNullOrWhiteSpace(assetId))
             {
-                AddCatalogSprite($"{label}Sprite", assetId, new Vector2(0f, 0.02f), new Vector2(0.86f, 1.16f), 10, 0f, group.transform);
+                AddCatalogSprite($"{label}Sprite", assetId, new Vector2(0f, 0.02f), new Vector2(0.86f, 1.16f), 310, 0f, group.transform);
             }
             else
             {
-                AddShape($"{label}LegA", CampusSpriteKind.Square, new Vector2(-0.1f, -0.34f), new Vector2(0.12f, 0.36f), CampusWorldPalette.Door, 8, 0f, group.transform);
-                AddShape($"{label}LegB", CampusSpriteKind.Square, new Vector2(0.1f, -0.34f), new Vector2(0.12f, 0.36f), CampusWorldPalette.Door, 8, 0f, group.transform);
-                AddShape($"{label}Body", CampusSpriteKind.Square, new Vector2(0f, 0f), new Vector2(0.48f, 0.55f), shirt, 9, 0f, group.transform);
-                AddShape($"{label}Pack", CampusSpriteKind.Square, new Vector2(0.31f, 0.02f), new Vector2(0.16f, 0.38f), CampusWorldPalette.CoralRoof, 8, 0f, group.transform);
-                AddShape($"{label}Head", CampusSpriteKind.Circle, new Vector2(0f, 0.48f), new Vector2(0.43f, 0.43f), CampusWorldPalette.Skin, 10, 0f, group.transform);
-                AddShape($"{label}Hair", CampusSpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), CampusWorldPalette.Hair, 11, 0f, group.transform);
+                AddShape($"{label}LegA", CampusSpriteKind.Square, new Vector2(-0.1f, -0.34f), new Vector2(0.12f, 0.36f), CampusWorldPalette.Door, 308, 0f, group.transform);
+                AddShape($"{label}LegB", CampusSpriteKind.Square, new Vector2(0.1f, -0.34f), new Vector2(0.12f, 0.36f), CampusWorldPalette.Door, 308, 0f, group.transform);
+                AddShape($"{label}Body", CampusSpriteKind.Square, new Vector2(0f, 0f), new Vector2(0.48f, 0.55f), shirt, 309, 0f, group.transform);
+                AddShape($"{label}Pack", CampusSpriteKind.Square, new Vector2(0.31f, 0.02f), new Vector2(0.16f, 0.38f), CampusWorldPalette.CoralRoof, 308, 0f, group.transform);
+                AddShape($"{label}Head", CampusSpriteKind.Circle, new Vector2(0f, 0.48f), new Vector2(0.43f, 0.43f), CampusWorldPalette.Skin, 310, 0f, group.transform);
+                AddShape($"{label}Hair", CampusSpriteKind.Circle, new Vector2(-0.03f, 0.62f), new Vector2(0.4f, 0.18f), CampusWorldPalette.Hair, 311, 0f, group.transform);
             }
 
             if (showLabel)
             {
-                AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, CampusWorldPalette.Ink, 12, group.transform);
+                AddLabel($"{label}Label", label, 0f, -0.83f, CharacterLabelSize, CampusWorldPalette.Ink, 312, group.transform);
             }
 
             if (animated)
@@ -223,46 +182,6 @@ namespace CareerQuest
             var renderer = labelObject.GetComponent<MeshRenderer>();
             renderer.sortingOrder = order;
             return label;
-        }
-
-        public static string ShortBuildingLabel(string label)
-        {
-            return label switch
-            {
-                "Design Build Studio" => "Design Build",
-                "Health Hero Clinic" => "Health Hero",
-                _ => label
-            };
-        }
-
-        public static string CampusAssetIdFor(string label)
-        {
-            return label switch
-            {
-                "Design Build Studio" => "campus.design_build_studio",
-                "Health Hero Clinic" => "campus.health_hero_clinic",
-                "Logic Court" => "campus.logic_court",
-                "Achievement Gallery" => "campus.achievement_gallery",
-                "Career Reveal Stage" => "campus.reveal_stage",
-                "AI Lab" => "campus.space_lab",
-                "Music Studio" => "campus.music_studio",
-                "Robotics" => "campus.robotics_garage",
-                "Kitchen" => "campus.community_kitchen",
-                _ => "campus.achievement_gallery"
-            };
-        }
-
-        public static string PropAssetIdFor(string label)
-        {
-            return label switch
-            {
-                "Clinic" => "prop.city_piece_clinic",
-                "Court" => "prop.city_piece_court",
-                "Studio" => "prop.city_piece_studio",
-                "Lab" => "prop.city_piece_lab",
-                "Art" => "prop.city_piece_art_tower",
-                _ => "prop.blueprint"
-            };
         }
 
         public static string BadgeAssetIdFor(string label)

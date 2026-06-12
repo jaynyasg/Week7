@@ -79,6 +79,17 @@ namespace CareerQuest
             });
         }
 
+        /// <summary>
+        /// U13: an INTENTIONAL local shutdown (pause menu → Exit to Title) must
+        /// not surface as "The host disconnected" — the disconnect callback NGO
+        /// raises while processing our own Shutdown() is pre-marked as notified
+        /// so <see cref="ClientConnectionLost"/> stays silent.
+        /// </summary>
+        public void SuppressLocalDisconnectNotice()
+        {
+            _localDisconnectNotified = true;
+        }
+
         public void StartSoloFallback()
         {
             LastMode = ConnectionMode.SoloFallback;
@@ -250,6 +261,10 @@ namespace CareerQuest
             if (manager.IsServer)
             {
                 SyncPlayerCountFromServer(manager);
+
+                // U12 P17 lifecycle: a client that disconnects mid-drag must not
+                // leave a stale held-piece flag (partner highlight) behind.
+                ClearHeldPiecesFor(clientId);
             }
 
             if (!manager.IsServer && manager.LocalClientId == clientId)
@@ -266,6 +281,18 @@ namespace CareerQuest
                     ClientConnectionLost?.Invoke();
                 }
             }
+        }
+
+        /// <summary>
+        /// Server-side held-piece sweep for a departed client across all three
+        /// room states (U12 P17 — also a host-only test seam). Each call is a
+        /// safe no-op when the state is absent or the client held nothing.
+        /// </summary>
+        public static void ClearHeldPiecesFor(ulong clientId)
+        {
+            FindFirstObjectByType<DesignBuildNetworkState>()?.ApplyHeldPiece(-1, clientId);
+            FindFirstObjectByType<HealthHeroNetworkState>()?.ApplyHeldPiece(-1, clientId);
+            FindFirstObjectByType<LogicCourtNetworkState>()?.ApplyHeldPiece(-1, clientId);
         }
 
         private static void SyncPlayerCountFromServer(NetworkManager manager)

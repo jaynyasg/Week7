@@ -4,8 +4,18 @@ using UnityEngine;
 
 namespace CareerQuest
 {
+    /// <summary>
+    /// Room transition host. Veil contract (characterized by HubWarmup tests):
+    /// ShowRoom covers the shot immediately ("RoomVeil" object, IsVeilActive
+    /// true); next frame the old world clears, the room builds, IsVeilActive
+    /// flips false. New in U4 (P6): the cover is a SceneWipe paper curtain and
+    /// after the room mounts a non-blocking "SceneWipeOpen" lift plays and
+    /// destroys itself — it never extends the veil-active window.
+    /// </summary>
     internal sealed class RoomVeilController
     {
+        public const float OpenDurationSeconds = 0.3f;
+
         private readonly MonoBehaviour _host;
         private readonly CampusWorldBuilder _builder;
         private Coroutine _veilRoutine;
@@ -33,7 +43,10 @@ namespace CareerQuest
         {
             Cancel();
             _builder.ClearWorld();
-            _builder.AddFullScreenVeil();
+            SceneWipe.CreateCover(_builder.Root);
+            // U8: one paper-wipe swish per room transition (the per-cue
+            // throttle in the director also guards rapid route changes).
+            AudioCueCatalog.TryPlay(AudioCueIds.RoomWipe);
             IsVeilActive = true;
             _veilRoutine = _host.StartCoroutine(RevealRoom(buildRoom));
         }
@@ -44,6 +57,10 @@ namespace CareerQuest
             _builder.ClearWorld();
             IsVeilActive = false;
             buildRoom?.Invoke();
+
+            // P6: paper-wipe open over the freshly mounted room (self-destructs).
+            var opener = SceneWipe.CreateCover(_builder.Root);
+            opener.BeginOpen(OpenDurationSeconds);
             _veilRoutine = null;
         }
     }

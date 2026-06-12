@@ -12,6 +12,12 @@ namespace CareerQuest.Editor
         [MenuItem("Career Quest/Build Windows Player")]
         public static void BuildWindowsPlayer()
         {
+            // U13 (P5): every Windows build carries the packaged identity
+            // (product name/window title, app icon, splash) — reproducible
+            // even when the standalone CareerQuestPackaging.Apply step was
+            // skipped.
+            CareerQuestPackaging.ApplyIdentity();
+
             var outputDirectory = Path.GetDirectoryName(WindowsOutputPath);
             if (!string.IsNullOrWhiteSpace(outputDirectory))
             {

@@ -37,3 +37,9 @@ sysinfo.txt
 *.userprefs
 *.tmp
 *.log
+
+# AgentOps session artifacts
+/.agents/
+
+# Unity test/build logs
+/Logs/

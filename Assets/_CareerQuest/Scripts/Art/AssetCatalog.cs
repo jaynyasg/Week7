@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -29,17 +30,27 @@ namespace CareerQuest
             Campus("campus.logic_court", "Logic Court", new Color(0.96f, 0.62f, 0.18f), new Color(0.68f, 0.36f, 0.03f)),
             Campus("campus.achievement_gallery", "Achievement Gallery", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
             Campus("campus.reveal_stage", "Career Reveal Stage", new Color(1f, 0.92f, 0.64f), new Color(0.28f, 0.66f, 0.94f)),
-            Campus("campus.space_lab", "Space Lab", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f), false),
-            Campus("campus.music_studio", "Music Studio", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f), false),
-            Campus("campus.green_energy_center", "Green Energy Center", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f), false),
-            Campus("campus.robotics_garage", "Robotics Garage", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f), false),
-            Campus("campus.community_kitchen", "Community Kitchen", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f), false),
+            // U11: optional-room campus buildings are required-for-acceptance —
+            // the upgraded owned building art (CareerQuestHubPrefabBuilder) is
+            // their final art, and the fallback gate now polices them.
+            Campus("campus.space_lab", "Space Lab", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f)),
+            Campus("campus.music_studio", "Music Studio", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
+            Campus("campus.green_energy_center", "Green Energy Center", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f)),
+            Campus("campus.robotics_garage", "Robotics Garage", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
+            Campus("campus.community_kitchen", "Community Kitchen", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
 
             Room("room.design_build", "Future City Room", new Color(0.94f, 0.34f, 0.28f), new Color(0.9f, 0.72f, 0.42f)),
             Room("room.health_hero", "Health Hero Room", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
             Room("room.logic_court", "Logic Court Room", new Color(0.96f, 0.62f, 0.18f), new Color(0.62f, 0.52f, 0.86f)),
             Room("room.gallery", "Achievement Gallery Room", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
             Room("room.reveal", "Reveal Ceremony Room", new Color(1f, 0.92f, 0.64f), new Color(0.55f, 0.85f, 1f)),
+            // U11 optional-room interiors (CareerQuestOptionalArtBuilder writes
+            // the final art; ids follow room.{activityId} so CampusRoomScenes
+            // resolves them from the CareerQuestCatalog entry id).
+            Room("room.ai_lab", "AI Space Lab Room", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Room("room.music_studio", "Music Studio Room", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
+            Room("room.robotics_garage", "Robotics Garage Room", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
+            Room("room.community_kitchen", "Community Kitchen Room", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
 
             Prop("prop.blueprint", "Blueprint", new Color(0.83f, 0.96f, 1f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_clinic", "Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.04f, 0.3f, 0.32f)),
@@ -47,15 +58,32 @@ namespace CareerQuest
             Prop("prop.city_piece_studio", "Studio City Piece", new Color(0.94f, 0.34f, 0.28f), new Color(0.55f, 0.12f, 0.12f)),
             Prop("prop.city_piece_lab", "Lab City Piece", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_art_tower", "Art Tower City Piece", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
+            // U11 campus-evolution pieces for the two optional rooms that had
+            // no skyline piece (CareerQuestOptionalArtBuilder writes final art).
+            Prop("prop.city_piece_garage", "Garage City Piece", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
+            Prop("prop.city_piece_kitchen", "Kitchen City Piece", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
             Prop("prop.thermometer", "Thermometer", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 1f, 1f)),
             Prop("prop.care_plan", "Care Plan", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.92f, 0.64f)),
             Prop("prop.evidence_card", "Evidence Card", new Color(0.83f, 0.96f, 1f), new Color(0.96f, 0.62f, 0.18f)),
             Prop("prop.argument_meter", "Argument Meter", new Color(0.62f, 0.52f, 0.86f), new Color(1f, 0.92f, 0.64f)),
+            // U10 drag pieces: Health Hero care tools + Logic Court court cards.
+            Prop("prop.symptom_clipboard", "Symptom Clipboard", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.97f, 0.88f)),
+            Prop("prop.bandage", "Bandage", new Color(0.94f, 0.78f, 0.6f), new Color(1f, 1f, 1f)),
+            Prop("prop.case_file", "Case File", new Color(0.95f, 0.64f, 0.23f), new Color(1f, 0.97f, 0.88f)),
+            Prop("prop.evidence_test", "Bridge Test Evidence", new Color(0.36f, 0.78f, 0.6f), new Color(0.1f, 0.2f, 0.24f)),
+            Prop("prop.evidence_paint", "Paint Opinion Evidence", new Color(0.62f, 0.52f, 0.86f), new Color(0.1f, 0.2f, 0.24f)),
+            Prop("prop.evidence_blueprint", "Blueprint Evidence", new Color(0.28f, 0.66f, 0.94f), new Color(1f, 1f, 1f)),
 
             Badge("badge.design_build", "Design Build Badge", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f)),
             Badge("badge.health_hero", "Health Hero Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
             Badge("badge.logic_court", "Logic Court Badge", new Color(0.96f, 0.62f, 0.18f), new Color(0.62f, 0.52f, 0.86f)),
             Badge("badge.reveal_ready", "Reveal Ready Badge", new Color(1f, 0.92f, 0.64f), new Color(0.28f, 0.66f, 0.94f)),
+            // U11 optional-room badges — career identity colors per DESIGN.md
+            // (Science Blue, Music Lilac, Workshop Teal, kitchen leaf green).
+            Badge("badge.ai_lab", "AI Lab Badge", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Badge("badge.music_studio", "Music Studio Badge", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
+            Badge("badge.robotics_garage", "Robotics Garage Badge", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
+            Badge("badge.community_kitchen", "Community Kitchen Badge", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
 
             Ui("ui.exit", "Exit Game Icon", new Color(0.09f, 0.31f, 0.42f), new Color(1f, 1f, 1f)),
             Ui("ui.gallery", "Gallery Icon", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
@@ -67,6 +95,15 @@ namespace CareerQuest
 
         private static readonly Dictionary<string, AssetDefinition> _definitionsById = _definitions.ToDictionary(definition => definition.Id);
         private static readonly Dictionary<string, SpriteResolution> _resolutionCache = new();
+        private static readonly Dictionary<string, Sprite[]> _frameSetCache = new();
+
+        // Frame-set convention (U5, curated by CareerQuestCharacterArtCurator):
+        // Resources/CareerQuest/{Category}/{id}.{state}{n}.png — frame n of a
+        // named animation state, contiguous from 0. Known states:
+        public const string FrameStateWalk = "walk";
+        public const string FrameStateIdle = "idle";
+        public const string FrameStateCelebrate = "celebrate";
+        public const int MaxFramesPerState = 16;
 
         public static IReadOnlyList<AssetDefinition> Definitions => _definitions;
         public static IReadOnlyList<AssetDefinition> RequiredDefinitions => _definitions.Where(definition => definition.RequiredInFirstPlayable).ToArray();
@@ -97,6 +134,64 @@ namespace CareerQuest
 
             var walkId = baseSpriteAssetId.EndsWith(".walk") ? baseSpriteAssetId : $"{baseSpriteAssetId}.walk";
             return TryGetDefinition(walkId, out _) ? walkId : baseSpriteAssetId;
+        }
+
+        /// <summary>
+        /// Resolves the animation frame set for a cataloged base id and state by
+        /// probing Resources at "{ResourcePath}.{state}{n}" from n = 0 until the
+        /// first missing frame. Returns an empty list (never null, never throws)
+        /// when the id is uncataloged or no frames are curated — callers fall
+        /// back to the static sprite, which keeps the fallback path safe.
+        /// </summary>
+        public static IReadOnlyList<Sprite> FrameSetFor(string baseId, string state)
+        {
+            if (string.IsNullOrWhiteSpace(baseId) || string.IsNullOrWhiteSpace(state))
+            {
+                return Array.Empty<Sprite>();
+            }
+
+            var cacheKey = $"{baseId}.{state}";
+            if (_frameSetCache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            if (!TryGetDefinition(baseId, out var definition))
+            {
+                _frameSetCache[cacheKey] = Array.Empty<Sprite>();
+                return _frameSetCache[cacheKey];
+            }
+
+            var frames = new List<Sprite>();
+            for (var index = 0; index < MaxFramesPerState; index++)
+            {
+                var frame = Resources.Load<Sprite>($"{definition.ResourcePath}.{state}{index}");
+                if (frame == null)
+                {
+                    break;
+                }
+
+                frames.Add(frame);
+
+                // Frame sprites are imported curated art belonging to a cataloged
+                // definition — register them so IsFinalArtSprite/fallback scans
+                // classify them like any other catalog-resolved sprite.
+                var frameKey = $"{cacheKey}{index}";
+                if (!_resolutionCache.ContainsKey(frameKey))
+                {
+                    _resolutionCache[frameKey] = new SpriteResolution(frameKey, definition, frame, false, false);
+                }
+            }
+
+            var resolved = frames.ToArray();
+            _frameSetCache[cacheKey] = resolved;
+            return resolved;
+        }
+
+        /// <summary>Clears the frame-set cache (tests, post-curation in editor).</summary>
+        public static void ResetFrameCache()
+        {
+            _frameSetCache.Clear();
         }
 
         public static SpriteResolution ResolveSprite(string id)

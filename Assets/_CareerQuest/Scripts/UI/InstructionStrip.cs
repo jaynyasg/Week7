@@ -1,5 +1,5 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CareerQuest
 {
@@ -32,11 +32,11 @@ namespace CareerQuest
             switch (session.CurrentRoute)
             {
                 case ActivityRoute.DesignBuild:
-                    return "Pick pieces for your city. Tap Complete when your blueprint is ready.";
+                    return "Drag each city piece onto its matching lot to finish your blueprint.";
                 case ActivityRoute.HealthHero:
-                    return "Read the symptom, choose the right tool, then pick the care plan.";
+                    return "Drag the symptom clipboard, the right tool, then the care plan to the patient.";
                 case ActivityRoute.LogicCourt:
-                    return "Match each clue to the fair rule, then decide the case.";
+                    return "Drag the case file to the podium, then sort each evidence card.";
                 case ActivityRoute.AiLab:
                     return "Train the model, then launch the probe to finish the lab quest.";
                 case ActivityRoute.MusicStudio:
@@ -58,17 +58,24 @@ namespace CareerQuest
             }
         }
 
-        public static Text Build(Transform parent, GameSession session)
+        public static TextMeshProUGUI Build(Transform parent, GameSession session)
         {
             var panel = UiBuilder.InstructionStripPanel(parent, PanelName, Paper, TealAccent);
             UiBuilder.Place(panel, 0f, -305f, 1120f, 64f);
 
-            var label = UiBuilder.Text(panel, LabelName, ResolveMessage(session), 20, TextAnchor.MiddleCenter, Ink);
+            var label = UiBuilder.Text(panel, LabelName, ResolveMessage(session), 20, TextAnchor.MiddleCenter, Ink, TypeRole.Body, TypeWeight.Medium);
             UiBuilder.Place(label.rectTransform, 0f, 0f, 1040f, 48f);
+
+            // Long kid-facing strings must wrap or shrink instead of overflowing the strip.
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14;
+            label.fontSizeMax = 20;
             return label;
         }
 
-        public static void Refresh(Text label, GameSession session)
+        public static void Refresh(TextMeshProUGUI label, GameSession session)
         {
             if (label == null)
             {

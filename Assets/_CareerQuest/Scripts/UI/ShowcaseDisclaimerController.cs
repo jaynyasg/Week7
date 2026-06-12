@@ -10,7 +10,7 @@ namespace CareerQuest
         {
             var panel = UiBuilder.FullPanel(parent, "ShowcaseDisclaimerPanel", new Color(0.95f, 0.95f, 0.88f));
 
-            var title = UiBuilder.Text(panel, "DisclaimerTitle", "Guided Showcase", 42, TextAnchor.MiddleCenter, new Color(0.1f, 0.15f, 0.18f));
+            var title = UiBuilder.Text(panel, "DisclaimerTitle", "Guided Showcase", 42, TextAnchor.MiddleCenter, new Color(0.1f, 0.15f, 0.18f), TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 155f, 820f, 70f);
 
             var body = UiBuilder.Text(panel, "DisclaimerBody", DisclaimerText, 26, TextAnchor.MiddleCenter, new Color(0.12f, 0.16f, 0.2f));
