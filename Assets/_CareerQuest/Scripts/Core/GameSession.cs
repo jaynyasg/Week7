@@ -95,6 +95,7 @@ namespace CareerQuest
                 case ActivityRoute.MusicStudio:
                 case ActivityRoute.RoboticsGarage:
                 case ActivityRoute.CommunityKitchen:
+                case ActivityRoute.PartyStation:
                     return SessionPhase.InRoom;
                 default:
                     return SessionPhase.Hub;

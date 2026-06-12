@@ -65,7 +65,8 @@ namespace CareerQuest.Tests
 
             var hub = Object.FindAnyObjectByType<PlayableHubController>();
             Assert.That(hub, Is.Not.Null);
-            Assert.That(hub.Entrances.Count, Is.EqualTo(7));
+            // U2: 7 legacy entrances + 6 station-id Party Pack doors.
+            Assert.That(hub.Entrances.Count, Is.EqualTo(13));
             Assert.That(hub.Entrances.Any(entrance => entrance.Route == ActivityRoute.MusicStudio), Is.True);
             Assert.That(hub.Entrances.Any(entrance => entrance.Route == ActivityRoute.RoboticsGarage), Is.True);
 

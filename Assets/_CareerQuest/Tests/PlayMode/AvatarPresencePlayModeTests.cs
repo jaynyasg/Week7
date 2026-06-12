@@ -261,7 +261,7 @@ namespace CareerQuest.Tests
             beat.AutoTick = false;
             beat.Tick(FirstRunGuideBeat.BeatDurationSeconds + 0.1f);
             Assert.That(beat.PointedDoor, Is.Null);
-            Assert.That(guide.Bubble.DisplayedText, Is.EqualTo("Move to a door, then press E."));
+            Assert.That(guide.Bubble.DisplayedText, Is.EqualTo("Walk into a door to start a quest!"));
 
             // Re-entry in the same session does not repeat the beat.
             app.ShowHealthHero();
@@ -274,7 +274,7 @@ namespace CareerQuest.Tests
             var secondBeat = secondGuide.GetComponent<FirstRunGuideBeat>();
             Assert.That(secondBeat.DidPlay, Is.False, "The beat plays once per session — re-entry must not repeat it.");
             Assert.That(secondGuide.GetComponent<CampusGuideController>().Bubble.DisplayedText,
-                Is.EqualTo("Move to a door, then press E."));
+                Is.EqualTo("Walk into a door to start a quest!"));
 
             Object.Destroy(appObject);
         }

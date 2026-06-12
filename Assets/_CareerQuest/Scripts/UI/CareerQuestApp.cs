@@ -59,6 +59,10 @@ namespace CareerQuest
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
+
+        /// <summary>U2: station id active on the generic PartyStation route; null elsewhere.</summary>
+        public string CurrentStationId => _router.CurrentStationId;
+
         public bool IsCeremonyActive => _ceremonyActive;
 
         private void Awake()
@@ -393,7 +397,7 @@ namespace CareerQuest
             var advancedHint = UiBuilder.Text(panel, "ConnectionAdvancedHint", "Use IP join only when another device is hosting on the same network.", 15, TextAnchor.MiddleCenter, new Color(0.18f, 0.26f, 0.3f));
             UiBuilder.Place(advancedHint.rectTransform, 0f, -148f, 760f, 34f);
 
-            var controls = UiBuilder.Text(panel, "ConnectionControls", "Campus controls: WASD or arrows to move. E / Space enters a door.", 16, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
+            var controls = UiBuilder.Text(panel, "ConnectionControls", "Campus controls: WASD or arrows to move. Walk into a door to enter.", 16, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
             UiBuilder.Place(controls.rectTransform, 0f, -212f, 760f, 36f);
 
             AttachDebug();
@@ -623,7 +627,7 @@ namespace CareerQuest
             UiBuilder.Place(badgeLabel.rectTransform, 130f, 2f, 130f, 26f);
 
             // --- ONE short controls hint (right); details live in the pause menu/strip ---
-            var controls = UiBuilder.Text(hud, "CampusControlsHint", "Move: WASD · Enter doors: E", 15, TextAnchor.MiddleRight, new Color(0.27f, 0.36f, 0.4f));
+            var controls = UiBuilder.Text(hud, "CampusControlsHint", "Move: WASD · Walk into a door", 15, TextAnchor.MiddleRight, new Color(0.27f, 0.36f, 0.4f));
             UiBuilder.Place(controls.rectTransform, 332f, 0f, 300f, 26f);
         }
 
@@ -777,6 +781,55 @@ namespace CareerQuest
             ShowOptionalRoom(ActivityRoute.CommunityKitchen);
         }
 
+        /// <summary>
+        /// U2 generic station branch (KTD3): the ONE mount path for every Party
+        /// Pack station, keyed by station id — never one method per station.
+        /// Stations that still carry a legacy ActivityRoute bridge to the
+        /// optional-room path until U5 flips them to station-id routing.
+        /// Returns false for unknown/non-station ids.
+        /// </summary>
+        public bool ShowPartyStation(string stationId)
+        {
+            if (_ceremonyActive)
+            {
+                return false;
+            }
+
+            if (!CareerQuestCatalog.IsPartyStationId(stationId) || !CareerQuestCatalog.TryGetById(stationId, out var entry))
+            {
+                return false;
+            }
+
+            if (!entry.UsesStationIdRouting)
+            {
+                // Converted legacy room: same station, bespoke route until U5.
+                ShowOptionalRoom(entry.Route);
+                return true;
+            }
+
+            _hub.Hide();
+            _router.ShowPartyStation(_session, stationId);
+            _world.ShowOptionalRoom(_session, entry);
+            ResetRoot();
+            MountPartyStationSurface(entry);
+            MountInstructionStrip();
+            AttachDebug();
+            return true;
+        }
+
+        /// <summary>
+        /// U2->U4 seam: mounts the station play surface for a station-id routed
+        /// entry. U4 swaps this placeholder (the generic OptionalRoomController
+        /// shell, which already proves room lifecycle, one-result emission, and
+        /// return-to-campus) for the real PartyStationController without
+        /// touching the routing path above.
+        /// </summary>
+        private void MountPartyStationSurface(CatalogEntry entry)
+        {
+            var controller = gameObject.GetComponent<OptionalRoomController>() ?? gameObject.AddComponent<OptionalRoomController>();
+            controller.Render(_root, _session, this, CurrentResultSource(), entry.Id);
+        }
+
         public void ShowGallery()
         {
             if (_ceremonyActive)
@@ -913,7 +966,7 @@ namespace CareerQuest
                 return;
             }
 
-            _instructionStripText = InstructionStrip.Build(_root, _session);
+            _instructionStripText = InstructionStrip.Build(_root, _session, _router.CurrentStationId);
         }
 
         private void RefreshInstructionStrip()
@@ -923,7 +976,7 @@ namespace CareerQuest
                 return;
             }
 
-            InstructionStrip.Refresh(_instructionStripText, _session);
+            InstructionStrip.Refresh(_instructionStripText, _session, _router.CurrentStationId);
         }
 
         private void HideInstructionStrip()

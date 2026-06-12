@@ -258,6 +258,12 @@ namespace CareerQuest
             return entry != null;
         }
 
+        /// <summary>True for any of the 10 Party Pack station ids (U2 generic-branch gate).</summary>
+        public static bool IsPartyStationId(string id)
+        {
+            return !string.IsNullOrWhiteSpace(id) && PartyStationIds.Contains(id);
+        }
+
         public static CatalogEntry GetByRoute(ActivityRoute route)
         {
             return Entries.First(entry => entry.Route == route);

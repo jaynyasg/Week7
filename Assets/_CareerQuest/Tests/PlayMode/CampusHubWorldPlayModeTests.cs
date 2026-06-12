@@ -97,6 +97,41 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
+        public IEnumerator StationEntrancesStayInsideWalkClampsAndNeverOverlap()
+        {
+            yield return null;
+
+            // U2: the playable entrance set is the anchored entrances plus the
+            // station-id doors. It must validate clean (non-overlapping entry
+            // circles, readable labels and district labels, resolvable station
+            // ids) and every door must be reachable under both walk clamps.
+            var entrances = WorldAnchors.ActiveEntrancesWithStations;
+            var errors = WorldAnchors.ValidateEntrances(entrances);
+            Assert.That(errors, Is.Empty,
+                $"Hub entrance layout must validate clean. Errors: {string.Join(" | ", errors)}");
+
+            var localBounds = WorldAnchors.ActiveWalkBounds;
+            var serverBounds = WorldAnchors.AssetWalkBounds;
+            foreach (var entrance in entrances.Where(entrance => entrance.IsStationEntrance))
+            {
+                Assert.That(localBounds.Contains(entrance.Position), Is.True,
+                    $"Station entrance '{entrance.Id}' at {entrance.Position} must lie inside the local walk clamp {localBounds}.");
+                Assert.That(serverBounds.Contains(entrance.Position), Is.True,
+                    $"Station entrance '{entrance.Id}' at {entrance.Position} must lie inside the server walk clamp {serverBounds}.");
+
+                var clamped = PlayerAvatarNetwork.ClampCampus(new Vector3(entrance.Position.x, entrance.Position.y, 0f));
+                Assert.That((Vector2)clamped, Is.EqualTo(entrance.Position),
+                    $"The server clamp must not move station entrance '{entrance.Id}'.");
+            }
+
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                Assert.That(entrances.Count(entrance => entrance.ResolveStationId() == stationId), Is.EqualTo(1),
+                    $"Station '{stationId}' must resolve exactly one campus entrance.");
+            }
+        }
+
+        [UnityTest]
         public IEnumerator ParallaxBandsTrackCameraAndReAnchorAfterRoomRoundTrip()
         {
             var worldObject = new GameObject("parallax-test");

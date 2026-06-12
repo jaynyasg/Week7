@@ -98,5 +98,80 @@ namespace CareerQuest.Tests
             Assert.That(route, Is.EqualTo(ActivityRoute.MusicStudio));
             Assert.That(session.CurrentPhase, Is.EqualTo(SessionPhase.InRoom));
         }
+
+        // ------------------------------------------------------------------
+        // U2 generic station branch: ONE route value, station id carried
+        // alongside (R7/KTD3).
+        // ------------------------------------------------------------------
+
+        [Test]
+        public void PartyStationRouteCarriesTheStationId()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+            router.BeginPlay(session);
+
+            var route = router.ShowPartyStation(session, CareerQuestCatalog.VetClinicId);
+
+            Assert.That(route, Is.EqualTo(ActivityRoute.PartyStation));
+            Assert.That(router.CurrentRoute, Is.EqualTo(ActivityRoute.PartyStation));
+            Assert.That(router.CurrentStationId, Is.EqualTo(CareerQuestCatalog.VetClinicId));
+            Assert.That(session.CurrentRoute, Is.EqualTo(ActivityRoute.PartyStation));
+            Assert.That(session.CurrentPhase, Is.EqualTo(SessionPhase.InRoom));
+        }
+
+        [Test]
+        public void EveryPartyStationIdRoutesThroughTheSingleGenericBranch()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+            router.BeginPlay(session);
+
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                router.ShowCampus(session);
+                var route = router.ShowPartyStation(session, stationId);
+
+                Assert.That(route, Is.EqualTo(ActivityRoute.PartyStation), stationId);
+                Assert.That(router.CurrentStationId, Is.EqualTo(stationId));
+            }
+        }
+
+        [Test]
+        public void LeavingThePartyStationRouteClearsTheStationId()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+            router.BeginPlay(session);
+            router.ShowPartyStation(session, CareerQuestCatalog.GreenCityId);
+
+            router.ShowCampus(session);
+
+            Assert.That(router.CurrentRoute, Is.EqualTo(ActivityRoute.Campus));
+            Assert.That(router.CurrentStationId, Is.Null);
+        }
+
+        [Test]
+        public void UnknownOrNonStationIdsCannotEnterTheGenericBranch()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+            router.BeginPlay(session);
+
+            Assert.Throws<ArgumentException>(() => router.ShowPartyStation(session, "not_a_station"));
+            Assert.Throws<ArgumentException>(() => router.ShowPartyStation(session, CareerConfig.DesignBuildId));
+            Assert.Throws<ArgumentException>(() => router.ShowPartyStation(session, null));
+        }
+
+        [Test]
+        public void PartyStationIsNotALegacyMiniGameRoute()
+        {
+            var session = new GameSession();
+            var router = new SceneFlowRouter();
+
+            Assert.That(SceneFlowRouter.IsMiniGameRoute(ActivityRoute.PartyStation), Is.False,
+                "The generic station branch never joins the legacy route lookups.");
+            Assert.Throws<ArgumentException>(() => router.ShowActivity(session, ActivityRoute.PartyStation));
+        }
     }
 }
