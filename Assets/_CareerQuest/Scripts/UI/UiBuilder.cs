@@ -149,6 +149,84 @@ namespace CareerQuest
             return button;
         }
 
+        /// <summary>
+        /// U13 paper-styled horizontal slider (0..1). Follows the factory
+        /// conventions: TMP-free composition (label is the caller's job),
+        /// kid-large hit area (size the root ≥ 44px tall via Place), and the
+        /// raycast policy — track + handle stay raycast targets (they ARE the
+        /// control), the fill never blocks. Track is paper-shadow, fill is
+        /// Path Gold, handle is a Workshop Teal circle.
+        /// </summary>
+        public static Slider Slider(Transform parent, string name, float initialValue, Action<float> onValueChanged)
+        {
+            var sliderObject = new GameObject(name, typeof(RectTransform), typeof(Slider));
+            sliderObject.transform.SetParent(parent, false);
+
+            // Track (background): full-width band, vertically centered.
+            var background = new GameObject($"{name}Track", typeof(RectTransform), typeof(Image));
+            background.transform.SetParent(sliderObject.transform, false);
+            var backgroundImage = background.GetComponent<Image>();
+            backgroundImage.color = new Color(0.851f, 0.714f, 0.435f, 0.85f); // DESIGN Paper Shadow
+            var backgroundRect = background.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = new Vector2(0f, 0.5f);
+            backgroundRect.anchorMax = new Vector2(1f, 0.5f);
+            backgroundRect.offsetMin = new Vector2(0f, -7f);
+            backgroundRect.offsetMax = new Vector2(0f, 7f);
+
+            // Fill area + fill: progress reads as Path Gold.
+            var fillArea = new GameObject($"{name}FillArea", typeof(RectTransform));
+            fillArea.transform.SetParent(sliderObject.transform, false);
+            var fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0f, 0.5f);
+            fillAreaRect.anchorMax = new Vector2(1f, 0.5f);
+            fillAreaRect.offsetMin = new Vector2(0f, -7f);
+            fillAreaRect.offsetMax = new Vector2(0f, 7f);
+
+            var fill = new GameObject($"{name}Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            var fillImage = fill.GetComponent<Image>();
+            fillImage.color = new Color(0.953f, 0.769f, 0.357f); // DESIGN Path Gold
+            fillImage.raycastTarget = false;
+            var fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            // Handle slide area + kid-large circular handle (≥ 36px visual,
+            // the whole root rect is the drag surface).
+            var handleArea = new GameObject($"{name}HandleArea", typeof(RectTransform));
+            handleArea.transform.SetParent(sliderObject.transform, false);
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero;
+            handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = new Vector2(18f, 0f);
+            handleAreaRect.offsetMax = new Vector2(-18f, 0f);
+
+            var handle = new GameObject($"{name}Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            var handleImage = handle.GetComponent<Image>();
+            handleImage.sprite = CircleSprite;
+            handleImage.color = new Color(0.055f, 0.42f, 0.435f); // DESIGN Workshop Teal
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(36f, 36f);
+
+            var slider = sliderObject.GetComponent<Slider>();
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.SetValueWithoutNotify(Mathf.Clamp01(initialValue));
+            if (onValueChanged != null)
+            {
+                slider.onValueChanged.AddListener(value => onValueChanged(value));
+            }
+
+            return slider;
+        }
+
         public static TMP_InputField Input(Transform parent, string name, string value)
         {
             var inputObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(TMP_InputField));

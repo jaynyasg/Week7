@@ -27,11 +27,19 @@ namespace CareerQuest
     ///   through Tick(deltaSeconds) (house idiom — AutoTick forwards
     ///   Time.deltaTime; tests set AutoTick=false and drive Tick directly).
     /// - Volume tiers: <see cref="SfxVolume"/> (UI + gameplay + fanfare) and
-    ///   <see cref="MusicVolume"/> (ambient/music) — PlayerPrefs application
-    ///   lands in U13; only the setters live here.
+    ///   <see cref="MusicVolume"/> (ambient/music) — persisted device prefs
+    ///   (U13/P20) load in Awake; PauseMenuController owns the pref writes.
     /// </summary>
     public class AudioDirector : MonoBehaviour
     {
+        /// <summary>
+        /// U13 device-settings keys (P20). These are device preferences only —
+        /// never child data (R23). PauseMenuController writes them; Awake
+        /// applies them so persisted volumes load on boot.
+        /// </summary>
+        public const string SfxVolumePrefKey = "cq.settings.sfx_volume";
+        public const string MusicVolumePrefKey = "cq.settings.music_volume";
+
         public const int GameplayVoiceCount = 6;            // plan: 4–8 pooled sources
         public const float GameplayPitchVariation = 0.08f;  // plan: ±5–10%
         public const float DefaultMinCueIntervalSeconds = 0.12f;
@@ -301,6 +309,12 @@ namespace CareerQuest
             {
                 Instance = this;
             }
+
+            // U13 (P20): persisted device volumes apply on boot. Setters route
+            // through the properties so live sources (none yet at Awake; the
+            // lazy EnsureSources path re-applies) always match the prefs.
+            SfxVolume = PlayerPrefs.GetFloat(SfxVolumePrefKey, 1f);
+            MusicVolume = PlayerPrefs.GetFloat(MusicVolumePrefKey, 1f);
         }
 
         private void OnDestroy()

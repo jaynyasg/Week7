@@ -79,6 +79,17 @@ namespace CareerQuest
             });
         }
 
+        /// <summary>
+        /// U13: an INTENTIONAL local shutdown (pause menu → Exit to Title) must
+        /// not surface as "The host disconnected" — the disconnect callback NGO
+        /// raises while processing our own Shutdown() is pre-marked as notified
+        /// so <see cref="ClientConnectionLost"/> stays silent.
+        /// </summary>
+        public void SuppressLocalDisconnectNotice()
+        {
+            _localDisconnectNotified = true;
+        }
+
         public void StartSoloFallback()
         {
             LastMode = ConnectionMode.SoloFallback;
