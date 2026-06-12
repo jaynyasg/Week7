@@ -1,7 +1,7 @@
 ---
 title: "feat: Wow Quality Pass — reference-bar art, drag-and-drop play, cinematic reveal"
 type: feat
-status: active
+status: completed
 date: 2026-06-11
 origin: docs/brainstorms/2026-06-11-wow-quality-pass-requirements.md
 deepened: 2026-06-11

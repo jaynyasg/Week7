@@ -14,8 +14,10 @@ or taste in the moment.
   Build drag session, and reveal cinematic are composited beside these
   references. The gate question is genre membership: *"Does our screen read
   as the same genre of environment as these?"* — not pixel parity.
-- **U14 final sweep:** the full screen set is composited against this folder
-  one last time before the SubmissionBundle.
+- **U14 final sweep (done 2026-06-12):** the full screen set is composited
+  against this folder one last time — the final 12-capture set lives in
+  `SubmissionBundle/screenshots/`, judged in
+  `docs/qa/2026-06-12-wow-pass-final.md`.
 
 ## Reference titles
 
