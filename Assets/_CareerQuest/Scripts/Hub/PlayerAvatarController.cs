@@ -27,6 +27,12 @@ namespace CareerQuest
             _avatarView.ApplyAvatar(session?.SelectedAvatar ?? AvatarConfig.DefaultAvatar);
             _entrances = entrances ?? Array.Empty<BuildingEntrance>();
             _onDestination = onDestination;
+
+            // Walk clamp from the single anchor truth (WorldAnchors); the
+            // serialized defaults stay only as an editor-visible mirror.
+            var bounds = WorldAnchors.ActiveWalkBounds;
+            minBounds = bounds.min;
+            maxBounds = bounds.max;
         }
 
         private void Update()

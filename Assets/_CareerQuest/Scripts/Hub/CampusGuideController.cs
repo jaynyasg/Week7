@@ -22,7 +22,7 @@ namespace CareerQuest
             label.color = new Color(0.05f, 0.09f, 0.11f);
 
             var renderer = labelObject.GetComponent<MeshRenderer>();
-            renderer.sortingOrder = 25;
+            renderer.sortingOrder = 330; // characters band — above the authored world (200-299)
         }
     }
 }

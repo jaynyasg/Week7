@@ -59,18 +59,10 @@ namespace CareerQuest
 
         public void ShowProof(GameSession session)
         {
-            EnsureSetup();
-            CancelBoot();
-            _cameraDirector.SetRouteShot(CameraShot.Default);
-            _builder.ClearWorld();
-            _builder.AddSky();
-            _builder.AddGround();
-            _builder.AddPath(new Vector2(0f, -0.9f), new Vector2(7.2f, 0.42f), 0f);
-            _builder.AddBuilding("Shared Campus", 0f, 1.25f, 2.25f, 1.3f, CampusWorldPalette.Mint, CampusWorldPalette.TealRoof, 3);
+            // Hub-style world (authored diorama) with the proof characters on top.
+            BeginHub("Proof");
             _builder.AddNetworkProof(-2.6f, -0.85f, "P1 Builder", CampusWorldPalette.PlayerBlue);
             _builder.AddNetworkProof(2.6f, -0.85f, "P2 Designer", CampusWorldPalette.PlayerGold);
-            _builder.AddShape("ProofPulseA", CampusSpriteKind.Circle, new Vector2(-2.6f, -0.85f), new Vector2(1.35f, 1.35f), CampusWorldPalette.PlayerBlueSoft, 1);
-            _builder.AddShape("ProofPulseB", CampusSpriteKind.Circle, new Vector2(2.6f, -0.85f), new Vector2(1.35f, 1.35f), CampusWorldPalette.PlayerGoldSoft, 1);
         }
 
         public void ShowDesignBuild(GameSession session)
@@ -113,6 +105,10 @@ namespace CareerQuest
         private void BeginHub(string name)
         {
             EnsureSetup();
+            // P24: starting a hub route cancels the previous route's pending
+            // work (room veil reveal AND hub decor) so a cancelled room build
+            // can never wipe or pollute the world this route mounts.
+            CancelBoot();
             _cameraDirector.SetRouteShot(CameraShot.Default);
             _hubBoot.BuildCampus(name);
         }
@@ -120,6 +116,9 @@ namespace CareerQuest
         private void BeginRoom(System.Action buildRoom)
         {
             EnsureSetup();
+            // P24: starting a room route cancels pending hub decor and any
+            // previous room's pending reveal — no orphaned hub decor in rooms.
+            CancelBoot();
             _cameraDirector.SetRouteShot(CameraShot.Default);
             _roomVeil.ShowRoom(buildRoom);
         }
@@ -146,8 +145,7 @@ namespace CareerQuest
             if (_builder == null)
             {
                 _builder = new CampusWorldBuilder(_root);
-                var entrances = new BuildingEntranceController(_builder);
-                _hubBoot = new HubBootController(this, _builder, entrances);
+                _hubBoot = new HubBootController(this, _builder);
                 _roomVeil = new RoomVeilController(this, _builder);
             }
         }

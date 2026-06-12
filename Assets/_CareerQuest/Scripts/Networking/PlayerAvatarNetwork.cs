@@ -99,10 +99,19 @@ namespace CareerQuest
             transform.position = _networkPosition.Value;
         }
 
-        private Vector3 ClampCampus(Vector3 position)
+        /// <summary>
+        /// Server-side campus clamp. Reads the walk bounds from the CampusHub
+        /// prefab ASSET via WorldAnchors (never a live instance — the host can
+        /// be inside a room with the hub world cleared while a client walks the
+        /// campus and streams move RPCs). Hard fallback constants apply when
+        /// the prefab asset is missing. Public static so the anchor-consistency
+        /// test can verify entrances against the exact server clamp.
+        /// </summary>
+        public static Vector3 ClampCampus(Vector3 position)
         {
-            position.x = Mathf.Clamp(position.x, -7.5f, 7.5f);
-            position.y = Mathf.Clamp(position.y, -4.2f, 4.2f);
+            var bounds = WorldAnchors.AssetWalkBounds;
+            position.x = Mathf.Clamp(position.x, bounds.xMin, bounds.xMax);
+            position.y = Mathf.Clamp(position.y, bounds.yMin, bounds.yMax);
             position.z = 0f;
             return position;
         }

@@ -6,7 +6,9 @@ namespace CareerQuest
     public class AvatarRuntimeView : MonoBehaviour
     {
         [SerializeField] private string avatarId = AvatarConfig.DefaultAvatarId;
-        [SerializeField] private int sortingOrder = 10;
+        // Characters band 300-399 per the U4 sorting-order banding decision
+        // (authored world content occupies 200-299).
+        [SerializeField] private int sortingOrder = 320;
 
         private SpriteRenderer _spriteRenderer;
         private string _spriteAssetId;
