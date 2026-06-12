@@ -352,6 +352,52 @@ namespace CareerQuest.Editor
             WritePng(pennant, $"{HubArtFolder}/hub_flag_pennant.png");
             UnityEngine.Object.DestroyImmediate(pennant);
 
+            // U12 toy props (P18): plaza fountain and a hand bell on a stand.
+            var fountain = DrawWithPixels(220, 200, (pixels, w, h) =>
+            {
+                var stone = new Color(0.78f, 0.76f, 0.72f);
+                var stoneShade = new Color(stone.r * 0.9f, stone.g * 0.9f, stone.b * 0.9f, 1f);
+                var water = new Color(0.62f, 0.87f, 0.97f);
+                var waterLight = Color.Lerp(water, Color.white, 0.35f);
+
+                // Ground shadow + lower basin with water ring.
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.08f), (int)(w * 0.46f), (int)(h * 0.06f), SoftShadow);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.2f), (int)(w * 0.45f), (int)(h * 0.15f), stone);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.23f), (int)(w * 0.37f), (int)(h * 0.11f), water);
+
+                // Pedestal + upper bowl.
+                FillRoundedRect(pixels, w, h, w / 2 - (int)(w * 0.05f), (int)(h * 0.24f), (int)(w * 0.1f), (int)(h * 0.3f), 8, stoneShade);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.57f), (int)(w * 0.22f), (int)(h * 0.08f), stone);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.59f), (int)(w * 0.17f), (int)(h * 0.055f), water);
+
+                // Spout column with a light cap.
+                FillRoundedRect(pixels, w, h, w / 2 - 5, (int)(h * 0.6f), 10, (int)(h * 0.22f), 5, waterLight);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.84f), (int)(w * 0.06f), (int)(h * 0.045f), waterLight);
+            });
+            WritePng(fountain, $"{HubArtFolder}/hub_fountain.png");
+            UnityEngine.Object.DestroyImmediate(fountain);
+
+            var bell = DrawWithPixels(120, 150, (pixels, w, h) =>
+            {
+                var wood = new Color(0.55f, 0.42f, 0.3f);
+                var bellGold = PathGold;
+                var bellLight = Color.Lerp(PathGold, Color.white, 0.3f);
+
+                // Stand: two posts + crossbar, soft shadow.
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.06f), (int)(w * 0.4f), (int)(h * 0.045f), SoftShadow);
+                FillRoundedRect(pixels, w, h, (int)(w * 0.12f), (int)(h * 0.06f), 8, (int)(h * 0.74f), 4, wood);
+                FillRoundedRect(pixels, w, h, (int)(w * 0.81f), (int)(h * 0.06f), 8, (int)(h * 0.74f), 4, wood);
+                FillRoundedRect(pixels, w, h, (int)(w * 0.08f), (int)(h * 0.78f), (int)(w * 0.84f), 9, 4, wood);
+
+                // Bell dome + lip + clapper hanging from the crossbar.
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.52f), (int)(w * 0.26f), (int)(h * 0.22f), bellGold);
+                FillRoundedRect(pixels, w, h, w / 2 - (int)(w * 0.28f), (int)(h * 0.3f), (int)(w * 0.56f), (int)(h * 0.08f), 6, bellLight);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.66f), (int)(w * 0.1f), (int)(h * 0.05f), bellLight);
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.24f), 6, 6, wood);
+            });
+            WritePng(bell, $"{HubArtFolder}/hub_bell.png");
+            UnityEngine.Object.DestroyImmediate(bell);
+
             var butterfly = DrawWithPixels(48, 40, (pixels, w, h) =>
             {
                 FillEllipse(pixels, w, h, w / 2 - 10, h / 2 + 3, 11, 12, MusicLilac);
@@ -497,6 +543,17 @@ namespace CareerQuest.Editor
             var pennant = AddSprite(world, "FlagPennant", Hub("hub_flag_pennant.png"), new Vector2(1.36f, 0.5f), new Vector2(0.55f, 0.32f), 247);
             pennant.AddComponent<AmbientMotion>().Configure(AmbientMotionKind.Sway, 0f, 7f, 1.9f, 0.6f);
 
+            // U12 interactive toys (P18): pure local click-delight — fountain
+            // splash, bell ring, and a flutter burst on the SAME flag pennant
+            // (sway owns rotation, flutter is scale-only — they compose).
+            var fountainToy = AddSprite(world, "FountainToy", Hub("hub_fountain.png"), new Vector2(-1.45f, -1.28f), new Vector2(1.05f, 0.95f), 242);
+            AddToy(fountainToy, HubToyKind.Fountain, AudioCueIds.ToyFountain, 0.55f);
+
+            var bellToy = AddSprite(world, "BellToy", Hub("hub_bell.png"), new Vector2(2.5f, -1.08f), new Vector2(0.62f, 0.78f), 243);
+            AddToy(bellToy, HubToyKind.Bell, AudioCueIds.ToyBell, 0.5f);
+
+            AddToy(pennant, HubToyKind.Flag, AudioCueIds.ToyFlag, 0.45f);
+
             var butterflyA = AddSprite(world, "ButterflyA", Hub("hub_butterfly.png"), new Vector2(-2.6f, -0.4f), new Vector2(0.22f, 0.18f), 290);
             butterflyA.AddComponent<AmbientMotion>().Configure(AmbientMotionKind.Bob, 0f, 0.1f, 1.3f, 0.5f);
             var butterflyB = AddSprite(world, "ButterflyB", Hub("hub_butterfly.png"), new Vector2(3.6f, -0.2f), new Vector2(0.2f, 0.16f), 291);
@@ -525,6 +582,20 @@ namespace CareerQuest.Editor
         private static void AddSmallBuilding(Transform parent, string name, string assetId, Vector2 position)
         {
             AddSprite(parent, name, Campus(assetId), position, new Vector2(1.45f, 1.3f), 238);
+        }
+
+        /// <summary>
+        /// U12 (P18): makes a hub prop clickable through the SAME Physics2D
+        /// raycast path the drag framework uses. The click radius is specified
+        /// in WORLD units (kid-large targets) and divided out of the sprite's
+        /// fitted local scale.
+        /// </summary>
+        private static void AddToy(GameObject host, HubToyKind kind, string cueId, float clickRadiusWorld)
+        {
+            var collider = host.AddComponent<CircleCollider2D>();
+            var scale = Mathf.Max(Mathf.Abs(host.transform.localScale.x), 0.0001f);
+            collider.radius = clickRadiusWorld / scale;
+            host.AddComponent<HubToy>().Configure(kind, cueId);
         }
 
         private static Transform AddBand(Transform root, string name, float factor)

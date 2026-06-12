@@ -250,6 +250,10 @@ namespace CareerQuest
             if (manager.IsServer)
             {
                 SyncPlayerCountFromServer(manager);
+
+                // U12 P17 lifecycle: a client that disconnects mid-drag must not
+                // leave a stale held-piece flag (partner highlight) behind.
+                ClearHeldPiecesFor(clientId);
             }
 
             if (!manager.IsServer && manager.LocalClientId == clientId)
@@ -266,6 +270,18 @@ namespace CareerQuest
                     ClientConnectionLost?.Invoke();
                 }
             }
+        }
+
+        /// <summary>
+        /// Server-side held-piece sweep for a departed client across all three
+        /// room states (U12 P17 — also a host-only test seam). Each call is a
+        /// safe no-op when the state is absent or the client held nothing.
+        /// </summary>
+        public static void ClearHeldPiecesFor(ulong clientId)
+        {
+            FindFirstObjectByType<DesignBuildNetworkState>()?.ApplyHeldPiece(-1, clientId);
+            FindFirstObjectByType<HealthHeroNetworkState>()?.ApplyHeldPiece(-1, clientId);
+            FindFirstObjectByType<LogicCourtNetworkState>()?.ApplyHeldPiece(-1, clientId);
         }
 
         private static void SyncPlayerCountFromServer(NetworkManager manager)

@@ -103,7 +103,9 @@ namespace CareerQuest.Editor
             manager.NetworkConfig.ConnectionApproval = true;
 
             var designBuildState = new GameObject("DesignBuildNetworkState", typeof(NetworkObject), typeof(DesignBuildNetworkState));
-            var campusSessionState = new GameObject("CampusSessionState", typeof(NetworkObject), typeof(CampusSessionState));
+            // U12: EmoteRelay rides the always-spawned CampusSessionState object
+            // (second NetworkBehaviour, same NetworkObject — no new prefab).
+            var campusSessionState = new GameObject("CampusSessionState", typeof(NetworkObject), typeof(CampusSessionState), typeof(EmoteRelay));
             var healthHeroState = new GameObject("HealthHeroNetworkState", typeof(NetworkObject), typeof(HealthHeroNetworkState));
             var logicCourtState = new GameObject("LogicCourtNetworkState", typeof(NetworkObject), typeof(LogicCourtNetworkState));
 

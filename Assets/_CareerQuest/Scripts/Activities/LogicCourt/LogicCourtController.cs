@@ -66,6 +66,7 @@ namespace CareerQuest
         private Coroutine _playfieldRoutine;
         private AvatarRuntimeView _judgeNpc;
         private SpeechBubble _judgeBubble;
+        private string _partnerHeldPieceId;
 
         public LogicCourtRoomState State => _state;
 
@@ -338,6 +339,7 @@ namespace CareerQuest
             _zones.Clear();
             _judgeNpc = null;
             _judgeBubble = null;
+            _partnerHeldPieceId = null; // P17: room re-entry starts indicator-clean
 
             if (UsesNetworkState)
             {
@@ -534,6 +536,7 @@ namespace CareerQuest
 
             EnsureJudgeNpc();
             SyncVisualsFromAuthority(celebrateNew: false);
+            ApplyPartnerHeldPiece(PartnerHeldPieceIdFromState()); // P17: pre-existing hold renders on mount
             UpdateProgress();
         }
 
@@ -633,6 +636,7 @@ namespace CareerQuest
             }
 
             SyncVisualsFromAuthority(celebrateNew: true);
+            ApplyPartnerHeldPiece(PartnerHeldPieceIdFromState()); // P17: held list changed with the state
             UpdateProgress();
             TryAutoComplete();
         }
@@ -828,6 +832,44 @@ namespace CareerQuest
                 stamp.localScale = baseScale;
                 stamp.localPosition = basePosition;
             }
+        }
+
+        /// <summary>P17 read seam: which piece the partner currently holds (or null).</summary>
+        public string PartnerHeldPieceId => _partnerHeldPieceId;
+
+        /// <summary>
+        /// P17 render seam: soft highlight on the piece the PARTNER holds —
+        /// gentle pulse on the tray piece, never drag-position mirroring. The
+        /// network path drives it from the held-piece list; tests drive it
+        /// directly. Null clears (drop/reject/accept/disconnect).
+        /// </summary>
+        public void ApplyPartnerHeldPiece(string pieceId)
+        {
+            if (_partnerHeldPieceId != null
+                && !string.Equals(_partnerHeldPieceId, pieceId, StringComparison.Ordinal)
+                && _pieces.TryGetValue(_partnerHeldPieceId, out var previous)
+                && previous != null)
+            {
+                PartnerHoldIndicator.Clear(previous.gameObject);
+            }
+
+            _partnerHeldPieceId = pieceId;
+            if (pieceId != null && _pieces.TryGetValue(pieceId, out var piece) && piece != null)
+            {
+                PartnerHoldIndicator.Show(piece.gameObject);
+            }
+        }
+
+        private string PartnerHeldPieceIdFromState()
+        {
+            if (!UsesNetworkState)
+            {
+                return null;
+            }
+
+            var manager = Unity.Netcode.NetworkManager.Singleton;
+            var localClientId = manager != null ? manager.LocalClientId : 0UL;
+            return LogicCourtNetworkState.PieceIdFor(_networkState.HeldPieceIndexForPartner(localClientId));
         }
 
         private void CheerJudgeNpc(string line, float celebrateSeconds = 1.2f)

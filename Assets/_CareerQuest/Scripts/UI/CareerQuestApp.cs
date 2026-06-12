@@ -471,6 +471,8 @@ namespace CareerQuest
             var labels = UiBuilder.Text(hud, "FutureLabels", "Future: " + string.Join(" / ", CareerConfig.FutureBuildingLabels), 15, TextAnchor.MiddleCenter, new Color(0.15f, 0.25f, 0.18f));
             UiBuilder.Place(labels.rectTransform, 110f, -18f, 590f, 26f);
 
+            MountEmoteBar();
+
             if (UsesPlayInstructionStrip)
             {
                 MountInstructionStrip();
@@ -493,6 +495,50 @@ namespace CareerQuest
             }
 
             AttachDebug();
+        }
+
+        /// <summary>
+        /// P16 emote bar: three kid-large icon buttons (heart/star/wave) that
+        /// send FIXED emote IDs through EmoteRelay — no text exists anywhere in
+        /// the path (no-chat privacy boundary). Visible only when networked:
+        /// in solo there is no partner to wave at, so the bar is hidden (hub
+        /// toys carry solo delight). Mounted with the campus HUD, so it lives
+        /// and dies with the hub route (rooms never show it).
+        /// </summary>
+        private void MountEmoteBar()
+        {
+            var relay = EmoteRelay.Instance;
+            var networked = networkManager != null && (networkManager.IsHost || networkManager.IsConnectedClient);
+            if (relay == null || !relay.IsSpawned || !networked)
+            {
+                return;
+            }
+
+            var bar = UiBuilder.Panel(_root, "EmoteBar", new Color(0.93f, 0.98f, 0.95f, 0.78f));
+            UiBuilder.Place(bar, -494f, -224f, 252f, 96f);
+
+            var label = UiBuilder.Text(bar, "EmoteBarLabel", "Send a cheer!", 14, TextAnchor.MiddleCenter, new Color(0.1f, 0.2f, 0.14f));
+            UiBuilder.Place(label.rectTransform, 0f, 36f, 240f, 22f);
+
+            AddEmoteButton(bar, EmoteId.Heart, -80f);
+            AddEmoteButton(bar, EmoteId.Star, 0f);
+            AddEmoteButton(bar, EmoteId.Wave, 80f);
+        }
+
+        private static void AddEmoteButton(RectTransform bar, EmoteId emote, float x)
+        {
+            var button = UiBuilder.Button(bar, $"Emote{emote}Button", string.Empty, () => EmoteRelay.Instance?.SendEmote(emote));
+            UiBuilder.Place(button.GetComponent<RectTransform>(), x, -10f, 64f, 64f); // kid-large (≥44px)
+            button.GetComponent<Image>().color = new Color(1f, 0.969f, 0.878f, 0.95f); // DESIGN Paper
+
+            var iconObject = new GameObject($"Emote{emote}Icon", typeof(RectTransform), typeof(Image));
+            iconObject.transform.SetParent(button.transform, false);
+            var icon = iconObject.GetComponent<Image>();
+            icon.sprite = EmoteBubble.SpriteFor(emote);
+            icon.color = EmoteBubble.IconTint(emote);
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            UiBuilder.Place(iconObject.GetComponent<RectTransform>(), 0f, 0f, 48f, 48f);
         }
 
         public void ShowShowcaseProofBeat()

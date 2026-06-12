@@ -62,6 +62,11 @@ namespace CareerQuest.Editor
             (AudioCueIds.EmotePop, $"{KenneyAudioRoot}/InterfaceSounds/bong_001.ogg"),
             (AudioCueIds.CityPiecePop, $"{KenneyAudioRoot}/InterfaceSounds/confirmation_002.ogg"), // P19 city piece arrival
 
+            // Hub toys (U12 P18 — click-to-delight)
+            (AudioCueIds.ToyFountain, $"{KenneyAudioRoot}/InterfaceSounds/drop_002.ogg"),          // water bloop splash
+            (AudioCueIds.ToyBell, $"{KenneyAudioRoot}/ImpactSounds/impactBell_heavy_000.ogg"),     // real bell strike
+            (AudioCueIds.ToyFlag, $"{KenneyAudioRoot}/RpgAudio/cloth1.ogg"),                       // cloth flutter
+
             // Ambient/music loops (P4) — longest jingle per family, see loop note
             (AudioCueIds.AmbientCampus, $"{KenneyAudioRoot}/MusicJingles/Steel jingles/jingles_STEEL07.ogg"),
             (AudioCueIds.AmbientDesignBuild, $"{KenneyAudioRoot}/MusicJingles/Sax jingles/jingles_SAX07.ogg"),

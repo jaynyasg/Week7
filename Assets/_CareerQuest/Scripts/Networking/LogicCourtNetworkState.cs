@@ -302,6 +302,24 @@ namespace CareerQuest
             return -1;
         }
 
+        /// <summary>
+        /// U12 P17: the piece index held by any client OTHER than
+        /// <paramref name="localClientId"/>, or -1. Readable on every peer (the
+        /// list syncs everywhere) — this is the partner-indicator read seam.
+        /// </summary>
+        public int HeldPieceIndexForPartner(ulong localClientId)
+        {
+            foreach (var entry in _heldPieces)
+            {
+                if (entry.ClientId != localClientId && entry.PieceIndex >= 0)
+                {
+                    return entry.PieceIndex;
+                }
+            }
+
+            return -1;
+        }
+
         /// <summary>Evidence-step index for a piece id (-1 for the case file).</summary>
         public static int StepIndexFor(string pieceId)
         {

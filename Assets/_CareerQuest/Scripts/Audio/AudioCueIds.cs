@@ -47,6 +47,11 @@ namespace CareerQuest
         /// <summary>P19: campus-evolution city piece arrival fanfare.</summary>
         public const string CityPiecePop = "city_piece_pop";
 
+        // ---- Gameplay tier: hub toys (U12 P18 — pure local delight) ----
+        public const string ToyFountain = "toy_fountain";
+        public const string ToyBell = "toy_bell";
+        public const string ToyFlag = "toy_flag";
+
         // ---- Ambient/music tier (looping; P4) ----
         public const string AmbientCampus = "ambient_campus";
         public const string AmbientDesignBuild = "ambient_design_build";
@@ -97,6 +102,9 @@ namespace CareerQuest
             Footstep,
             EmotePop,
             CityPiecePop,
+            ToyFountain,
+            ToyBell,
+            ToyFlag,
             AmbientCampus,
             AmbientDesignBuild,
             AmbientHealthHero,
