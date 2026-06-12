@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -86,7 +87,7 @@ namespace CareerQuest.Tests
             var healthTray = RectFor("HealthHeroToolTray");
             var healthCheck = RectFor("HealthHeroCheckButton");
             var healthComplete = RectFor("HealthHeroCompleteButton");
-            var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<Text>();
+            var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<TextMeshProUGUI>();
 
             Assert.That(healthHud.anchoredPosition.y, Is.GreaterThan(230f));
             Assert.That(Top(healthTray), Is.LessThan(-280f));
@@ -101,7 +102,7 @@ namespace CareerQuest.Tests
             var logicTray = RectFor("LogicCourtEvidenceTray");
             var logicReview = RectFor("LogicCourtReviewButton");
             var logicClosing = RectFor("LogicCourtClosingButton");
-            var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<Text>();
+            var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<TextMeshProUGUI>();
 
             Assert.That(logicHud.anchoredPosition.y, Is.GreaterThan(230f));
             Assert.That(Top(logicTray), Is.LessThan(-280f));

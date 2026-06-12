@@ -1,6 +1,7 @@
 using System.Collections;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -108,14 +109,14 @@ namespace CareerQuest.Tests
         {
             var textObject = GameObject.Find(objectName);
             Assert.That(textObject, Is.Not.Null, $"{objectName} should exist.");
-            Assert.That(textObject.GetComponent<Text>().text, Is.EqualTo(expected));
+            Assert.That(textObject.GetComponent<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
 
         private static void AssertButtonText(string buttonName, string expected)
         {
             var buttonObject = GameObject.Find(buttonName);
             Assert.That(buttonObject, Is.Not.Null, $"{buttonName} should exist.");
-            Assert.That(buttonObject.GetComponentInChildren<Text>().text, Is.EqualTo(expected));
+            Assert.That(buttonObject.GetComponentInChildren<TextMeshProUGUI>().text, Is.EqualTo(expected));
         }
 
         private static RectTransform RectFor(string objectName)

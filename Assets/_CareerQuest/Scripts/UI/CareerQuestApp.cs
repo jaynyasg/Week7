@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -35,17 +36,17 @@ namespace CareerQuest
         private CampusWorldController _world;
         private PlayableHubController _hub;
         private SceneFlowRouter _router;
-        private Text _connectionStatusText;
+        private TextMeshProUGUI _connectionStatusText;
         private bool _ceremonyActive;
         private CeremonyController _ceremonyController;
         private Coroutine _ceremonyCoroutine;
         private GameObject _ceremonyOverlay;
-        private Text _ceremonyTitleText;
-        private Text _ceremonyMessageText;
-        private Text _ceremonyBadgeText;
+        private TextMeshProUGUI _ceremonyTitleText;
+        private TextMeshProUGUI _ceremonyMessageText;
+        private TextMeshProUGUI _ceremonyBadgeText;
         private RectTransform _ceremonyBadgeStamp;
         private Button _ceremonySkipButton;
-        private Text _instructionStripText;
+        private TextMeshProUGUI _instructionStripText;
         private bool _sessionChangedSubscribed;
 
         public GameSession Session => _session;
@@ -252,7 +253,7 @@ namespace CareerQuest
             UiBuilder.Place(panel, 0f, 12f, 920f, 548f);
 
             UiBuilder.Shape(panel, "ConnectionHeaderBand", new Color(0.06f, 0.25f, 0.34f, 0.95f), 0f, 226f, 920f, 96f);
-            var title = UiBuilder.Text(panel, "ConnectionTitle", "Start Game", 38, TextAnchor.MiddleCenter, Color.white);
+            var title = UiBuilder.Text(panel, "ConnectionTitle", "Start Game", TypeStyles.ScreenTitle, TextAnchor.MiddleCenter, Color.white, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 242f, 860f, 48f);
 
             var subtitle = UiBuilder.Text(panel, "ConnectionSubtitle", "Play solo now, or use local multiplayer when testing two players.", 18, TextAnchor.MiddleCenter, new Color(0.88f, 0.97f, 1f));
@@ -434,7 +435,7 @@ namespace CareerQuest
             var hud = UiBuilder.Panel(_root, "CampusHud", new Color(0.93f, 0.98f, 0.95f, 0.78f));
             UiBuilder.Place(hud, 0f, 286f, 1050f, 78f);
 
-            var title = UiBuilder.Text(hud, "CampusTitle", "Free Campus", 30, TextAnchor.MiddleLeft, new Color(0.08f, 0.2f, 0.13f));
+            var title = UiBuilder.Text(hud, "CampusTitle", "Free Campus", 30, TextAnchor.MiddleLeft, new Color(0.08f, 0.2f, 0.13f), TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, -365f, 14f, 260f, 36f);
 
             var mode = UiBuilder.Text(hud, "CampusMode", $"Mode: {_session.Mode} / {_session.ConnectionMode}", 17, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.14f));
@@ -477,7 +478,7 @@ namespace CareerQuest
             _world.ShowProof(_session);
             ResetRoot();
             var panel = UiBuilder.FullPanel(_root, "ShowcaseProofPanel", new Color(0.86f, 0.91f, 1f));
-            var title = UiBuilder.Text(panel, "ProofTitle", "Two-Client Proof", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f));
+            var title = UiBuilder.Text(panel, "ProofTitle", "Two-Client Proof", 40, TextAnchor.MiddleCenter, new Color(0.08f, 0.12f, 0.25f), TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 220f, 900f, 60f);
 
             var split = UiBuilder.Text(panel, "ProofBody", "Showcase simulates two local players for reliability.\nQA still proves real Netcode host/client movement.", 26, TextAnchor.MiddleCenter, new Color(0.1f, 0.14f, 0.24f));
@@ -637,16 +638,16 @@ namespace CareerQuest
         private static void StyleConnectionButton(Button button, Color color, int fontSize)
         {
             button.GetComponent<Image>().color = color;
-            var label = button.GetComponentInChildren<Text>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label == null)
             {
                 return;
             }
 
             label.fontSize = fontSize;
-            label.resizeTextForBestFit = true;
-            label.resizeTextMinSize = 16;
-            label.resizeTextMaxSize = fontSize;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 16;
+            label.fontSizeMax = fontSize;
         }
 
         private void ResetRoot()
@@ -964,7 +965,7 @@ namespace CareerQuest
             var stripe = UiBuilder.Panel(card, "CeremonyStripe", presentation.AccentColor);
             UiBuilder.Place(stripe, 0f, 198f, 780f, 10f);
 
-            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 40, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            _ceremonyTitleText = UiBuilder.Text(card, "CeremonyTitle", presentation.Title, 40, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.Bold);
             UiBuilder.Place(_ceremonyTitleText.rectTransform, 0f, 150f, 700f, 52f);
 
             _ceremonyBadgeStamp = UiBuilder.Circle(card, "CeremonyBadgeStamp", presentation.AccentColor, 0f, 40f, 120f, 120f);

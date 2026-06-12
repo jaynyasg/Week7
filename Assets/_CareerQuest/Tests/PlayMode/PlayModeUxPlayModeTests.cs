@@ -1,6 +1,7 @@
 using System.Collections;
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -22,6 +23,10 @@ namespace CareerQuest.Tests
             var label = FindInstructionLabel();
             Assert.That(label, Is.Not.Null);
             Assert.That(label.text, Does.Contain("career door"));
+
+            // Long kid-facing strings must wrap and auto-size instead of overflowing the strip.
+            Assert.That(label.textWrappingMode, Is.EqualTo(TextWrappingModes.Normal));
+            Assert.That(label.enableAutoSizing, Is.True);
 
             Object.Destroy(appObject);
         }
@@ -91,9 +96,74 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(appObject);
         }
 
-        private static Text FindInstructionLabel()
+        [UnityTest]
+        public IEnumerator ActiveUiUsesTmpTypographyInEveryCoreState()
         {
-            foreach (var text in Resources.FindObjectsOfTypeAll<Text>())
+            var appObject = new GameObject("ae5-typography-scan-test");
+            var app = appObject.AddComponent<CareerQuestApp>();
+            yield return null; // Start() renders the entry screen.
+
+            AssertNoLegacyUiText("entry");
+
+            app.ShowAvatarSelectionForPlay();
+            yield return null;
+            AssertNoLegacyUiText("avatar-selection");
+
+            yield return PlayModeTestBootstrap.EnterPlayCampus(app);
+            AssertNoLegacyUiText("campus");
+
+            app.ShowDesignBuild(false);
+            yield return null;
+            AssertNoLegacyUiText("design-build");
+
+            app.ShowHealthHero();
+            yield return null;
+            AssertNoLegacyUiText("health-hero");
+
+            app.ShowLogicCourt();
+            yield return null;
+            AssertNoLegacyUiText("logic-court");
+
+            app.ShowGallery();
+            yield return null;
+            AssertNoLegacyUiText("gallery");
+
+            app.ShowReveal();
+            yield return null;
+            AssertNoLegacyUiText("reveal");
+
+            Object.DestroyImmediate(appObject);
+        }
+
+        /// <summary>
+        /// AE5 surface: active uGUI hierarchies must contain zero legacy Text components and no
+        /// LegacyRuntime/Arial font references. World-space TextMesh is intentionally out of scope
+        /// (it is retired by the U4/U5 world rebuild, not this typography pass).
+        /// </summary>
+        private static void AssertNoLegacyUiText(string state)
+        {
+            var legacyTexts = Object.FindObjectsByType<Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Assert.That(legacyTexts, Is.Empty,
+                $"State '{state}' should render zero legacy UnityEngine.UI.Text components.");
+
+            foreach (var text in Object.FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                Assert.That(text.font, Is.Not.Null,
+                    $"State '{state}': '{text.name}' should have a TMP font asset assigned.");
+
+                var fontName = text.font.name;
+                Assert.That(fontName.Contains("Arial") || fontName.Contains("LegacyRuntime"), Is.False,
+                    $"State '{state}': '{text.name}' should not reference a legacy font (got '{fontName}').");
+                Assert.That(
+                    fontName.Contains(TypeStyles.DisplayFamily) || fontName.Contains(TypeStyles.BodyFamily),
+                    Is.True,
+                    $"State '{state}': '{text.name}' should use {TypeStyles.DisplayFamily} or {TypeStyles.BodyFamily} (got '{fontName}').");
+            }
+        }
+
+        private static TextMeshProUGUI FindInstructionLabel()
+        {
+            foreach (var text in Resources.FindObjectsOfTypeAll<TextMeshProUGUI>())
             {
                 if (text.name == InstructionStrip.LabelName)
                 {

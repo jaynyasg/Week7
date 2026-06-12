@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,7 +34,9 @@ namespace CareerQuest
                 session.RevealReady ? "Your Future Paths!" : "Career Reveal Stage",
                 48,
                 TextAnchor.MiddleCenter,
-                QuestStageUi.Ink);
+                QuestStageUi.Ink,
+                TypeRole.Display,
+                TypeWeight.Bold);
             UiBuilder.Place(title.rectTransform, 0f, 170f, 780f, 64f);
 
             QuestStageUi.MountBadgeSlots(passport, session, 40f);
@@ -66,13 +69,15 @@ namespace CareerQuest
                     "REVEAL UNLOCKED!",
                     32,
                     TextAnchor.MiddleCenter,
-                    QuestStageUi.WorkshopTeal);
+                    QuestStageUi.WorkshopTeal,
+                    TypeRole.Display,
+                    TypeWeight.Bold);
                 UiBuilder.Place(unlockBanner.rectTransform, 0f, 115f, 520f, 44f);
                 SetGraphicAlpha(unlockBanner, 0f);
 
                 var matches = session.CoLeadMatches();
                 var names = string.Join("  +  ", matches.Select(match => match.Career.DisplayName));
-                var lead = UiBuilder.Text(passport, "RevealLead", names, 40, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f));
+                var lead = UiBuilder.Text(passport, "RevealLead", names, 40, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f), TypeRole.Display, TypeWeight.SemiBold);
                 UiBuilder.Place(lead.rectTransform, 0f, -95f, 760f, 56f);
                 SetGraphicAlpha(lead, 0f);
 
@@ -205,10 +210,10 @@ namespace CareerQuest
 
         private static IEnumerator RevealUnlockedContent(RectTransform passport)
         {
-            var banner = passport.Find("RevealUnlockBanner")?.GetComponent<Text>();
-            var lead = passport.Find("RevealLead")?.GetComponent<Text>();
-            var confidence = passport.Find("RevealConfidence")?.GetComponent<Text>();
-            var body = passport.Find("RevealBody")?.GetComponent<Text>();
+            var banner = passport.Find("RevealUnlockBanner")?.GetComponent<TextMeshProUGUI>();
+            var lead = passport.Find("RevealLead")?.GetComponent<TextMeshProUGUI>();
+            var confidence = passport.Find("RevealConfidence")?.GetComponent<TextMeshProUGUI>();
+            var body = passport.Find("RevealBody")?.GetComponent<TextMeshProUGUI>();
             var cards = new List<RectTransform>();
             for (var i = 0; i < 3; i++)
             {
@@ -304,7 +309,7 @@ namespace CareerQuest
                 var accent = UiBuilder.Panel(card, $"RevealCareerAccent{i}", QuestStageUi.PathGold);
                 UiBuilder.Place(accent, 0f, 48f, 170f, 8f);
 
-                var name = UiBuilder.Text(card, $"RevealCareerName{i}", match.Career.DisplayName, 20, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+                var name = UiBuilder.Text(card, $"RevealCareerName{i}", match.Career.DisplayName, 20, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.Medium);
                 UiBuilder.Place(name.rectTransform, 0f, 10f, 150f, 32f);
 
                 var score = UiBuilder.Text(card, $"RevealCareerScore{i}", "Top match", 14, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);

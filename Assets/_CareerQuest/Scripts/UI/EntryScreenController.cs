@@ -8,7 +8,7 @@ namespace CareerQuest
         {
             var panel = UiBuilder.FullPanel(parent, "EntryPanel", new Color(0.9f, 0.98f, 1f));
 
-            var title = UiBuilder.Text(panel, "Title", "Career Quest Campus", 48, TextAnchor.MiddleCenter, new Color(0.08f, 0.18f, 0.24f));
+            var title = UiBuilder.Text(panel, "Title", "Career Quest Campus", TypeStyles.HeroTitle, TextAnchor.MiddleCenter, new Color(0.08f, 0.18f, 0.24f), TypeRole.Display, TypeWeight.Bold);
             UiBuilder.Place(title.rectTransform, 0f, 210f, 900f, 70f);
 
             var subtitle = UiBuilder.Text(panel, "Subtitle", "Build, explore, earn badges, and reveal future paths.", 24, TextAnchor.MiddleCenter, new Color(0.08f, 0.18f, 0.24f));

@@ -16,7 +16,7 @@ namespace CareerQuest
             var spine = UiBuilder.Panel(book, "GalleryPassportSpine", QuestStageUi.PaperShadow);
             UiBuilder.Place(spine, -430f, 0f, 36f, 540f);
 
-            var title = UiBuilder.Text(book, "GalleryTitle", "Quest Passport", 44, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            var title = UiBuilder.Text(book, "GalleryTitle", "Quest Passport", 44, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 40f, 230f, 760f, 56f);
 
             var subtitle = UiBuilder.Text(book, "GallerySubtitle", "Sticker badges from every career room you tried", 18, TextAnchor.MiddleCenter, new Color(0.25f, 0.32f, 0.36f));

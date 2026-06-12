@@ -1,12 +1,12 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace CareerQuest
 {
     public class DemoDebugOverlay : MonoBehaviour
     {
         [SerializeField] private bool visible;
-        [SerializeField] private Text debugText;
+        [SerializeField] private TextMeshProUGUI debugText;
 
         private GameSession _session;
         private NetworkBootstrap _networkBootstrap;
@@ -28,9 +28,8 @@ namespace CareerQuest
 
         public void AttachTo(Transform parent)
         {
-            debugText = UiBuilder.Text(parent, "DemoDebugOverlay", string.Empty, 14, TextAnchor.UpperLeft, Color.white);
+            debugText = UiBuilder.Text(parent, "DemoDebugOverlay", string.Empty, 14, TextAnchor.UpperLeft, Color.white, TypeRole.Body, TypeWeight.SemiBold);
             debugText.color = Color.white;
-            debugText.gameObject.AddComponent<Outline>().effectColor = Color.black;
             UiBuilder.Place(debugText.rectTransform, -460f, 260f, 330f, 150f);
             debugText.gameObject.SetActive(visible);
         }

@@ -72,7 +72,7 @@ namespace CareerQuest
             var briefing = UiBuilder.Panel(panel, "DesignBuildBriefing", ActivityRoomChrome.DesignPaper);
             UiBuilder.Place(briefing, -300f, 282f, 620f, 94f);
 
-            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, ActivityRoomChrome.DesignInk);
+            var title = UiBuilder.Text(briefing, "DesignBuildTitle", "Future City Workshop", 18, TextAnchor.MiddleLeft, ActivityRoomChrome.DesignInk, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, -132f, 26f, 340f, 24f);
 
             var feedback = UiBuilder.Text(briefing, "DesignBuildFeedback", _feedback, 13, TextAnchor.MiddleLeft, new Color(0.1f, 0.2f, 0.25f));

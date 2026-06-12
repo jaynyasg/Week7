@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,7 +26,7 @@ namespace CareerQuest
             UiBuilder.Circle(panel, "AvatarSelectionCloudB", new Color(1f, 1f, 1f, 0.74f), -404f, 262f, 118f, 54f);
             UiBuilder.Circle(panel, "AvatarSelectionCloudC", new Color(1f, 1f, 1f, 0.82f), -336f, 250f, 104f, 42f);
 
-            var title = UiBuilder.Text(panel, "AvatarSelectionTitle", "Choose Your Quest Hero", 32, TextAnchor.MiddleLeft, Ink);
+            var title = UiBuilder.Text(panel, "AvatarSelectionTitle", "Choose Your Quest Hero", 32, TextAnchor.MiddleLeft, Ink, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, -366f, 286f, 470f, 44f);
 
             var subtitle = UiBuilder.Text(panel, "AvatarSelectionSubtitle", "Pick the character you want to bring into Career Quest Campus.", 16, TextAnchor.MiddleLeft, Ink);
@@ -44,7 +45,7 @@ namespace CareerQuest
             var previewImage = AvatarPreviewController.CreatePreview(previewPanel, "SelectedAvatarPreview", selectedAvatar, new Vector2(178f, 224f));
             UiBuilder.Place(previewImage.rectTransform, 0f, 62f, 178f, 224f);
 
-            var previewName = UiBuilder.Text(previewPanel, "SelectedAvatarName", selectedAvatar.DisplayName, 24, TextAnchor.MiddleCenter, Ink);
+            var previewName = UiBuilder.Text(previewPanel, "SelectedAvatarName", selectedAvatar.DisplayName, 24, TextAnchor.MiddleCenter, Ink, TypeRole.Display, TypeWeight.Medium);
             UiBuilder.Place(previewName.rectTransform, 0f, -96f, 282f, 30f);
 
             var previewRole = UiBuilder.Text(previewPanel, "SelectedAvatarRole", selectedAvatar.Role, 16, TextAnchor.MiddleCenter, Ink);
@@ -100,7 +101,7 @@ namespace CareerQuest
             UiBuilder.Place(preview.rectTransform, -72f, 32f, 82f, 98f);
             preview.raycastTarget = false;
 
-            var name = UiBuilder.Text(card, $"{avatar.Id}Name", avatar.DisplayName, 19, TextAnchor.MiddleCenter, Ink);
+            var name = UiBuilder.Text(card, $"{avatar.Id}Name", avatar.DisplayName, 19, TextAnchor.MiddleCenter, Ink, TypeRole.Display, TypeWeight.Medium);
             UiBuilder.Place(name.rectTransform, 46f, 32f, 166f, 28f);
             name.raycastTarget = false;
 
@@ -139,7 +140,7 @@ namespace CareerQuest
         private static void StyleButton(Button button, Color color, int fontSize, string label = null)
         {
             button.GetComponent<Image>().color = color;
-            var labelText = button.GetComponentInChildren<Text>();
+            var labelText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (labelText == null)
             {
                 return;
@@ -151,14 +152,14 @@ namespace CareerQuest
             }
 
             labelText.fontSize = fontSize;
-            labelText.resizeTextForBestFit = true;
-            labelText.resizeTextMinSize = 12;
-            labelText.resizeTextMaxSize = fontSize;
+            labelText.enableAutoSizing = true;
+            labelText.fontSizeMin = 12;
+            labelText.fontSizeMax = fontSize;
         }
 
         private sealed class AvatarCardView
         {
-            public AvatarCardView(AvatarDefinition avatar, Image cardImage, Image accentImage, Image selectedBadge, Text selectedText, Button chooseButton)
+            public AvatarCardView(AvatarDefinition avatar, Image cardImage, Image accentImage, Image selectedBadge, TextMeshProUGUI selectedText, Button chooseButton)
             {
                 Avatar = avatar;
                 CardImage = cardImage;
@@ -172,7 +173,7 @@ namespace CareerQuest
             public Image CardImage { get; }
             public Image AccentImage { get; }
             public Image SelectedBadge { get; }
-            public Text SelectedText { get; }
+            public TextMeshProUGUI SelectedText { get; }
             public Button ChooseButton { get; }
         }
     }

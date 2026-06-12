@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -7,25 +8,9 @@ namespace CareerQuest
 {
     public static class UiBuilder
     {
-        private static Font _font;
-
-        public static Font DefaultFont
+        public static TMP_FontAsset FontFor(TypeRole role, TypeWeight weight)
         {
-            get
-            {
-                if (_font != null)
-                {
-                    return _font;
-                }
-
-                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                if (_font == null)
-                {
-                    _font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                }
-
-                return _font;
-            }
+            return TypeStyles.Resolve(role, weight);
         }
 
         public static Canvas EnsureCanvas()
@@ -96,18 +81,26 @@ namespace CareerQuest
             return circle;
         }
 
-        public static Text Text(Transform parent, string name, string value, int fontSize, TextAnchor anchor, Color color)
+        public static TextMeshProUGUI Text(
+            Transform parent,
+            string name,
+            string value,
+            int fontSize,
+            TextAnchor anchor,
+            Color color,
+            TypeRole role = TypeRole.Body,
+            TypeWeight weight = TypeWeight.Regular)
         {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             textObject.transform.SetParent(parent, false);
-            var text = textObject.GetComponent<Text>();
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.font = TypeStyles.Resolve(role, weight);
             text.text = value;
-            text.font = DefaultFont;
             text.fontSize = fontSize;
-            text.alignment = anchor;
+            text.alignment = ToAlignment(anchor);
             text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Overflow;
             return text;
         }
 
@@ -121,7 +114,7 @@ namespace CareerQuest
             var button = buttonObject.GetComponent<Button>();
             button.onClick.AddListener(() => onClick?.Invoke());
 
-            var labelText = Text(buttonObject.transform, $"{name}Label", label, 24, TextAnchor.MiddleCenter, Color.white);
+            var labelText = Text(buttonObject.transform, $"{name}Label", label, TypeStyles.ButtonLabel, TextAnchor.MiddleCenter, Color.white, TypeRole.Body, TypeWeight.SemiBold);
             Stretch(labelText.rectTransform);
             return button;
         }
@@ -129,7 +122,7 @@ namespace CareerQuest
         public static Button SmallButton(Transform parent, string name, string label, Action onClick)
         {
             var button = Button(parent, name, label, onClick);
-            var labelText = button.GetComponentInChildren<Text>();
+            var labelText = button.GetComponentInChildren<TextMeshProUGUI>();
             if (labelText != null)
             {
                 labelText.fontSize = 16;
@@ -138,19 +131,42 @@ namespace CareerQuest
             return button;
         }
 
-        public static InputField Input(Transform parent, string name, string value)
+        public static TMP_InputField Input(Transform parent, string name, string value)
         {
-            var inputObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(InputField));
+            var inputObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
             inputObject.transform.SetParent(parent, false);
             inputObject.GetComponent<Image>().color = Color.white;
 
-            var text = Text(inputObject.transform, $"{name}Text", value, 20, TextAnchor.MiddleLeft, Color.black);
-            Stretch(text.rectTransform, 12f, 4f);
+            var viewportObject = new GameObject($"{name}Viewport", typeof(RectTransform), typeof(RectMask2D));
+            viewportObject.transform.SetParent(inputObject.transform, false);
+            var viewport = viewportObject.GetComponent<RectTransform>();
+            Stretch(viewport, 12f, 4f);
 
-            var input = inputObject.GetComponent<InputField>();
+            var text = Text(viewportObject.transform, $"{name}Text", value, 20, TextAnchor.MiddleLeft, Color.black);
+            Stretch(text.rectTransform);
+
+            var input = inputObject.GetComponent<TMP_InputField>();
+            input.textViewport = viewport;
             input.textComponent = text;
             input.text = value;
             return input;
+        }
+
+        public static TextAlignmentOptions ToAlignment(TextAnchor anchor)
+        {
+            return anchor switch
+            {
+                TextAnchor.UpperLeft => TextAlignmentOptions.TopLeft,
+                TextAnchor.UpperCenter => TextAlignmentOptions.Top,
+                TextAnchor.UpperRight => TextAlignmentOptions.TopRight,
+                TextAnchor.MiddleLeft => TextAlignmentOptions.Left,
+                TextAnchor.MiddleCenter => TextAlignmentOptions.Center,
+                TextAnchor.MiddleRight => TextAlignmentOptions.Right,
+                TextAnchor.LowerLeft => TextAlignmentOptions.BottomLeft,
+                TextAnchor.LowerCenter => TextAlignmentOptions.Bottom,
+                TextAnchor.LowerRight => TextAlignmentOptions.BottomRight,
+                _ => TextAlignmentOptions.Center
+            };
         }
 
         public static void Place(RectTransform rect, float x, float y, float width, float height)

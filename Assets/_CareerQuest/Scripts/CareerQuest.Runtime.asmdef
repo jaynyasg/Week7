@@ -4,7 +4,8 @@
   "references": [
     "Unity.Netcode.Runtime",
     "Unity.Networking.Transport",
-    "UnityEngine.UI"
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -1,5 +1,6 @@
 using CareerQuest;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -41,7 +42,7 @@ namespace CareerQuest.Tests
             var completeButton = GameObject.Find("DesignBuildCompleteButton").GetComponent<RectTransform>();
             var reviewButton = GameObject.Find("ReviewBlueprintButton").GetComponent<Button>();
             var helperButton = GameObject.Find("PatternHelperButton").GetComponent<Button>();
-            var title = GameObject.Find("DesignBuildTitle").GetComponent<Text>();
+            var title = GameObject.Find("DesignBuildTitle").GetComponent<TextMeshProUGUI>();
             var titleRect = title.GetComponent<RectTransform>();
             var feedbackRect = GameObject.Find("DesignBuildFeedback").GetComponent<RectTransform>();
             var progressRect = GameObject.Find("DesignBuildProgress").GetComponent<RectTransform>();

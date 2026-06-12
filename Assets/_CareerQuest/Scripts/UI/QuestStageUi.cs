@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -75,7 +76,7 @@ namespace CareerQuest
         internal static void StylePrimaryButton(Button button)
         {
             button.GetComponent<Image>().color = WorkshopTeal;
-            var label = button.GetComponentInChildren<Text>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
                 label.fontSize = 24;
@@ -86,7 +87,7 @@ namespace CareerQuest
         internal static void StyleSecondaryButton(Button button)
         {
             button.GetComponent<Image>().color = new Color(0.09f, 0.31f, 0.42f);
-            var label = button.GetComponentInChildren<Text>();
+            var label = button.GetComponentInChildren<TextMeshProUGUI>();
             if (label != null)
             {
                 label.fontSize = 22;
@@ -120,7 +121,7 @@ namespace CareerQuest
                     UiBuilder.Place(icon.rectTransform, x, y, 56f, 56f);
                 }
 
-                var stamp = UiBuilder.Text(parent, $"{slotName}Label", entry.BadgeName, 11, TextAnchor.MiddleCenter, Ink);
+                var stamp = UiBuilder.Text(parent, $"{slotName}Label", entry.BadgeName, 12, TextAnchor.MiddleCenter, Ink);
                 UiBuilder.Place(stamp.rectTransform, x, y - 58f, 120f, 28f);
             }
             else
