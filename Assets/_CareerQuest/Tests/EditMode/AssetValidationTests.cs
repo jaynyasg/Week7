@@ -164,5 +164,60 @@ namespace CareerQuest.Tests
                 Assert.That(playerFacingIds, Does.Contain(requiredId), requiredId);
             }
         }
+
+        /// <summary>
+        /// U1: every Party Pack station identity art key (badge, campus
+        /// building, evolution piece) resolves to a cataloged definition. New
+        /// station art ships as intentional placeholders (not required, not
+        /// player-facing) so the final-art fallback gate ignores them until
+        /// the U5/U8/U11 art passes flip the flags.
+        /// </summary>
+        [Test]
+        public void PartyStationIdentityArtKeysAreCataloged()
+        {
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(station.BadgeArtKey, out var badge), Is.True, station.BadgeArtKey);
+                Assert.That(badge.Category, Is.EqualTo(AssetCategory.Badge), station.BadgeArtKey);
+
+                Assert.That(AssetCatalog.TryGetDefinition(station.CampusArtKey, out var campus), Is.True, station.CampusArtKey);
+                Assert.That(campus.Category, Is.EqualTo(AssetCategory.Campus), station.CampusArtKey);
+
+                Assert.That(AssetCatalog.TryGetDefinition(station.EvolutionPropAssetId, out var piece), Is.True, station.EvolutionPropAssetId);
+                Assert.That(piece.Category, Is.EqualTo(AssetCategory.Prop), station.EvolutionPropAssetId);
+            }
+        }
+
+        [Test]
+        public void AccessoryRewardSpritesAreCatalogedAsIntentionalPlaceholders()
+        {
+            foreach (var accessory in AccessoryRewardConfig.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition), Is.True, accessory.Id);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Prop), accessory.Id);
+                // Placeholder contract: accessory art stays outside the
+                // final-art gates until the U6/U11 accessory fit pass.
+                Assert.That(definition.RequiredInFirstPlayable, Is.False, accessory.Id);
+                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.False, accessory.Id);
+            }
+        }
+
+        [Test]
+        public void PartyStationObjectSpriteKeysAreCatalogedOrIntentionalPlaceholders()
+        {
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                foreach (var seed in station.Seeds)
+                {
+                    foreach (var item in station.ResolveObjects(seed))
+                    {
+                        var resolvable = AssetCatalog.TryGetDefinition(item.SpriteKey, out _)
+                            || item.SpriteKey.StartsWith(PartyStationValidator.PlaceholderSpritePrefix);
+
+                        Assert.That(resolvable, Is.True, $"{seed.SeedId}.{item.ObjectId}: {item.SpriteKey}");
+                    }
+                }
+            }
+        }
     }
 }
