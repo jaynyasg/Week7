@@ -107,6 +107,471 @@ namespace CareerQuest.Editor
         }
 
         // ------------------------------------------------------------------
+        // U10: Health Hero Clinic prefab (drag-room replication)
+        // ------------------------------------------------------------------
+
+        private const string ClinicArtFolder = "Assets/_CareerQuest/Art/Rooms/HealthHero";
+        private const string ClinicPrefabAssetPath = "Assets/_CareerQuest/Prefabs/Rooms/HealthHeroClinic.prefab";
+        private const string ClinicPrefabResourcesPath = "Assets/Resources/CareerQuest/World/HealthHeroClinic.prefab";
+        private const string ClinicBackdropPath = "Assets/Resources/CareerQuest/Room/room.health_hero.png";
+
+        // DESIGN.md activity identity colors.
+        private static readonly Color HealthMint = new(0.345f, 0.784f, 0.580f);   // #58C894
+        private static readonly Color LogicAmber = new(0.949f, 0.639f, 0.231f);   // #F2A33B
+        private static readonly Color LilacSoft = new(0.62f, 0.52f, 0.86f);
+        private static readonly Color InkSoft = new(0.098f, 0.196f, 0.235f);
+
+        [MenuItem("Career Quest/World/Build Health Hero Clinic Prefab")]
+        public static void BuildHealthHeroClinicInteractive()
+        {
+            BuildHealthHeroClinicCore(exitWhenDone: false);
+        }
+
+        /// <summary>Headless entry point: composes and saves the clinic prefab, then exits 0/1.</summary>
+        public static void BuildHealthHeroClinic()
+        {
+            BuildHealthHeroClinicCore(exitWhenDone: true);
+        }
+
+        private static void BuildHealthHeroClinicCore(bool exitWhenDone)
+        {
+            GameObject root = null;
+            try
+            {
+                GeneratePiecePropArt();
+                GenerateRoomHelperArt(); // the clinic reuses the studio's room_table.png
+                GenerateClinicHelperArt();
+                root = ComposeHealthHeroClinic();
+
+                EnsureFolder(PrefabFolder);
+                PrefabUtility.SaveAsPrefabAsset(root, ClinicPrefabAssetPath);
+
+                EnsureFolder(PrefabResourcesFolder);
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(ClinicPrefabResourcesPath) != null)
+                {
+                    AssetDatabase.DeleteAsset(ClinicPrefabResourcesPath);
+                }
+
+                if (!AssetDatabase.CopyAsset(ClinicPrefabAssetPath, ClinicPrefabResourcesPath))
+                {
+                    throw new InvalidOperationException($"Failed to copy '{ClinicPrefabAssetPath}' to '{ClinicPrefabResourcesPath}'.");
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log($"CQ_ROOM_PREFAB BuildHealthHeroClinic: saved '{ClinicPrefabAssetPath}' (+ runtime copy '{ClinicPrefabResourcesPath}').");
+                ExitIfHeadless(exitWhenDone, 0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"CQ_ROOM_PREFAB BuildHealthHeroClinic failed: {exception}");
+                ExitIfHeadless(exitWhenDone, 1);
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clinic helper art (idempotent — rebuild overwrites): warm exam bed,
+        /// patient-zone pad, tool tray board, care plan board, symptom clipboard
+        /// wall board, wall cross — the DESIGN.md clinic diorama set, in the
+        /// Kenney palette with Health Mint identity.
+        /// </summary>
+        private static void GenerateClinicHelperArt()
+        {
+            Directory.CreateDirectory(ClinicArtFolder);
+
+            // Warm exam bed with a lighter mattress top and a pillow block.
+            var bed = DrawWithPixels(300, 130, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, 12, w / 2 - 8, 11, SoftShadow);
+                FillRoundedRect(pixels, w, h, 6, 12, w - 12, h - 38, 14, Color.Lerp(HealthMint, Color.white, 0.62f));
+                FillRoundedRect(pixels, w, h, 14, 40, w - 28, h - 70, 12, Color.Lerp(HealthMint, Color.white, 0.8f));
+                FillRoundedRect(pixels, w, h, 18, h - 44, 70, 30, 10, PaperWarm);
+                FillRect(pixels, w, h, 6, 12, w - 12, 8, Color.Lerp(HealthMint, Color.black, 0.12f));
+            });
+            WritePng(bed, $"{ClinicArtFolder}/clinic_bed.png");
+            UnityEngine.Object.DestroyImmediate(bed);
+
+            // Patient-zone pad: soft mint plate with a lighter inset (drop target).
+            var pad = DrawWithPixels(240, 110, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, h / 2, w / 2 - 4, h / 2 - 4, Color.Lerp(HealthMint, Color.white, 0.5f));
+                FillEllipse(pixels, w, h, w / 2, h / 2, w / 2 - 18, h / 2 - 14, Color.Lerp(HealthMint, Color.white, 0.72f));
+            });
+            WritePng(pad, $"{ClinicArtFolder}/clinic_zone_pad.png");
+            UnityEngine.Object.DestroyImmediate(pad);
+
+            // Tool tray: paper board with a soft inner well (mirrors the studio tray).
+            var tray = DrawWithPixels(640, 104, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 0, 0, w, h, 16, PaperWarm);
+                FillRoundedRect(pixels, w, h, 8, 8, w - 16, h - 16, 12, Color.Lerp(PaperWarm, Color.black, 0.06f));
+            });
+            WritePng(tray, $"{ClinicArtFolder}/clinic_tray.png");
+            UnityEngine.Object.DestroyImmediate(tray);
+
+            // Care plan board: paper card with a mint header band and plan lines.
+            var board = DrawWithPixels(150, 130, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 4, 4, w - 8, h - 8, 10, PaperWarm);
+                FillRect(pixels, w, h, 10, h - 30, w - 20, 18, Color.Lerp(HealthMint, Color.white, 0.25f));
+                FillRect(pixels, w, h, 14, h - 48, w - 28, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 14, h - 62, w - 36, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 14, h - 76, w - 44, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+            });
+            WritePng(board, $"{ClinicArtFolder}/clinic_care_board.png");
+            UnityEngine.Object.DestroyImmediate(board);
+
+            // Symptom clipboard wall board: clipboard silhouette with case notes.
+            var wallBoard = DrawWithPixels(110, 140, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 6, 4, w - 12, h - 16, 10, Color.Lerp(LogicAmber, Color.white, 0.45f));
+                FillRoundedRect(pixels, w, h, 14, 12, w - 28, h - 36, 8, PaperWarm);
+                FillRoundedRect(pixels, w, h, w / 2 - 16, h - 18, 32, 12, 5, Color.Lerp(InkSoft, Color.white, 0.4f));
+                FillRect(pixels, w, h, 22, h - 54, w - 44, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 22, h - 68, w - 52, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 22, h - 82, w - 48, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+            });
+            WritePng(wallBoard, $"{ClinicArtFolder}/clinic_symptom_board.png");
+            UnityEngine.Object.DestroyImmediate(wallBoard);
+
+            // Wall cross badge: mint circle with a white cross.
+            var cross = DrawWithPixels(96, 96, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, h / 2, w / 2 - 4, h / 2 - 4, HealthMint);
+                FillRect(pixels, w, h, w / 2 - 7, 22, 14, h - 44, Color.white);
+                FillRect(pixels, w, h, 22, h / 2 - 7, w - 44, 14, Color.white);
+            });
+            WritePng(cross, $"{ClinicArtFolder}/clinic_wall_cross.png");
+            UnityEngine.Object.DestroyImmediate(cross);
+
+            AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Structure and names mirror CampusRoomScenes.BuildFallbackClinic and the
+        /// HealthHeroClinicLayout single coordinate truth. World band 200-299;
+        /// controller-spawned pieces sit at 330. The patient NPC is NOT baked:
+        /// CampusRoomScenes creates it in code for both paths (P14 hook).
+        /// </summary>
+        private static GameObject ComposeHealthHeroClinic()
+        {
+            var root = new GameObject("HealthHeroClinic");
+
+            AddSprite(root.transform, "Backdrop", LoadSprite(ClinicBackdropPath), new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 200);
+
+            // Patient zone pad under the bed area — the drop target reads as a place.
+            var zone = HealthHeroClinicLayout.PatientZonePosition;
+            AddSprite(root.transform, "PatientZonePad", ClinicSprite("clinic_zone_pad.png"), new Vector2(zone.x, zone.y - 0.25f), new Vector2(2.3f, 1.05f), 206);
+            AddAnchor(root.transform, HealthHeroClinicLayout.ZoneAnchorPrefix + HealthHeroClinicLayout.PatientZoneId, zone);
+
+            AddSprite(root.transform, "ClinicBed", ClinicSprite("clinic_bed.png"), new Vector2(-1.82f, -0.6f), new Vector2(2.35f, 1.0f), 210);
+            AddSprite(root.transform, "CareCounter", RoomSprite("room_table.png"), new Vector2(1.88f, -0.62f), new Vector2(2.72f, 0.62f), 210);
+            AddSprite(root.transform, "SymptomBoard", ClinicSprite("clinic_symptom_board.png"), new Vector2(-3.2f, 0.7f), new Vector2(0.85f, 1.1f), 212);
+            AddSprite(root.transform, "CarePlanBoard", ClinicSprite("clinic_care_board.png"), new Vector2(2.6f, 0.55f), new Vector2(1.15f, 1.0f), 212);
+            AddSprite(root.transform, "WallCross", ClinicSprite("clinic_wall_cross.png"), new Vector2(0.2f, 1.05f), new Vector2(0.55f, 0.55f), 212);
+
+            AddSprite(root.transform, "ToolTrayBoard", ClinicSprite("clinic_tray.png"), new Vector2(0f, HealthHeroClinicLayout.TrayPosition(0).y - 0.02f), new Vector2(6.2f, 1.0f), 208);
+            for (var i = 0; i < HealthHeroClinicLayout.PieceIds.Length; i++)
+            {
+                AddAnchor(root.transform, HealthHeroClinicLayout.TrayAnchorPrefix + i, HealthHeroClinicLayout.TrayPosition(i));
+            }
+
+            foreach (var stepPieceId in HealthHeroClinicLayout.StepPieceIds)
+            {
+                AddAnchor(root.transform, HealthHeroClinicLayout.AppliedAnchorPrefix + stepPieceId, HealthHeroClinicLayout.AppliedPosition(stepPieceId));
+            }
+
+            return root;
+        }
+
+        private static Sprite ClinicSprite(string fileName)
+        {
+            return LoadSprite($"{ClinicArtFolder}/{fileName}");
+        }
+
+        // ------------------------------------------------------------------
+        // U10: Logic Court prefab (drag-room replication)
+        // ------------------------------------------------------------------
+
+        private const string CourtArtFolder = "Assets/_CareerQuest/Art/Rooms/LogicCourt";
+        private const string CourtPrefabAssetPath = "Assets/_CareerQuest/Prefabs/Rooms/LogicCourt.prefab";
+        private const string CourtPrefabResourcesPath = "Assets/Resources/CareerQuest/World/LogicCourt.prefab";
+        private const string CourtBackdropPath = "Assets/Resources/CareerQuest/Room/room.logic_court.png";
+        private const string ArgumentMeterPropPath = "Assets/Resources/CareerQuest/Prop/prop.argument_meter.png";
+
+        [MenuItem("Career Quest/World/Build Logic Court Prefab")]
+        public static void BuildLogicCourtInteractive()
+        {
+            BuildLogicCourtCore(exitWhenDone: false);
+        }
+
+        /// <summary>Headless entry point: composes and saves the court prefab, then exits 0/1.</summary>
+        public static void BuildLogicCourt()
+        {
+            BuildLogicCourtCore(exitWhenDone: true);
+        }
+
+        private static void BuildLogicCourtCore(bool exitWhenDone)
+        {
+            GameObject root = null;
+            try
+            {
+                GeneratePiecePropArt();
+                GenerateCourtHelperArt();
+                root = ComposeLogicCourt();
+
+                EnsureFolder(PrefabFolder);
+                PrefabUtility.SaveAsPrefabAsset(root, CourtPrefabAssetPath);
+
+                EnsureFolder(PrefabResourcesFolder);
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(CourtPrefabResourcesPath) != null)
+                {
+                    AssetDatabase.DeleteAsset(CourtPrefabResourcesPath);
+                }
+
+                if (!AssetDatabase.CopyAsset(CourtPrefabAssetPath, CourtPrefabResourcesPath))
+                {
+                    throw new InvalidOperationException($"Failed to copy '{CourtPrefabAssetPath}' to '{CourtPrefabResourcesPath}'.");
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                Debug.Log($"CQ_ROOM_PREFAB BuildLogicCourt: saved '{CourtPrefabAssetPath}' (+ runtime copy '{CourtPrefabResourcesPath}').");
+                ExitIfHeadless(exitWhenDone, 0);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"CQ_ROOM_PREFAB BuildLogicCourt failed: {exception}");
+                ExitIfHeadless(exitWhenDone, 1);
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Court helper art (idempotent — rebuild overwrites): judge bench,
+        /// podium, sorting zone pads (helpful check / not-helpful cross),
+        /// evidence tray, conclusion stamp — the DESIGN.md court diorama set,
+        /// in the Kenney palette with Logic Amber identity.
+        /// </summary>
+        private static void GenerateCourtHelperArt()
+        {
+            Directory.CreateDirectory(CourtArtFolder);
+
+            // Judge bench: amber desk with a darker front panel and a top lip.
+            var bench = DrawWithPixels(300, 120, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, 10, w / 2 - 8, 9, SoftShadow);
+                FillRoundedRect(pixels, w, h, 4, 10, w - 8, h - 26, 12, Color.Lerp(LogicAmber, Color.black, 0.18f));
+                FillRoundedRect(pixels, w, h, 10, h - 36, w - 20, 22, 8, Color.Lerp(LogicAmber, Color.white, 0.2f));
+                FillRect(pixels, w, h, 16, 28, w - 32, 8, Color.Lerp(LogicAmber, Color.black, 0.32f));
+            });
+            WritePng(bench, $"{CourtArtFolder}/court_bench.png");
+            UnityEngine.Object.DestroyImmediate(bench);
+
+            // Podium: narrow amber stand with a paper rest.
+            var podium = DrawWithPixels(120, 130, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, 10, w / 2 - 10, 8, SoftShadow);
+                FillRoundedRect(pixels, w, h, w / 2 - 14, 10, 28, h - 50, 8, Color.Lerp(LogicAmber, Color.black, 0.22f));
+                FillRoundedRect(pixels, w, h, 8, h - 44, w - 16, 30, 8, Color.Lerp(LogicAmber, Color.white, 0.22f));
+                FillRoundedRect(pixels, w, h, 16, h - 38, w - 32, 18, 6, PaperWarm);
+            });
+            WritePng(podium, $"{CourtArtFolder}/court_podium.png");
+            UnityEngine.Object.DestroyImmediate(podium);
+
+            // Helpful zone pad: mint plate with a white check mark.
+            var helpful = DrawWithPixels(220, 130, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 4, 4, w - 8, h - 8, 14, Color.Lerp(Mint, Color.white, 0.45f));
+                FillRoundedRect(pixels, w, h, 14, 14, w - 28, h - 28, 12, Color.Lerp(Mint, Color.white, 0.68f));
+                FillRect(pixels, w, h, w / 2 - 26, h / 2 - 6, 18, 10, Color.Lerp(Mint, Color.black, 0.25f));
+                FillRect(pixels, w, h, w / 2 - 12, h / 2 - 18, 12, 30, Color.Lerp(Mint, Color.black, 0.25f));
+            });
+            WritePng(helpful, $"{CourtArtFolder}/court_zone_helpful.png");
+            UnityEngine.Object.DestroyImmediate(helpful);
+
+            // Not-helpful zone pad: lilac plate with a soft cross mark.
+            var notHelpful = DrawWithPixels(220, 130, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 4, 4, w - 8, h - 8, 14, Color.Lerp(LilacSoft, Color.white, 0.5f));
+                FillRoundedRect(pixels, w, h, 14, 14, w - 28, h - 28, 12, Color.Lerp(LilacSoft, Color.white, 0.72f));
+                FillRect(pixels, w, h, w / 2 - 18, h / 2 - 5, 36, 10, Color.Lerp(LilacSoft, Color.black, 0.2f));
+                FillRect(pixels, w, h, w / 2 - 5, h / 2 - 18, 10, 36, Color.Lerp(LilacSoft, Color.black, 0.2f));
+            });
+            WritePng(notHelpful, $"{CourtArtFolder}/court_zone_not_helpful.png");
+            UnityEngine.Object.DestroyImmediate(notHelpful);
+
+            // Evidence tray: paper board with a soft inner well.
+            var tray = DrawWithPixels(640, 104, (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 0, 0, w, h, 16, PaperWarm);
+                FillRoundedRect(pixels, w, h, 8, 8, w - 16, h - 16, 12, Color.Lerp(PaperWarm, Color.black, 0.06f));
+            });
+            WritePng(tray, $"{CourtArtFolder}/court_tray.png");
+            UnityEngine.Object.DestroyImmediate(tray);
+
+            // Conclusion stamp: amber handle over a dark base (the P14 punch prop).
+            var stamp = DrawWithPixels(90, 110, (pixels, w, h) =>
+            {
+                FillEllipse(pixels, w, h, w / 2, 10, w / 2 - 12, 7, SoftShadow);
+                FillRoundedRect(pixels, w, h, 10, 8, w - 20, 26, 8, Color.Lerp(InkSoft, Color.white, 0.18f));
+                FillRoundedRect(pixels, w, h, w / 2 - 9, 30, 18, h - 62, 6, Color.Lerp(LogicAmber, Color.black, 0.12f));
+                FillEllipse(pixels, w, h, w / 2, h - 18, 22, 13, LogicAmber);
+            });
+            WritePng(stamp, $"{CourtArtFolder}/court_stamp.png");
+            UnityEngine.Object.DestroyImmediate(stamp);
+
+            AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Structure and names mirror CampusRoomScenes.BuildFallbackCourt and the
+        /// LogicCourtLayout single coordinate truth. World band 200-299;
+        /// controller-spawned cards sit at 330. The judge NPC is NOT baked:
+        /// CampusRoomScenes creates it in code for both paths (P14 hook). The
+        /// conclusion stamp IS baked (named prop the stamp punch animates).
+        /// </summary>
+        private static GameObject ComposeLogicCourt()
+        {
+            var root = new GameObject("LogicCourt");
+
+            AddSprite(root.transform, "Backdrop", LoadSprite(CourtBackdropPath), new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 200);
+
+            AddSprite(root.transform, "JudgeBench", CourtSprite("court_bench.png"), new Vector2(-2.05f, -0.42f), new Vector2(2.4f, 0.95f), 210);
+            AddSprite(root.transform, LogicCourtLayout.StampPropName, CourtSprite("court_stamp.png"), LogicCourtLayout.StampPosition, new Vector2(0.42f, 0.52f), 218);
+
+            var podiumZone = LogicCourtLayout.PodiumZonePosition;
+            AddSprite(root.transform, "CourtPodium", CourtSprite("court_podium.png"), new Vector2(podiumZone.x, podiumZone.y - 0.18f), new Vector2(0.85f, 0.95f), 210);
+            AddAnchor(root.transform, LogicCourtLayout.ZoneAnchorPrefix + LogicCourtLayout.PodiumZoneId, podiumZone);
+
+            AddSprite(root.transform, "HelpfulZonePad", CourtSprite("court_zone_helpful.png"), LogicCourtLayout.HelpfulZonePosition, new Vector2(1.4f, 0.9f), 206);
+            AddAnchor(root.transform, LogicCourtLayout.ZoneAnchorPrefix + LogicCourtLayout.HelpfulZoneId, LogicCourtLayout.HelpfulZonePosition);
+
+            AddSprite(root.transform, "NotHelpfulZonePad", CourtSprite("court_zone_not_helpful.png"), LogicCourtLayout.NotHelpfulZonePosition, new Vector2(1.4f, 0.9f), 206);
+            AddAnchor(root.transform, LogicCourtLayout.ZoneAnchorPrefix + LogicCourtLayout.NotHelpfulZoneId, LogicCourtLayout.NotHelpfulZonePosition);
+
+            AddSprite(root.transform, "ArgumentMeterProp", LoadSprite(ArgumentMeterPropPath), new Vector2(3.3f, 0.42f), new Vector2(0.8f, 0.8f), 212);
+
+            AddSprite(root.transform, "EvidenceTrayBoard", CourtSprite("court_tray.png"), new Vector2(0f, LogicCourtLayout.TrayPosition(0).y - 0.02f), new Vector2(6.2f, 1.0f), 208);
+            for (var i = 0; i < LogicCourtLayout.PieceIds.Length; i++)
+            {
+                AddAnchor(root.transform, LogicCourtLayout.TrayAnchorPrefix + i, LogicCourtLayout.TrayPosition(i));
+            }
+
+            return root;
+        }
+
+        private static Sprite CourtSprite(string fileName)
+        {
+            return LoadSprite($"{CourtArtFolder}/{fileName}");
+        }
+
+        // ------------------------------------------------------------------
+        // U10 piece prop art: catalog-convention PNGs for the drag pieces.
+        // Fill-missing only (the sprite-kit demotion policy): curated art at
+        // Resources/CareerQuest/Prop/{id}.png always wins and is never
+        // overwritten by a rebuild.
+        // ------------------------------------------------------------------
+
+        private const string PropResourcesFolder = "Assets/Resources/CareerQuest/Prop";
+
+        private static void GeneratePiecePropArt()
+        {
+            Directory.CreateDirectory(PropResourcesFolder);
+
+            WritePieceIfMissing("prop.symptom_clipboard", (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 18, 8, w - 36, h - 24, 12, Color.Lerp(LogicAmber, Color.white, 0.45f));
+                FillRoundedRect(pixels, w, h, 26, 16, w - 52, h - 44, 10, PaperWarm);
+                FillRoundedRect(pixels, w, h, w / 2 - 18, h - 22, 36, 14, 6, Color.Lerp(InkSoft, Color.white, 0.4f));
+                FillRect(pixels, w, h, 34, h - 52, w - 68, 6, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 34, h - 68, w - 76, 6, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 34, h - 84, w - 72, 6, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillEllipse(pixels, w, h, w - 38, 34, 10, 10, HealthMint);
+            });
+
+            WritePieceIfMissing("prop.bandage", (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 10, h / 2 - 22, w - 20, 44, 18, new Color(0.94f, 0.78f, 0.6f));
+                FillRoundedRect(pixels, w, h, w / 2 - 20, h / 2 - 16, 40, 32, 8, Color.Lerp(Color.white, new Color(0.94f, 0.78f, 0.6f), 0.2f));
+                FillEllipse(pixels, w, h, 26, h / 2, 4, 4, Color.Lerp(new Color(0.94f, 0.78f, 0.6f), Color.black, 0.18f));
+                FillEllipse(pixels, w, h, w - 26, h / 2, 4, 4, Color.Lerp(new Color(0.94f, 0.78f, 0.6f), Color.black, 0.18f));
+            });
+
+            WritePieceIfMissing("prop.case_file", (pixels, w, h) =>
+            {
+                FillRoundedRect(pixels, w, h, 12, 16, w - 24, h - 44, 10, Color.Lerp(LogicAmber, Color.white, 0.3f));
+                FillRoundedRect(pixels, w, h, 12, h - 40, 52, 18, 6, Color.Lerp(LogicAmber, Color.white, 0.3f));
+                FillRoundedRect(pixels, w, h, 20, 24, w - 40, h - 64, 8, PaperWarm);
+                FillRect(pixels, w, h, 28, h - 70, w - 56, 6, Color.Lerp(InkSoft, Color.white, 0.6f));
+                FillRect(pixels, w, h, 28, h - 84, w - 64, 6, Color.Lerp(InkSoft, Color.white, 0.6f));
+            });
+
+            WritePieceIfMissing("prop.evidence_test", (pixels, w, h) =>
+            {
+                DrawEvidenceCard(pixels, w, h, Mint);
+                // Bridge truss: deck + two triangle struts.
+                FillRect(pixels, w, h, 28, 46, w - 56, 8, Color.Lerp(InkSoft, Color.white, 0.25f));
+                FillRect(pixels, w, h, 36, 54, 8, 22, Color.Lerp(InkSoft, Color.white, 0.25f));
+                FillRect(pixels, w, h, w / 2 - 4, 54, 8, 22, Color.Lerp(InkSoft, Color.white, 0.25f));
+                FillRect(pixels, w, h, w - 44, 54, 8, 22, Color.Lerp(InkSoft, Color.white, 0.25f));
+            });
+
+            WritePieceIfMissing("prop.evidence_paint", (pixels, w, h) =>
+            {
+                DrawEvidenceCard(pixels, w, h, LilacSoft);
+                // Paint blob + drip.
+                FillEllipse(pixels, w, h, w / 2, 62, 24, 16, Color.Lerp(LilacSoft, Color.white, 0.1f));
+                FillEllipse(pixels, w, h, w / 2 - 10, 44, 6, 9, Color.Lerp(LilacSoft, Color.white, 0.1f));
+            });
+
+            WritePieceIfMissing("prop.evidence_blueprint", (pixels, w, h) =>
+            {
+                DrawEvidenceCard(pixels, w, h, ScienceBlue);
+                // Blueprint inset with white grid lines.
+                FillRoundedRect(pixels, w, h, 30, 38, w - 60, 44, 6, Color.Lerp(ScienceBlue, Color.black, 0.15f));
+                FillRect(pixels, w, h, 30, 58, w - 60, 3, Color.white);
+                FillRect(pixels, w, h, w / 2 - 2, 38, 3, 44, Color.white);
+            });
+
+            AssetDatabase.Refresh();
+        }
+
+        private static void DrawEvidenceCard(Color[] pixels, int width, int height, Color accent)
+        {
+            FillEllipse(pixels, width, height, width / 2, 14, width / 2 - 18, 9, SoftShadow);
+            FillRoundedRect(pixels, width, height, 16, 14, width - 32, height - 28, 12, PaperWarm);
+            FillRect(pixels, width, height, 22, height - 36, width - 44, 16, Color.Lerp(accent, Color.white, 0.25f));
+            FillRect(pixels, width, height, 26, 28, width - 52, 5, Color.Lerp(InkSoft, Color.white, 0.6f));
+        }
+
+        private static void WritePieceIfMissing(string propId, Action<Color[], int, int> draw)
+        {
+            var path = $"{PropResourcesFolder}/{propId}.png";
+            if (File.Exists(path))
+            {
+                return; // curated art wins; never overwrite
+            }
+
+            var texture = DrawWithPixels(128, 128, draw);
+            WritePng(texture, path);
+            UnityEngine.Object.DestroyImmediate(texture);
+        }
+
+        // ------------------------------------------------------------------
         // U7: Reveal Stage prefab (in-world cinematic ceremony)
         // ------------------------------------------------------------------
 

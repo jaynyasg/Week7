@@ -34,9 +34,9 @@ namespace CareerQuest
                 case ActivityRoute.DesignBuild:
                     return "Drag each city piece onto its matching lot to finish your blueprint.";
                 case ActivityRoute.HealthHero:
-                    return "Read the symptom, choose the right tool, then pick the care plan.";
+                    return "Drag the symptom clipboard, the right tool, then the care plan to the patient.";
                 case ActivityRoute.LogicCourt:
-                    return "Match each clue to the fair rule, then decide the case.";
+                    return "Drag the case file to the podium, then sort each evidence card.";
                 case ActivityRoute.AiLab:
                     return "Train the model, then launch the probe to finish the lab quest.";
                 case ActivityRoute.MusicStudio:

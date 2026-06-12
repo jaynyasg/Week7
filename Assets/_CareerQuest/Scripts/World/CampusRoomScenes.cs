@@ -72,35 +72,135 @@ namespace CareerQuest
 
         public static void ShowClinic(CampusWorldBuilder builder, GameSession session)
         {
+            // U10: the room route mounts the authored HealthHeroClinic prefab
+            // (visual-only, no NetworkObject). When the prefab has not been built
+            // yet, a code-built diorama with an EMPTY patient zone keeps the room
+            // playable — the controller's drag playfield supplies the care tools
+            // in both paths.
+            if (!TryMountRoomPrefab(
+                builder,
+                HealthHeroClinicLayout.PrefabResourcePath,
+                "HealthHeroClinic",
+                "Career Quest/World/Build Health Hero Clinic Prefab",
+                "CareerQuestRoomPrefabBuilder.BuildHealthHeroClinic"))
+            {
+                BuildFallbackClinic(builder);
+            }
+
+            builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.38f, -1.35f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerBlue, 0.3f, true, session?.SelectedAvatar.SpriteAssetId, false);
+            AddPatientNpc(builder);
+        }
+
+        /// <summary>Fallback clinic with an EMPTY patient zone (care tools live in the drag tray).</summary>
+        private static void BuildFallbackClinic(CampusWorldBuilder builder)
+        {
             builder.AddCatalogSprite("HealthHeroRoomBackdrop", "room.health_hero", new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 0);
             builder.AddShape("ClinicExamBedShadow", CampusSpriteKind.Circle, new Vector2(-1.82f, -0.88f), new Vector2(2.25f, 0.36f), CampusWorldPalette.Shadow, 2);
+            builder.AddShape("ClinicPatientZonePad", CampusSpriteKind.Circle, HealthHeroClinicLayout.PatientZonePosition, new Vector2(2.2f, 1.0f), new Color(0.74f, 0.93f, 0.82f, 0.55f), 2);
             builder.AddShape("ClinicExamBed", CampusSpriteKind.Square, new Vector2(-1.82f, -0.66f), new Vector2(2.25f, 0.42f), CampusWorldPalette.Window, 3);
             builder.AddShape("ClinicExamPillow", CampusSpriteKind.Square, new Vector2(-2.58f, -0.43f), new Vector2(0.5f, 0.22f), CampusWorldPalette.Plaza, 4);
+            builder.AddShape("ClinicCareBoard", CampusSpriteKind.Square, new Vector2(2.6f, 0.55f), new Vector2(1.2f, 1.0f), CampusWorldPalette.Plaza, 3);
             builder.AddShape("ClinicCareCounterShadow", CampusSpriteKind.Circle, new Vector2(1.88f, -0.9f), new Vector2(2.5f, 0.36f), CampusWorldPalette.Shadow, 2);
             builder.AddShape("ClinicCareCounter", CampusSpriteKind.Square, new Vector2(1.88f, -0.62f), new Vector2(2.72f, 0.62f), CampusWorldPalette.Plaza, 3);
-            builder.AddCatalogSprite("Thermometer", "prop.thermometer", new Vector2(1.16f, -0.4f), new Vector2(0.64f, 0.72f), 5);
-            builder.AddCatalogSprite("CarePlan", "prop.care_plan", new Vector2(2.05f, -0.42f), new Vector2(0.72f, 0.72f), 5);
+            builder.AddShape("ClinicToolTrayBoard", CampusSpriteKind.Square, new Vector2(0f, HealthHeroClinicLayout.TrayPosition(0).y - 0.05f), new Vector2(6.2f, 1.0f), CampusWorldPalette.Plaza, 2);
             builder.AddShape("ClinicWallBadge", CampusSpriteKind.Circle, new Vector2(-3.08f, 0.72f), new Vector2(0.55f, 0.55f), CampusWorldPalette.Mint, 3);
             builder.AddShape("ClinicWallCrossA", CampusSpriteKind.Square, new Vector2(-3.08f, 0.72f), new Vector2(0.12f, 0.4f), Color.white, 4);
             builder.AddShape("ClinicWallCrossB", CampusSpriteKind.Square, new Vector2(-3.08f, 0.72f), new Vector2(0.4f, 0.12f), Color.white, 4);
-            builder.AddCharacter("Patient", -1.82f, -1.04f, CampusWorldPalette.Mint, 1.2f, true, "npc.patient", false);
-            builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Care Lead", 0.38f, -1.35f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerBlue, 0.3f, true, session?.SelectedAvatar.SpriteAssetId, false);
+        }
+
+        /// <summary>
+        /// The patient NPC is created in code for both paths (prefab and
+        /// fallback) so the controller's P14 brighten hook always finds the same
+        /// AvatarRuntimeView + name (mirrors the BuilderNpc convention).
+        /// </summary>
+        private static void AddPatientNpc(CampusWorldBuilder builder)
+        {
+            var npcObject = new GameObject(HealthHeroClinicLayout.PatientNpcName, typeof(SpriteRenderer), typeof(AvatarRuntimeView));
+            npcObject.transform.SetParent(builder.Root, false);
+            npcObject.transform.localPosition = new Vector3(
+                HealthHeroClinicLayout.NpcPosition.x,
+                HealthHeroClinicLayout.NpcPosition.y,
+                0f);
+            builder.AddShape("PatientNpcShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, npcObject.transform);
+            npcObject.GetComponent<AvatarRuntimeView>().ApplySpriteAsset("npc.patient");
         }
 
         public static void ShowCourt(CampusWorldBuilder builder, GameSession session)
+        {
+            // U10: the room route mounts the authored LogicCourt prefab
+            // (visual-only, no NetworkObject). When the prefab has not been built
+            // yet, a code-built diorama with EMPTY sorting zones keeps the room
+            // playable — the controller's drag playfield supplies the cards in
+            // both paths.
+            if (!TryMountRoomPrefab(
+                builder,
+                LogicCourtLayout.PrefabResourcePath,
+                "LogicCourt",
+                "Career Quest/World/Build Logic Court Prefab",
+                "CareerQuestRoomPrefabBuilder.BuildLogicCourt"))
+            {
+                BuildFallbackCourt(builder);
+            }
+
+            builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.04f, -1.35f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerGold, 0.8f, true, session?.SelectedAvatar.SpriteAssetId, false);
+            AddJudgeNpc(builder);
+        }
+
+        /// <summary>Fallback court with EMPTY sorting zones (evidence cards live in the drag tray).</summary>
+        private static void BuildFallbackCourt(CampusWorldBuilder builder)
         {
             builder.AddCatalogSprite("LogicCourtRoomBackdrop", "room.logic_court", new Vector2(0f, 0.18f), new Vector2(8.35f, 4.7f), 0);
             builder.AddShape("JudgeBenchShadow", CampusSpriteKind.Circle, new Vector2(-2.05f, -0.62f), new Vector2(2.34f, 0.42f), CampusWorldPalette.Shadow, 2);
             builder.AddShape("JudgeBench", CampusSpriteKind.Square, new Vector2(-2.05f, -0.34f), new Vector2(2.3f, 0.72f), CampusWorldPalette.GoldRoof, 3);
             builder.AddShape("JudgeBenchFront", CampusSpriteKind.Square, new Vector2(-2.05f, -0.62f), new Vector2(2.48f, 0.22f), CampusWorldPalette.Gold, 4);
-            builder.AddShape("HelpfulZone", CampusSpriteKind.Square, new Vector2(1.03f, -0.56f), new Vector2(1.35f, 0.78f), new Color(0.74f, 0.93f, 0.76f, 0.86f), 3);
-            builder.AddShape("ReviewZone", CampusSpriteKind.Square, new Vector2(2.48f, -0.56f), new Vector2(1.35f, 0.78f), new Color(0.83f, 0.9f, 1f, 0.86f), 3);
-            builder.AddEvidence("Test", 0.72f, -0.42f, CampusWorldPalette.Mint);
-            builder.AddEvidence("Plan", 1.45f, -0.42f, CampusWorldPalette.SkyBlue);
-            builder.AddEvidence("Paint", 2.5f, -0.42f, CampusWorldPalette.Lilac);
+            builder.AddShape(LogicCourtLayout.StampPropName, CampusSpriteKind.Square, LogicCourtLayout.StampPosition, new Vector2(0.45f, 0.5f), CampusWorldPalette.Gold, 6);
+            builder.AddShape("CourtPodium", CampusSpriteKind.Square, new Vector2(LogicCourtLayout.PodiumZonePosition.x, LogicCourtLayout.PodiumZonePosition.y - 0.2f), new Vector2(0.85f, 0.7f), CampusWorldPalette.GoldRoof, 3);
+            builder.AddShape("HelpfulZone", CampusSpriteKind.Square, LogicCourtLayout.HelpfulZonePosition, new Vector2(1.35f, 0.85f), new Color(0.74f, 0.93f, 0.76f, 0.86f), 3);
+            builder.AddShape("NotHelpfulZone", CampusSpriteKind.Square, LogicCourtLayout.NotHelpfulZonePosition, new Vector2(1.35f, 0.85f), new Color(0.9f, 0.86f, 0.96f, 0.86f), 3);
+            builder.AddShape("CourtTrayBoard", CampusSpriteKind.Square, new Vector2(0f, LogicCourtLayout.TrayPosition(0).y - 0.05f), new Vector2(6.2f, 1.0f), CampusWorldPalette.Plaza, 2);
             builder.AddCatalogSprite("ArgumentMeter", "prop.argument_meter", new Vector2(3.3f, 0.42f), new Vector2(0.8f, 0.8f), 4);
-            builder.AddCharacter("Judge", -2.05f, -1.02f, CampusWorldPalette.PlayerGold, 1.6f, true, "npc.judge", false);
-            builder.AddCharacter(session?.SelectedAvatar.DisplayName ?? "Speaker", 0.04f, -1.35f, session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerGold, 0.8f, true, session?.SelectedAvatar.SpriteAssetId, false);
+        }
+
+        /// <summary>
+        /// The judge NPC is created in code for both paths (prefab and fallback)
+        /// so the controller's P14 stamp/cheer hook always finds the same
+        /// AvatarRuntimeView + name (mirrors the BuilderNpc convention).
+        /// </summary>
+        private static void AddJudgeNpc(CampusWorldBuilder builder)
+        {
+            var npcObject = new GameObject(LogicCourtLayout.JudgeNpcName, typeof(SpriteRenderer), typeof(AvatarRuntimeView));
+            npcObject.transform.SetParent(builder.Root, false);
+            npcObject.transform.localPosition = new Vector3(
+                LogicCourtLayout.NpcPosition.x,
+                LogicCourtLayout.NpcPosition.y,
+                0f);
+            builder.AddShape("JudgeNpcShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, npcObject.transform);
+            npcObject.GetComponent<AvatarRuntimeView>().ApplySpriteAsset("npc.judge");
+        }
+
+        /// <summary>
+        /// Generic prefab mount for authored room dioramas (U10 — name-matched
+        /// fallback with LogWarning, the Design Build convention).
+        /// </summary>
+        private static bool TryMountRoomPrefab(
+            CampusWorldBuilder builder,
+            string resourcePath,
+            string instanceName,
+            string menuItem,
+            string headlessMethod)
+        {
+            var prefab = Resources.Load<GameObject>(resourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    $"{instanceName} prefab missing at Resources/{resourcePath} — " +
+                    $"run '{menuItem}' ({headlessMethod}). Falling back to the code-built room.");
+                return false;
+            }
+
+            var instance = Object.Instantiate(prefab, builder.Root);
+            instance.name = instanceName;
+            return true;
         }
 
         public static void ShowGallery(CampusWorldBuilder builder, GameSession session)

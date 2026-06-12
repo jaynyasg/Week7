@@ -52,6 +52,13 @@ namespace CareerQuest
             Prop("prop.care_plan", "Care Plan", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.92f, 0.64f)),
             Prop("prop.evidence_card", "Evidence Card", new Color(0.83f, 0.96f, 1f), new Color(0.96f, 0.62f, 0.18f)),
             Prop("prop.argument_meter", "Argument Meter", new Color(0.62f, 0.52f, 0.86f), new Color(1f, 0.92f, 0.64f)),
+            // U10 drag pieces: Health Hero care tools + Logic Court court cards.
+            Prop("prop.symptom_clipboard", "Symptom Clipboard", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.97f, 0.88f)),
+            Prop("prop.bandage", "Bandage", new Color(0.94f, 0.78f, 0.6f), new Color(1f, 1f, 1f)),
+            Prop("prop.case_file", "Case File", new Color(0.95f, 0.64f, 0.23f), new Color(1f, 0.97f, 0.88f)),
+            Prop("prop.evidence_test", "Bridge Test Evidence", new Color(0.36f, 0.78f, 0.6f), new Color(0.1f, 0.2f, 0.24f)),
+            Prop("prop.evidence_paint", "Paint Opinion Evidence", new Color(0.62f, 0.52f, 0.86f), new Color(0.1f, 0.2f, 0.24f)),
+            Prop("prop.evidence_blueprint", "Blueprint Evidence", new Color(0.28f, 0.66f, 0.94f), new Color(1f, 1f, 1f)),
 
             Badge("badge.design_build", "Design Build Badge", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f)),
             Badge("badge.health_hero", "Health Hero Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),

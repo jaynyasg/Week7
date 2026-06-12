@@ -41,7 +41,7 @@ namespace CareerQuest.Tests
             app.ShowHealthHero();
             yield return null;
 
-            CompleteHealthHeroRoom();
+            CompleteHealthHeroRoom(appObject);
 
             var overlay = GameObject.Find("CeremonyOverlay");
             Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after Health Hero completion.");
@@ -63,7 +63,7 @@ namespace CareerQuest.Tests
             app.ShowLogicCourt();
             yield return null;
 
-            CompleteLogicCourtRoom();
+            CompleteLogicCourtRoom(appObject);
 
             var overlay = GameObject.Find("CeremonyOverlay");
             Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after Logic Court completion.");
@@ -113,10 +113,10 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// U6 migration: Design Build is a drag room — completion is driven
-        /// through the TrySubmitDrop seam (the route emitter → ceremony → router
-        /// contract is unchanged). Health Hero / Logic Court stay button-driven
-        /// until their U10 conversion.
+        /// U6/U10 migration: all three core rooms are drag rooms — completion is
+        /// driven through the TrySubmitDrop seams (the route emitter → ceremony →
+        /// router contract is unchanged). FindButton drivers remain only in the
+        /// optional-room suites.
         /// </summary>
         private static void CompleteDesignBuildRoom(GameObject appObject)
         {
@@ -132,35 +132,39 @@ namespace CareerQuest.Tests
             }
         }
 
-        private static void CompleteHealthHeroRoom()
+        /// <summary>U10: the three care steps play as ordered drags onto the patient zone.</summary>
+        private static void CompleteHealthHeroRoom(GameObject appObject)
         {
-            FindButton("HealthHeroCheckButton").onClick.Invoke();
-            FindButton("HealthHeroToolButton").onClick.Invoke();
-            FindButton("HealthHeroCareButton").onClick.Invoke();
-            FindButton("HealthHeroCompleteButton").onClick.Invoke();
-        }
+            var controller = appObject.GetComponent<HealthHeroController>();
+            Assert.That(controller, Is.Not.Null, "HealthHeroController should exist after ShowHealthHero.");
 
-        private static void CompleteLogicCourtRoom()
-        {
-            FindButton("LogicCourtReviewButton").onClick.Invoke();
-            FindButton("LogicCourtTestButton").onClick.Invoke();
-            FindButton("LogicCourtPaintButton").onClick.Invoke();
-            FindButton("LogicCourtBlueprintButton").onClick.Invoke();
-            FindButton("LogicCourtClosingButton").onClick.Invoke();
-        }
-
-        private static Button FindButton(string name)
-        {
-            foreach (var button in Resources.FindObjectsOfTypeAll<Button>())
+            foreach (var pieceId in HealthHeroClinicLayout.StepPieceIds)
             {
-                if (button.name == name)
-                {
-                    return button;
-                }
+                Assert.That(
+                    controller.TrySubmitDrop(pieceId, HealthHeroClinicLayout.PatientZoneId),
+                    Is.EqualTo(DropSubmitResult.Accepted),
+                    $"Care step '{pieceId}' should be accepted on the patient zone.");
             }
+        }
 
-            Assert.Fail($"{name} should exist.");
-            return null;
+        /// <summary>U10: case review is a podium drag; each sort is a zone drag.</summary>
+        private static void CompleteLogicCourtRoom(GameObject appObject)
+        {
+            var controller = appObject.GetComponent<LogicCourtController>();
+            Assert.That(controller, Is.Not.Null, "LogicCourtController should exist after ShowLogicCourt.");
+
+            Assert.That(
+                controller.TrySubmitDrop(LogicCourtLayout.CaseFilePieceId, LogicCourtLayout.PodiumZoneId),
+                Is.EqualTo(DropSubmitResult.Accepted),
+                "Case file should be accepted on the podium.");
+
+            foreach (var pieceId in LogicCourtLayout.EvidencePieceIds)
+            {
+                Assert.That(
+                    controller.TrySubmitDrop(pieceId, LogicCourtLayout.CorrectZoneFor(pieceId)),
+                    Is.EqualTo(DropSubmitResult.Accepted),
+                    $"Evidence '{pieceId}' should be accepted in its correct zone.");
+            }
         }
     }
 }
