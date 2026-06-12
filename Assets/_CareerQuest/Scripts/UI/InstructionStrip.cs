@@ -32,7 +32,7 @@ namespace CareerQuest
             switch (session.CurrentRoute)
             {
                 case ActivityRoute.DesignBuild:
-                    return "Pick pieces for your city. Tap Complete when your blueprint is ready.";
+                    return "Drag each city piece onto its matching lot to finish your blueprint.";
                 case ActivityRoute.HealthHero:
                     return "Read the symptom, choose the right tool, then pick the care plan.";
                 case ActivityRoute.LogicCourt:
