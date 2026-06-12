@@ -74,7 +74,8 @@ Minimum fields:
 - `DisplayName`
 - `VerbTags`
 - `Prompt`
-- `ObjectSlots`
+- `ToyPatternId`
+- `Objects`
 - `SuccessRule`
 - `TraitDeltas`
 - `AccessoryRewardId`
@@ -93,7 +94,19 @@ Each seed should be small:
 - `ResultSummary`
 - `NpcReaction`
 
+Implementation schema contract:
+
+- `PartyStationDefinition`: `Id`, `DisplayName`, `VerbTags`, `ToyPatternId`, `GuideName`, `GuideVoice`, `Prompt`, `Objects`, `SuccessRule`, `TraitDeltas`, `AccessoryRewardId`, `CareerTags`, `BadgeArtKey`, `CampusArtKey`, `EvolutionPropAssetId`, `Seeds`.
+- `PartyStationSeedDefinition`: `SeedId`, `DisplayName`, `PromptOverride`, `ObjectOverrides`, `TargetRule`, `IntroLine`, `HintLine`, `EscalationHintLine`, `SuccessLine`, `RewardPreviewLine`, `ResultSummary`, `NpcReaction`.
+- `PartyStationObjectDefinition`: `ObjectId`, `DisplayName`, `Role`, `SpriteKey`, `TargetId`, `ReactionKey`, optional `TraitHint`.
+- Supported object `Role` ids for this plan: `CoreTask`, `Clue`, `Helper`, `Wildcard`, `Reaction`, `Bonus`, `Meter`.
+- Supported first-pass `ToyPatternId` values: `DragToSlot`, `SortToBin`, `PickMatchingTrio`, `SequenceCards`, `ComposeSet`, `MatchAndCare`, `BalanceMeters`.
+
+The seed bible can use playful prose such as "compose plus match" or "match plus care pattern," but implementation data must map each station to one supported `ToyPatternId`. Definition validation should fail on unknown pattern ids, unknown object roles, duplicate object ids, duplicate seed ids, missing guide copy, missing result copy, and seed overrides that reference unknown objects.
+
 The existing `MiniGameResult` remains the output contract. The station system should emit ordinary activity results, not invent a parallel progression channel.
+
+Result/presentation split: `MiniGameResult` and `GameSession` best results remain the scoring, reveal-readiness, badge, and Career DNA contract. Add a lightweight session-only reward event log for presentation facts that are not the same as "best score": recent station completions, selected seed id, seed-aware micro-result summary, top trait highlights, unlocked accessory id, and shown combo spark ids. Replays can append a recent reward event even when they do not replace the best result. This log should never become persistent profile data or a second scoring channel.
 
 Station ids, catalog ids, result activity ids, and evolution ids must stay the same string for a station. Seeds may change the prompt, objects, target rule, result copy, and NPC reaction, but they should not create extra badge identities or inflate reveal progress.
 
@@ -126,11 +139,13 @@ Add validation tests that prove `CareerQuestCatalog`, station definitions, `Care
 
 Multiplayer contract: all 10 in-plan stations must be solo-playable and 2P-safe/shared-progress. Implement multiplayer at the `ToyInteractionKit` pattern level, not as 10 bespoke network systems. The host owns selected station seed, accepted submissions, progress, rejects, and completion. Clients submit actions; host validates; both clients see accepted progress. Do not sync per-frame drag positions. Partner presence can show as ghost/highlight/emote, not live mirrored dragging.
 
+Multiplayer result read-model rule: host authority should remain the source of truth for recording `MiniGameResult`, but clients need more than `UniqueCompletedGames` to render the expanded reward surfaces correctly. Add a compact network read model for completed station ids plus minimal best-result summary data needed to derive accessories, combo cards, gallery/passport entries, reveal copy, and campus life reactions consistently on every peer. Do not replicate a full persistent profile, per-frame interaction data, or child-identifying history; replicate only session-scoped completion/reward facts derived from host-owned results.
+
 `PartyStationController` should not directly mutate reveal, gallery, career ranking, or campus evolution state. Those systems should continue to derive from `GameSession` best results and station/catalog metadata, preserving the existing one-way progression spine.
 
 Architecture decision: use Result-Spine Architecture. Station completion flows through one clean result path: `PartyStationController` -> `MiniGameResult` -> `GameSession` best result. Accessories, combo cards, reveal copy, gallery badges, and campus evolution derive from `GameSession` plus station metadata. Do not add direct side effects from station controllers to reward, reveal, gallery, or evolution systems.
 
-Routing decision: new Party Pack stations should use generic station routing / catalog-driven dispatch instead of adding one enum value and one switch branch per station. Keep bespoke routes for major app states and existing core rooms if needed, but party station entrances should route by `CatalogEntry.Id` / `PartyStationDefinition.Id` into the generic `PartyStationController`. Adding station 11 later should mostly be content/metadata work, not edits across `ActivityRoute`, hub switches, instruction switches, app methods, and fallback anchors.
+Routing decision: new Party Pack stations should use generic station routing / catalog-driven dispatch instead of adding one enum value and one switch branch per station. Keep bespoke routes for major app states and existing core rooms if needed, but Party Pack entrances must route by `CatalogEntry.Id` / `PartyStationDefinition.Id` into the generic `PartyStationController`. `ActivityRoute` should remain a high-level app/legacy route concept, not the permanent identity model for every new station. `WorldAnchorEntrance`, `CareerQuestCatalog`, hub dispatch, app room mounting, instruction copy, and fallback anchors should all support station-id driven Party Pack entries. Adding station 11 later should mostly be content/metadata work, not edits across `ActivityRoute`, hub switches, instruction switches, app methods, and fallback anchors.
 
 Add lightweight guided-run state to `GameSession` for the demo/PartyRunPresenter sequence. It should store ordered station ids, selected seed ids, current round index, completed station ids, and active/complete flags. This state is session-only and exists to survive route changes between campus, rooms, reward spotlights, and reveal during the guided/demo route.
 
@@ -529,6 +544,8 @@ New gear: Tool Belt.
 
 Micro-results should be seed-aware so alternate scenarios feel different without changing the station's core reward.
 
+Recent micro-results should come from the session reward event log, not only from best-result replacement. If a player replays Robotics with the alternate seed and gets a lower score, the best result should still drive scoring/reveal, but the passport/reward surface may still show the recent seed-aware action summary. Combo Spark display should also use the same session memory so each combo spark appears once per session, even if stations are replayed.
+
 ## Passport Upgrade
 
 Upgrade the existing Achievement Gallery into a lightweight session passport that can revisit more than badges without becoming a persistent profile or inventory system. The passport should derive from `GameSession` best results plus station, accessory, combo, and reveal metadata. It must stay session-only.
@@ -648,11 +665,13 @@ Avatar: wearing goggles + tool belt
 | Accessories consume too much art time | Start with simple overlays/badge-like props and only require three visible accessories by reveal time. |
 | Guided Party Run creates routing bugs | Reuse `GameSession` and room lifecycle. Add tests for 3-station completion, return-to-campus, and reveal readiness. Keep normal campus play free-choice. |
 | Remix seeds create QA sprawl | First pass requires one default seed and one alternate seed per station. Follow-up can add up to two more alternates per station after the first pack is playable. Test one golden seed per station plus definition validation for all seeds. |
-| Vet Clinic and Game Studio need new routes | Prefer generic optional-station routing if it fits the existing router; otherwise add explicit route/catalog entries with tests before adding custom room code. |
+| Vet Clinic and Game Studio need new routes | Use the generic station-id routing path from `T2route`; if that bridge is not ready, block promotion until it lands instead of adding bespoke `ActivityRoute` values or custom hub/app switch branches. |
 
 ## Performance Notes
 
 The Party Campus Pack is small enough to keep asset handling simple. Use existing `AssetCatalog` lookups and static station definitions as the source of truth. Add tiny local caches inside render controllers only for sprites or definitions repeatedly resolved on one screen. Do not add a preload/streaming system or app-start asset loading pass for this 10-station expansion unless profiling later proves it necessary.
+
+Lifecycle/performance rule: the quick party loop will enter, exit, and replay stations rapidly, so `PartyStationController`, `ToyInteractionKit`, hint highlights, Accessory Spotlight, Combo Spark, and station guide surfaces must follow the existing route-teardown discipline. On route change or station replay, cancel active drags, coroutines, delayed callbacks, subscriptions, highlight pulses, and transient particle/reward objects. Avoid static `GameObject` caches or persistent scene objects for station UI unless they have explicit teardown ownership. Add a small replay-churn smoke that enters/exits/replays several stations repeatedly and asserts the scene does not accumulate orphaned station roots, drag pieces, highlight objects, reward spotlights, or duplicate subscriptions.
 
 ## Observability And Debuggability
 
@@ -784,6 +803,10 @@ Use definition validation plus one end-to-end PlayMode proof as the first test g
 
 Add one PlayMode test for Robotics Rescue before multiplying content. The test should cover: station render, hint ladder escalation, toy completion, `ActivityResultEmitter` duplicate gate, normal `MiniGameResult`, derived accessory unlock, Accessory Spotlight availability, campus evolution city piece, gallery compatibility, and reveal-readiness compatibility. This is the proof that the data spine works in the real scene lifecycle, not just in static tables.
 
+Add one broad final PlayMode smoke test for the full in-plan station pack after all 10 stations are implemented. `StationPackSmokePlayModeTests` should iterate every in-plan station through the generic station-id route in quick/golden mode, complete the default seed, assert a normal `MiniGameResult` is emitted, assert the player can return to campus, and assert the station remains replayable with a valid seed choice. This breadth smoke does not replace the deeper Robotics proof; it catches broken routing, missing result contracts, and missed final-station wiring before demo time.
+
+Add one lifecycle replay-churn PlayMode smoke after the first reusable station controller lands. It should run several quick station enter/exit/replay cycles and assert route teardown removes transient station roots, drag pieces, hint highlights, reward spotlight objects, combo spark surfaces, active station coroutines, and duplicate session subscriptions. This test can start with Robotics Rescue and later include at least one creative station and one Wave 2 station.
+
 Final verification should include a 10-station QA matrix:
 
 | Station | Default Seed | Alternate Seed | Solo | 2P Shared | Accessory | Micro-Result | Badge/Gallery | Evolution | Reveal | Free-Choice Entry | Guided Compatible | Pass |
@@ -911,15 +934,15 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - [ ] **T1 (P1, human: ~2h / Codex: ~15min)** - Station data - Add static `PartyStationDefinition` definitions and validation tests.
   - Surfaced by: Architecture, Error Review, and grill-me content review - station ids, seed ids, asset keys, rewards, career tags, copy safety, and station content quality need a loud validation gate.
   - Files: `Assets/_CareerQuest/Scripts/Catalog`, `Assets/_CareerQuest/Scripts/Config`, `Assets/_CareerQuest/Tests/EditMode`.
-  - Verify: EditMode station/catalog/career/accessory/object-role/copy validation tests pass, every station has guide identity plus intro/hint/escalation/success copy, every seed has intro premise/reaction/reward-preview copy, every seed has 4-6 interactables, at least 4 objects participate in the task or clue chain, and every seed passes the Station Content Rubric.
+  - Verify: EditMode station/catalog/career/accessory/object-role/copy validation tests pass, every station uses the explicit `PartyStationDefinition` / `PartyStationSeedDefinition` / `PartyStationObjectDefinition` schema, every station maps to a supported `ToyPatternId`, every station has guide identity plus intro/hint/escalation/success copy, every seed has intro premise/reaction/reward-preview copy, every seed has 4-6 interactables, at least 4 objects participate in the task or clue chain, and every seed passes the Station Content Rubric.
 - [ ] **T2 (P1, human: ~2-3h / Codex: ~15-30min)** - Station play - Add `PartyStationController` and Robotics Rescue end-to-end proof.
   - Surfaced by: First Build Checkpoint - prove one complete toy station before multiplying content.
   - Files: `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Scripts/UI/CareerQuestApp.cs`, `Assets/_CareerQuest/Tests/PlayMode`.
-  - Verify: Robotics Rescue PlayMode test covers render, guide intro/hint/success copy, short station intro, reward preview, immediate play handoff, default/alternate replay selection, quick pacing for demo/proof mode, hint ladder escalation, toy completion, 45-75 second pacing target, `MiniGameResult`, duplicate gate, and campus return.
+  - Verify: Robotics Rescue PlayMode test covers render, guide intro/hint/success copy, short station intro, reward preview, immediate play handoff, default/alternate replay selection, quick pacing for demo/proof mode, hint ladder escalation, toy completion, 45-75 second pacing target, `MiniGameResult`, duplicate gate, campus return, and initial replay-churn cleanup for transient station/reward objects.
 - [ ] **T2route (P1, human: ~1-2h / Codex: ~10-20min)** - Station routing - Add generic station routing / catalog-driven dispatch for Party Pack stations.
   - Surfaced by: Grill-me routing gap - adding 10 stations should not require enum/switch edits across hub, app, instruction, and anchor code.
   - Files: `Assets/_CareerQuest/Scripts/Core`, `Assets/_CareerQuest/Scripts/Catalog`, `Assets/_CareerQuest/Scripts/Hub`, `Assets/_CareerQuest/Scripts/UI`, `Assets/_CareerQuest/Scripts/World`, routing tests.
-  - Verify: a new station can be added through station/catalog metadata and entered from campus without adding a bespoke route switch branch.
+  - Verify: Party Pack entrances route by station id into `PartyStationController`; `ActivityRoute` does not gain one new value per Party Pack station; `WorldAnchorEntrance` and `CareerQuestCatalog` can represent station-id entries; the hub/app dispatch path has one generic station branch; a new station can be added through station/catalog metadata and entered from campus without adding a bespoke route switch branch.
 - [ ] **T2a (P1, human: ~1-2h / Codex: ~10-20min)** - Toy interactions - Extract shared drag/drop result contracts and add the first `ToyInteractionKit` primitive.
   - Surfaced by: Grill-me gap - `DraggablePiece`, `DropZone`, `DragFeel`, and `IDragDropHost` exist, but reusable station patterns are not explicit and `DropSubmitResult` is currently Design Build-local.
   - Files: `Assets/_CareerQuest/Scripts/Interaction`, `Assets/_CareerQuest/Scripts/Activities/DesignBuild`, `Assets/_CareerQuest/Tests/EditMode`.
@@ -934,12 +957,12 @@ Synthesized from this review's findings. Each task derives from a specific findi
   - Verify: Robotics Rescue correct action pops/sounds, wrong action gently wobbles or nudges, completion celebrates, Accessory Spotlight cue plays, Combo Spark cue is distinct, and shared effects are reused by station definitions.
 - [ ] **T2d (P1, human: ~2-3h / Codex: ~20-30min)** - Toy-kit multiplayer - Add generic shared-progress networking for `ToyInteractionKit` patterns.
   - Surfaced by: Grill-me gap - all 10 stations need a clear multiplayer contract without 10 custom network-state systems.
-  - Files: `Assets/_CareerQuest/Scripts/Interaction`, `Assets/_CareerQuest/Scripts/Networking`, `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Tests/PlayMode`.
-  - Verify: two-player station test proves host-owned seed, accepted submissions, rejection path, shared progress, shared accepted hint state, and one completion result without per-frame drag sync.
+  - Files: `Assets/_CareerQuest/Scripts/Interaction`, `Assets/_CareerQuest/Scripts/Networking`, `Assets/_CareerQuest/Scripts/Core`, `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Tests/PlayMode`.
+  - Verify: two-player station test proves host-owned seed, accepted submissions, rejection path, shared progress, shared accepted hint state, one completion result without per-frame drag sync, and a compact client result read model that exposes completed station ids/minimal best-result summaries so accessories, combo cards, gallery/passport, reveal, and campus reactions match the host.
 - [ ] **T3 (P1, human: ~1-2h / Codex: ~10-20min)** - Rewards - Add derived station and milestone accessory unlocks, slot rules, and Accessory Spotlight.
   - Surfaced by: Interaction and UX Review - accessories must be visible without creating separate persistence or clutter.
-  - Files: `Assets/_CareerQuest/Scripts/Avatar`, `Assets/_CareerQuest/Scripts/UI`, `Assets/_CareerQuest/Scripts/Art`.
-  - Verify: station accessories derive from best results, milestone accessories derive from 3/5/8/10 unique completions, newest item per slot displays without clutter, and the 10-completion flourish appears only in reveal.
+  - Files: `Assets/_CareerQuest/Scripts/Core`, `Assets/_CareerQuest/Scripts/Avatar`, `Assets/_CareerQuest/Scripts/UI`, `Assets/_CareerQuest/Scripts/Art`.
+  - Verify: station accessories derive from best results, milestone accessories derive from 3/5/8/10 unique completions, newest item per slot displays without clutter, the 10-completion flourish appears only in reveal, and `GameSession` has session-only reward event memory for recent station completions, selected seed ids, accessory spotlight facts, and shown combo spark ids without changing best-result scoring.
 - [ ] **T3a (P1, human: ~1-2h / Codex: ~10-20min)** - Avatar rendering - Add `AvatarAccessoryLayer` with fixed slot anchors.
   - Surfaced by: Grill-me gap - `AvatarRuntimeView` currently has one base `SpriteRenderer`; accessories need a concrete overlay mechanism.
   - Files: `Assets/_CareerQuest/Scripts/Avatar`, `Assets/_CareerQuest/Scripts/Art`, `Assets/_CareerQuest/Tests/PlayMode`.
@@ -951,7 +974,7 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - [ ] **T4a (P1, human: ~30-60min / Codex: ~5-10min)** - Hub entry UX - Replace press-to-enter station doors with automatic overlap entry.
   - Surfaced by: Grill-me UX gap - current campus entry requires precise positioning plus E/Space/Return, which can feel fiddly.
   - Files: `Assets/_CareerQuest/Scripts/Hub/PlayerAvatarController.cs`, `Assets/_CareerQuest/Scripts/Hub/BuildingEntrance.cs`, `Assets/_CareerQuest/Scripts/UI/CareerQuestApp.cs`, hub entry tests.
-  - Verify: walking into an entrance area routes to the station once after dwell, with route cooldown and return-to-campus grace; campus copy no longer says "Enter doors: E"; click-to-enter remains optional only if it does not conflict.
+  - Verify: walking into an entrance area routes to the station once after dwell, with route cooldown and return-to-campus grace; pending-station highlight appears before dwell completes; legacy press-to-enter tests/prompts are updated or replaced; campus copy no longer says "press E", "Enter doors: E", Space, or Return are required; click-to-enter remains optional only if it does not conflict.
 - [ ] **T4b (P1, human: ~1-2h / Codex: ~10-20min)** - Campus layout - Rework campus entrances into districts with non-overlapping auto-entry zones.
   - Surfaced by: Grill-me campus gap - 10 stations plus auto-entry need readable spatial grouping and no overlap between entrance radii.
   - Files: `Assets/_CareerQuest/Scripts/World/WorldAnchors.cs`, campus prefab/build scripts, hub layout tests.
@@ -967,7 +990,7 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - [ ] **T5b (P2, human: ~1-2h / Codex: ~10-20min)** - Passport upgrade - Expand Achievement Gallery into session passport pages.
   - Surfaced by: Grill-me reward gap - badges, accessories, combo cards, and micro-results need a fun place to revisit without adding accounts or persistent inventory.
   - Files: `Assets/_CareerQuest/Scripts/UI/AchievementGalleryController.cs`, `Assets/_CareerQuest/Scripts/Core`, `Assets/_CareerQuest/Scripts/Config`, gallery/passport tests.
-  - Verify: passport renders Badges, Gear, Combos, and Results pages from `GameSession`-derived state; completed badge/result entries can replay stations through normal free-choice routing and expose valid seed choices; locked entries do not jump or expose seed choices; no profile/account/persistence is introduced; reveal progress, guided-run continue/quit state, and return-to-campus still work.
+  - Verify: passport renders Badges, Gear, Combos, and Results pages from `GameSession`-derived state; Results can show recent seed-aware reward events even when a replay does not replace the best result; completed badge/result entries can replay stations through normal free-choice routing and expose valid seed choices; locked entries do not jump or expose seed choices; no profile/account/persistence is introduced; reveal progress, guided-run continue/quit state, and return-to-campus still work.
 - [ ] **T6 (P2, human: ~2-3h / Codex: ~15-30min)** - Visual polish - Run the full new character art pass after the gameplay loop is proven.
   - Surfaced by: Visual Strategy Review - full character art stays in plan but should not block the first playable proof.
   - Files: `Assets/_CareerQuest/Scripts/Art`, avatar/reveal/campus rendering surfaces.
@@ -975,4 +998,4 @@ Synthesized from this review's findings. Each task derives from a specific findi
 - [ ] **T7 (P2, human: ~3-4h / Codex: ~30-45min)** - Wave 2 stations - Add Weather Lab Rescue, Spaceport Pilot, Newsroom Story Sprint, and Green City Builder after the first six-station pack is stable.
   - Surfaced by: Grill-me expansion - user wants more games built, but the extra games should be gated behind the proven station spine.
   - Files: `Assets/_CareerQuest/Scripts/Activities`, `Assets/_CareerQuest/Scripts/Catalog`, `Assets/_CareerQuest/Scripts/Config`, `Assets/_CareerQuest/Tests`.
-  - Verify: each Wave 2 station has one default seed, one alternate seed, accessory reward, campus evolution piece, valid career tags, and normal `MiniGameResult` output.
+  - Verify: each Wave 2 station has one default seed, one alternate seed, accessory reward, campus evolution piece, valid career tags, normal `MiniGameResult` output, and passes the all-10 `StationPackSmokePlayModeTests` route/result/replay sweep.
