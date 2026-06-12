@@ -96,6 +96,11 @@ namespace CareerQuest
             public float FadeT = 1f; // 1 = settled
             public float ChannelVolume;
 
+            // Volume factor the outgoing source fades down FROM. Retargeting
+            // mid-crossfade hands over a source that is only partly faded in;
+            // restarting its fade-out from full would pop it loud first.
+            public float OutgoingStartFactor = 1f;
+
             public AudioSource Active => ActiveIsA ? A : B;
             public AudioSource Outgoing => ActiveIsA ? B : A;
         }
@@ -377,7 +382,24 @@ namespace CareerQuest
             }
 
             channel.TargetCue = cueId;
-            channel.ActiveIsA = !channel.ActiveIsA; // outgoing keeps playing, fades down
+
+            // Mid-crossfade retarget: keep the LOUDER source audible as the new
+            // outgoing (continuing its fade from its current level) and reuse the
+            // quieter one for the new cue — no pop up, no loud click off.
+            var activeFactor = channel.FadeT;                                  // current incoming level
+            var outgoingFactor = (1f - channel.FadeT) * channel.OutgoingStartFactor; // current outgoing level
+            if (activeFactor >= outgoingFactor)
+            {
+                channel.ActiveIsA = !channel.ActiveIsA; // old incoming becomes outgoing
+                channel.OutgoingStartFactor = activeFactor;
+            }
+            else
+            {
+                // Old outgoing stays outgoing, continuing from its current level;
+                // the half-faded-in source is reused for the new cue.
+                channel.OutgoingStartFactor = outgoingFactor;
+            }
+
             channel.FadeT = 0f;
 
             var incoming = channel.Active;
@@ -419,7 +441,7 @@ namespace CareerQuest
 
             var full = channel.ChannelVolume * _musicVolume;
             channel.Active.volume = full * channel.FadeT;
-            channel.Outgoing.volume = full * (1f - channel.FadeT);
+            channel.Outgoing.volume = full * channel.OutgoingStartFactor * (1f - channel.FadeT);
         }
 
         private void TickFanfareFade(float deltaSeconds)

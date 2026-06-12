@@ -67,6 +67,15 @@ namespace CareerQuest
     {
         public const float SkipDelaySeconds = 3f;
         public const float MaxSeconds = 12f;
+
+        /// <summary>
+        /// Grace window for the host's reveal-start sync. A client that enters
+        /// the reveal route when the host never announces (host still on campus)
+        /// must get the normal local sequence, not wait forever — without this
+        /// the latch never opens, Skip never arms, and pause stays suppressed
+        /// (soft-lock). Sync arriving inside the window still wins (shared start).
+        /// </summary>
+        public const float LatchFallbackSeconds = 2.5f;
         public const float CameraTweenSeconds = 1.2f;
         public const float TokenTravelSeconds = 0.9f;  // DESIGN reveal motion 700-1200ms
         public const float LightSweepSeconds = 0.9f;   // DESIGN reveal motion 700-1200ms
@@ -101,6 +110,7 @@ namespace CareerQuest
         private Vector3[] _slotPositions = Array.Empty<Vector3>();
         private Transform _tokenLayer;
         private float _beatElapsed;
+        private float _latchWaitSeconds;
         private int _travelingTokenIndex;
         private bool _resolvedRaised;
 
@@ -217,6 +227,7 @@ namespace CareerQuest
             _slotPositions = Array.Empty<Vector3>();
             _context = null;
             _beatElapsed = 0f;
+            _latchWaitSeconds = 0f;
             _travelingTokenIndex = 0;
             ElapsedSeconds = 0f;
             LatchOpened = false;
@@ -235,11 +246,15 @@ namespace CareerQuest
             if (CurrentBeat == RevealCinematicBeat.WaitingForLatch)
             {
                 // Latch = max(sync moment observed, local stage mounted) — never
-                // the RPC alone, never an unmounted stage.
+                // the RPC alone, never an unmounted stage. The sync input expires
+                // after LatchFallbackSeconds: a client whose host never announces
+                // plays the normal local sequence instead of soft-locking.
+                _latchWaitSeconds += Mathf.Max(0f, deltaSeconds);
                 var mounted = _context.IsStageMounted == null || _context.IsStageMounted();
                 var synced = !_context.RequireRevealStartSync
                     || _context.HasRevealStartSync == null
-                    || _context.HasRevealStartSync();
+                    || _context.HasRevealStartSync()
+                    || _latchWaitSeconds >= LatchFallbackSeconds;
                 if (mounted && synced)
                 {
                     OpenLatch();

@@ -76,8 +76,12 @@ namespace CareerQuest
         /// </summary>
         public event Action<int, int, DesignBuildRejectReason> PlacementRejected;
 
+        // Cached once: Complete and the bounds check run per Changed event per
+        // piece per client — rebuilding the default blueprint there is waste.
+        private static readonly int RequiredPieceCount = FutureCityBlueprint.CreateDefault().Pieces.Count;
+
         public int AcceptedCount => _acceptedPieceIndexes.Count;
-        public bool Complete => AcceptedCount >= FutureCityBlueprint.CreateDefault().Pieces.Count;
+        public bool Complete => AcceptedCount >= RequiredPieceCount;
         public int AttemptNumber => _attemptNumber.Value;
 
         // Host-side seams: the last reject decision the validator made. Lets
@@ -147,7 +151,7 @@ namespace CareerQuest
                 return PlacementSubmissionResult.IgnoredComplete;
             }
 
-            if (pieceIndex < 0 || pieceIndex >= FutureCityBlueprint.CreateDefault().Pieces.Count)
+            if (pieceIndex < 0 || pieceIndex >= RequiredPieceCount)
             {
                 SendReject(senderClientId, pieceIndex, submissionId, DesignBuildRejectReason.UnknownPiece);
                 return PlacementSubmissionResult.Rejected;
@@ -191,7 +195,7 @@ namespace CareerQuest
                 RpcTarget.Single(senderClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         private void PlacementRejectedRpc(int pieceIndex, int submissionId, byte reason, RpcParams rpcParams = default)
         {
             PlacementRejected?.Invoke(pieceIndex, submissionId, (DesignBuildRejectReason)reason);

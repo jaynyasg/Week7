@@ -216,8 +216,16 @@ namespace CareerQuest
             if (stepIndex != NextStepIndex)
             {
                 // Step order is deterministic local content (mirrors the old
-                // "check symptoms before choosing tools" gates).
-                _state.CountMistake();
+                // "check symptoms before choosing tools" gates). In multiplayer
+                // NextStepIndex reads replicated state, so an order bounce can be
+                // replication lag (partner's accept still in flight) rather than
+                // a real error — bounce with teaching copy but don't charge a
+                // mistake against the result tier (never punish lag).
+                if (!UsesNetworkState)
+                {
+                    _state.CountMistake();
+                }
+
                 SetFeedback(NextStepIndex == 0 ? NeedSymptomsFirstFeedback : NeedToolFirstFeedback);
                 RaiseRejected(pieceId);
                 return DropSubmitResult.RejectedWrongSlot;
@@ -610,6 +618,14 @@ namespace CareerQuest
         private IEnumerator DeferredReject(int stepIndex, int submissionId, HealthHeroRejectReason reason)
         {
             yield return null;
+            if (_feedbackText == null)
+            {
+                // Room torn down while the reject was in flight (player left the
+                // route) — don't leak reject feedback/audio into the new route.
+                UnsubscribeNetwork();
+                yield break;
+            }
+
             ProcessRejectedStep(HealthHeroNetworkState.StepPieceIdFor(stepIndex), submissionId, reason);
         }
 

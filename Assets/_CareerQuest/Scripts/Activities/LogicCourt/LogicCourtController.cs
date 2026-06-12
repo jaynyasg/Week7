@@ -661,6 +661,14 @@ namespace CareerQuest
         private IEnumerator DeferredReject(int stepIndex, int submissionId, LogicCourtRejectReason reason)
         {
             yield return null;
+            if (_feedbackText == null)
+            {
+                // Room torn down while the reject was in flight (player left the
+                // route) — don't leak reject feedback/audio into the new route.
+                UnsubscribeNetwork();
+                yield break;
+            }
+
             ProcessRejectedStep(LogicCourtNetworkState.StepPieceIdFor(stepIndex), submissionId, reason);
         }
 

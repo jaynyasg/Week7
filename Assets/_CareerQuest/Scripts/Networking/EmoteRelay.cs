@@ -112,7 +112,7 @@ namespace CareerQuest
             return true;
         }
 
-        [Rpc(SendTo.Everyone)]
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         private void ShowEmoteRpc(byte emote, ulong senderClientId, RpcParams rpcParams = default)
         {
             ShowEmoteFor(senderClientId, (EmoteId)emote);

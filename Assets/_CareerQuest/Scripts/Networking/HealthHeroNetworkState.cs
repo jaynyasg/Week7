@@ -178,7 +178,7 @@ namespace CareerQuest
                 RpcTarget.Single(senderClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         private void StepRejectedRpc(int stepIndex, int submissionId, byte reason, RpcParams rpcParams = default)
         {
             StepRejected?.Invoke(stepIndex, submissionId, (HealthHeroRejectReason)reason);

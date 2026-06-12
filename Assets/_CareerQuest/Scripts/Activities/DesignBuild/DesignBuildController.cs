@@ -547,6 +547,14 @@ namespace CareerQuest
         private IEnumerator DeferredReject(int pieceIndex, int submissionId, DesignBuildRejectReason reason)
         {
             yield return null;
+            if (_feedbackText == null)
+            {
+                // Room torn down while the reject was in flight (player left the
+                // route) — don't leak reject feedback/audio into the new route.
+                UnsubscribeNetwork();
+                yield break;
+            }
+
             ProcessRejectedPlacement(DesignBuildNetworkState.PieceIdFor(pieceIndex), submissionId, reason);
         }
 

@@ -222,6 +222,42 @@ namespace CareerQuest.Tests
             yield break;
         }
 
+        [UnityTest]
+        public IEnumerator LatchFallsBackToLocalStartWhenHostNeverAnnounces()
+        {
+            // Soft-lock regression: a client that opens the reveal while the host
+            // stays on campus never receives the sync moment. The latch must open
+            // after the fallback window so Skip/exit arm and the sequence plays —
+            // the plan's "B entering later gets the normal local sequence".
+            var directorObject = new GameObject("reveal-latch-fallback-test");
+            var director = directorObject.AddComponent<RevealCinematicDirector>();
+            director.AutoTick = false;
+
+            director.Begin(new RevealCinematicContext
+            {
+                Unlocked = true,
+                EarnedCount = 3,
+                RequireRevealStartSync = true,
+                HasRevealStartSync = () => false, // host never announces
+                IsStageMounted = () => true
+            });
+
+            director.Tick(RevealCinematicDirector.LatchFallbackSeconds * 0.5f);
+            Assert.That(director.LatchOpened, Is.False, "Inside the grace window the client still waits for a sync in flight.");
+
+            director.Tick(RevealCinematicDirector.LatchFallbackSeconds * 0.5f);
+            Assert.That(director.LatchOpened, Is.True, "Past the window the client starts its normal local sequence.");
+            Assert.That(director.CurrentBeat, Is.EqualTo(RevealCinematicBeat.CameraToStage));
+
+            // And the clock now runs — skip arms, the hard cap is reachable.
+            director.Tick(RevealCinematicDirector.SkipDelaySeconds);
+            Assert.That(director.CanSkip, Is.True, "Skip must arm once the fallback latch opened.");
+
+            director.StopImmediate();
+            Object.DestroyImmediate(directorObject);
+            yield break;
+        }
+
         // ------------------------------------------------------------------
         // Helpers
         // ------------------------------------------------------------------
