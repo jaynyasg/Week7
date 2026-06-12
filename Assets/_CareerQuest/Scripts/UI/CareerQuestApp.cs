@@ -416,6 +416,17 @@ namespace CareerQuest
             yield return ConnectAndShowCampus(ConnectionMode.HostP1, 1, () => _networkBootstrap.StartHostP1());
         }
 
+        /// <summary>
+        /// QA seam for the 2P matrix smoke (TwoPlayerMatrixSmoke): the exact
+        /// connect path the connection buttons use — including session-state
+        /// binding and the campus route. Check
+        /// <see cref="NetworkBootstrap.LastConnectionSucceeded"/> afterwards.
+        /// </summary>
+        public IEnumerator ConnectForQa(bool asHost)
+        {
+            return asHost ? ConnectAsHost() : ConnectAsLocalClient();
+        }
+
         private IEnumerator ConnectAsLocalClient()
         {
             yield return ConnectAndShowCampus(ConnectionMode.JoinLocalhostP2, 2, () => _networkBootstrap.JoinLocalhostP2());
@@ -1030,6 +1041,16 @@ namespace CareerQuest
                     LogSmoke("CQ_SMOKE_CONNECTED", mode);
                     yield return new WaitForSeconds(6f);
                     break;
+                case "2p-host":
+                case "2p-client":
+                {
+                    // Automated 2P matrix evidence (docs/qa rows a–f): the
+                    // dedicated harness owns its CQ_2P_* log lines and exit code.
+                    var matrix = gameObject.GetComponent<TwoPlayerMatrixSmoke>() ?? gameObject.AddComponent<TwoPlayerMatrixSmoke>();
+                    yield return matrix.Run(this, mode);
+                    yield break;
+                }
+
                 case "showcase":
                     BeginShowcase();
                     yield return new WaitForSeconds(7f);

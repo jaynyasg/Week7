@@ -18,8 +18,8 @@
 
 - Machine: Windows 11 Pro dev machine (same as flagship review)
 - Input devices: keyboard + mouse
-- Same-computer host/client tested: **automated yes / manual matrix pending
-  (owner action — checklist below)**
+- Same-computer host/client tested: **YES — automated two-process matrix
+  PASS 2026-06-12** (client 6/6, host 3/3; see matrix results below)
 - LAN tested: NOT TESTED (Join IP path exists; localhost path is the shipped
   configuration)
 
@@ -57,35 +57,51 @@ No procedural fallback or checker sprites are visible in any capture.
 | AE | Status | Evidence |
 |---|---|---|
 | AE1 — campus reads at the reference bar beside `docs/references/` | **PASS (owner-affirmed)** | U9 flagship checkpoint affirmed ("Affirm + fold polish in"; folded items delivered in U11/U13). Final composite: `SubmissionBundle/screenshots/campus.png` beside `docs/references/` captures. |
-| AE2 — 2P drag accept/reject with host validation | **PARTIAL — automated half PASS, manual half pending** | Host-authority seam suite (accept/reject/attempt lifecycle/locks) green in PlayMode 155/155. Pending manual rows: (a) two-client reject delivery, (b) live shared placement rendering, (f) partner held-piece glow — see matrix below. |
+| AE2 — 2P drag accept/reject with host validation | **PASS** | Host-authority seam suite green in PlayMode, PLUS the automated two-process matrix (2026-06-12): rows (a) wire reject delivery with submission-id echo, (b) live shared placement rendering, (f) partner held-piece glow all PASS on real host+client processes — see matrix results below. |
 | AE3 — cinematic reveal ≤12s, Skip ≥3s, locked branch | **PASS (automated + screenshots)** | Reveal cinematic + latch tests green; `reveal-unlocked.png` (staged in-world unlock) and `reveal-locked.png` (locked slots, no Skip). Cross-client latch/skip independence is manual row (d). |
 | AE4 — zero fallback art in optional rooms/badges | **PASS** | Extended fallback gate green; `music.png`, `ai-lab.png`, `robotics.png`, `kitchen.png`, `gallery.png` show curated art only. |
 | AE5 — Fredoka/Lexend everywhere, no LegacyRuntime/Arial | **PASS** | Zero-legacy-`Text` scan green; visible in all 12 captures. |
 | AE6 — distinct audio cues; understandable with audio off | **PASS (coverage) / by-ear pass pending** | AudioCueCoverage green over 29 cue IDs; silent no-op behavior tested. Clip mappings are name/semantics-curated — a listening pass may swap individual clips. |
-| AE7 — always launchable, full loop playable | **PARTIAL — automated PASS, manual same-computer rows pending** | EditMode 73/73 + PlayMode 155/155 traverse avatar → campus → rooms → gallery → reveal; packaged exe launches the same loop. The human two-client walkthrough is rows (a)–(f) below. |
+| AE7 — always launchable, full loop playable | **PASS** | EditMode 73/73 + PlayMode 156/156 traverse avatar → campus → rooms → gallery → reveal; packaged exe launches the same loop; the two-process matrix drove a real host+client through connect → room → drag → ceremony → reveal end-to-end (rows a–f below, all PASS). |
 
-## Manual 2P matrix — ready to execute (owner action)
+## 2P matrix — EXECUTED (automated two-process run, 2026-06-12)
 
-Standing QA debt (same-computer host/client testing is required per
-`docs/qa/README.md`). Setup: launch `CareerQuestCampus.exe` twice on one
-computer → instance 1 **Host Game**, instance 2 **Join This PC** (P1: WASD +
-F, P2: IJKL + Enter). Record PASS/FAIL per row.
+The standing same-computer host/client QA debt (`docs/qa/README.md`) is now
+covered by an automated harness: `TwoPlayerMatrixSmoke` drives two built
+player processes over localhost through all six rows with state-based
+synchronization (no fixed-sleep choreography; cross-process signals ride the
+emote relay). Re-run anytime:
 
-| # | Row | Steps | Expected |
+```powershell
+& .\Builds\Windows\CareerQuestCampus.exe -cq-smoke -cq-mode 2p-host -logFile .\Builds\logs\2p-host.log -screen-fullscreen 0 -screen-width 1280 -screen-height 720
+# ~4s later:
+& .\Builds\Windows\CareerQuestCampus.exe -cq-smoke -cq-mode 2p-client -logFile .\Builds\logs\2p-client.log -screen-fullscreen 0 -screen-width 1280 -screen-height 720
+```
+
+Exit code 0 on both = all rows pass; structured lines `CQ_2P_RESULT
+scenario=<id> pass=<bool>` in each log. First run results (client 6/6,
+host 3/3, exit 0/0; logs at `Builds/logs/2p-{host,client}.log`):
+
+| # | Row | Result | Evidence detail (from the run) |
 |---|---|---|---|
-| a | Two-client reject delivery | Both enter Design Build. A places a piece; B drags the same piece (or a wrong piece to a filled lot) and drops. | B's piece snaps back with gentle feedback copy + reject cue on B only; A's view unaffected. |
-| b | Shared placement rendering | A places pieces while B watches. B then tries to pick up an accepted piece. | B renders A's placements live; accepted pieces are not draggable by B. |
-| c | Re-entry attempt reset | Complete a room attempt together; both exit through ceremony; one client re-enters the room. | Fresh attempt: slots render empty, drops accepted (network-state reset via RPC); a client entering mid-attempt joins the in-progress state instead of wiping it. |
-| d | Reveal latch/skip independence | Earn 3 badges; both clients navigate to the reveal route. A skips at ~3.5s; B watches to the end. Variant: B stays in a room while A reveals. | Each client starts at its own latch; A's skip does not corrupt B's sequence; B-in-room is unaffected and gets a normal local sequence later. |
-| e | Emote delivery | A fires the emote button; spam it past the rate limit. | Emote bubble renders above A's avatar on both clients; excess spam dropped gently. |
-| f | Partner held-piece glow | A picks up and holds a piece while B watches; A drops or gets rejected. | B sees the soft highlight on the piece A holds; highlight clears on drop/reject. |
+| a | Two-client reject delivery | **PASS** | dup=RejectedOccupied, rejectEvent=True, wireReject=True (host reject RPC delivered to the submitting client with submission-id echo), dragFree=True, count=1 |
+| b | Shared placement rendering | **PASS** | accepted=True, dragBlocked=True, zoneOccupied=True, pieceLocked=True on the client for the host's placement |
+| c | Re-entry attempt reset | **PASS** | complete=True, ceremonyPhase=True, reset=True (AttemptNumber bump + slots cleared over RPC), resubmit=Pending → accepted=True |
+| d | Reveal latch/skip independence | **PASS both sides** | client: latch opened via fallback while host unannounced, skip armed, continuity held through host's later announce, resolved. host: announced, skipped at own pace, resolved — client uncorrupted |
+| e | Emote delivery | **PASS both sides** | bubble rendered above the sender's avatar on the sender's AND the partner's screen |
+| f | Partner held-piece glow | **PASS both sides** | host saw the glow on the client-held piece and its clear; client confirmed its held entry synced and cleared |
+
+Note: the harness asserts state seams (render flags, events, network values),
+not pixels — a human playthrough remains worthwhile for feel, but the wire
+contracts of AE2/AE7 are machine-verified.
 
 ## Known issues (minor)
 
-1. **Optional-room action buttons low contrast** — the bottom action buttons
-   (e.g. Robotics "Build Robot", Music "Record Beat", shared "Complete
-   Quest") render pale against the cream instruction-strip band; visible in
-   all four optional-room captures. Cosmetic; targets remain clickable.
+1. ~~Optional-room action buttons low contrast~~ — **FIXED 2026-06-12**: root
+   cause was placement under the instruction strip's translucent band, not
+   color; buttons moved above the band (y −238) in optional AND core rooms,
+   chrome tests updated to assert the above-strip contract, verified in a
+   fresh Robotics capture.
 2. **Audio mappings unheard** — clips curated by filename/semantics, by-ear
    pass pending (may swap mappings, no code change expected).
 3. Campus footer copy says "press Enter to start a quest" while the HUD hint

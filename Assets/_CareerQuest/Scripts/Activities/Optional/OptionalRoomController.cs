@@ -43,8 +43,10 @@ namespace CareerQuest
             // U11 at-bar pass: the action tray reads as a paper HUD band (DESIGN
             // warm-paper UI foundation) and the step button carries the room's
             // career identity color. Interactions stay button-driven by design.
+            // Sits ABOVE the instruction strip band (strip top edge is y -273;
+            // anything at y -320 renders underneath its translucent paper wash).
             var tray = UiBuilder.Panel(panel, $"{play.PanelPrefix}ToolTray", new Color(1f, 0.97f, 0.86f, 0.9f));
-            UiBuilder.Place(tray, -254f, -320f, 790f, 56f);
+            UiBuilder.Place(tray, -254f, -238f, 790f, 56f);
             UiBuilder.Shape(tray, $"{play.PanelPrefix}TrayStripe", play.AccentColor, -388f, 0f, 10f, 56f);
 
             var step = UiBuilder.Button(tray, $"{play.PanelPrefix}StepButton", play.StepLabel, () =>
@@ -75,11 +77,11 @@ namespace CareerQuest
                 readyToFinish = true;
                 TryCompleteRoom(session, app, CreateResult(entry, readyToFinish, source));
             });
-            UiBuilder.Place(complete.GetComponent<RectTransform>(), 430f, -320f, 156f, 38f);
+            UiBuilder.Place(complete.GetComponent<RectTransform>(), 430f, -238f, 156f, 38f);
             ActivityRoomChrome.StyleButton(complete, ActivityRoomChrome.ButtonReady, 14);
 
             var campus = UiBuilder.Button(panel, $"{play.PanelPrefix}CampusButton", "Campus", () => ExitToCampus(app));
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 570f, -320f, 112f, 38f);
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 570f, -238f, 112f, 38f);
             ActivityRoomChrome.StyleButton(campus, ActivityRoomChrome.ButtonPrimary, 14);
         }
 

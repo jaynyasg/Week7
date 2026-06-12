@@ -475,7 +475,7 @@ namespace CareerQuest
             _statusText = refs.Status;
 
             var campus = UiBuilder.Button(parent, "LogicCourtCampusButton", "Campus", () => ExitToCampus(_app));
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 568f, -322f, 106f, 34f);
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 568f, -238f, 106f, 34f); // above the instruction strip band
             ActivityRoomChrome.StyleButton(campus, ActivityRoomChrome.ButtonPrimary, 14);
         }
 

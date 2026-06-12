@@ -38,18 +38,6 @@
 **Priority:** P3
 **Depends on:** Week7 first playable shipped; `CampusSessionState` + disconnect/ceremony policies (S1/S2) stable.
 
-### Execute Manual Same-Computer 2P Matrix
-
-**What:** A human runs the six-row two-client checklist in `docs/qa/2026-06-12-wow-pass-final.md`: (a) reject delivery, (b) shared placement rendering, (c) re-entry attempt reset, (d) reveal latch/skip independence, (e) emote delivery, (f) partner held-piece glow. Record PASS/FAIL per row in that doc.
-
-**Why:** Same-computer host/client testing is required by `docs/qa/README.md` and is the only outstanding half of AE2/AE7 — the automated host-authority and latch suites are green, but no human has driven two clients since the drag conversion.
-
-**Context:** Setup is two instances of `Builds/Windows/CareerQuestCampus.exe`: Host Game + Join This PC (P1: WASD + F, P2: IJKL + Enter). Carried from the U9 flagship review's outstanding matrix, extended with the U12 emote/held-piece rows.
-
-**Effort:** S (~30 min)
-**Priority:** P1
-**Depends on:** Nothing — build and checklist are ready.
-
 ### Audio By-Ear Soundcheck Pass
 
 **What:** Play the flagship path (campus → Design Build → ceremony → reveal) and each room with audio on; swap any cue-to-clip mappings that sound wrong.
@@ -62,19 +50,29 @@
 **Priority:** P2
 **Depends on:** Nothing.
 
-### Fix Optional-Room Action Button Contrast
-
-**What:** Restyle the bottom action buttons in the four optional rooms (e.g. Robotics "Build Robot", Music "Record Beat", shared "Complete Quest") so they read against the cream instruction-strip band.
-
-**Why:** They currently render pale on pale (visible in all four optional-room captures in `SubmissionBundle/screenshots/`); cosmetic but below the DESIGN.md contrast bar for kid-facing controls.
-
-**Context:** Known minor issue 1 in `docs/qa/2026-06-12-wow-pass-final.md`. Likely a button-style/color token fix in the optional-room chrome, not a layout change.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** Nothing.
-
 ## Completed
+
+### Two-Process 2P Matrix Automated (2026-06-12)
+
+The six-row matrix no longer needs a human pass: `TwoPlayerMatrixSmoke`
+(`-cq-smoke -cq-mode 2p-host` / `2p-client`) runs two built-player processes
+over localhost through all six scenarios with state-based synchronization.
+First run: client 6/6 PASS, host 3/3 PASS, exit codes 0/0 — wire reject
+delivery with submission-id echo, shared placement rendering, attempt reset
+over RPC, reveal latch fallback + per-client skip independence, emote delivery
+to both screens, and partner held-piece glow all verified on real processes.
+Results recorded in `docs/qa/2026-06-12-wow-pass-final.md`; logs at
+`Builds/logs/2p-{host,client}.log`. Re-run anytime with the two command lines
+in that doc.
+
+### Optional-Room Action Button Overlap Fixed (2026-06-12)
+
+Root cause was placement, not color: the action buttons sat at y −320, under
+the instruction strip's translucent band (y −337..−273), which rendered over
+them. Optional-room tray/Complete/Campus and the three core-room Campus
+buttons moved to y −238 (above the band); chrome tests now assert the
+above-strip contract. Verified in a fresh Robotics capture — all buttons
+render at full contrast.
 
 ### Wow Quality Pass (2026-06-12)
 

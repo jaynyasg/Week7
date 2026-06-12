@@ -50,7 +50,7 @@ namespace CareerQuest.Tests
 
             // HUD stays off the skyline: quest band at the top, exit at the bottom edge.
             Assert.That(questHud.anchoredPosition.y, Is.GreaterThan(220f));
-            Assert.That(campusButton.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(campusButton.anchoredPosition.y, Is.InRange(-272f, -200f), "Bottom band but ABOVE the instruction strip (strip top edge is y -273).");
             Assert.That(campusButton.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(title.fontSize, Is.LessThanOrEqualTo(28));
             Assert.That(feedback.text, Does.Contain("Drag"));

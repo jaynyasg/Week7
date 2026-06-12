@@ -94,7 +94,7 @@ namespace CareerQuest.Tests
             var healthPrompt = GameObject.Find("HealthHeroPrompt").GetComponent<TextMeshProUGUI>();
 
             Assert.That(healthHud.anchoredPosition.y, Is.GreaterThan(220f));
-            Assert.That(healthCampus.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(healthCampus.anchoredPosition.y, Is.InRange(-272f, -200f), "Bottom band but ABOVE the instruction strip (strip top edge is y -273).");
             Assert.That(healthCampus.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(healthPrompt.fontSize, Is.LessThanOrEqualTo(18));
             Assert.That(healthPrompt.text, Does.Contain("patient"));
@@ -111,7 +111,7 @@ namespace CareerQuest.Tests
             var logicPrompt = GameObject.Find("LogicCourtPrompt").GetComponent<TextMeshProUGUI>();
 
             Assert.That(logicHud.anchoredPosition.y, Is.GreaterThan(220f));
-            Assert.That(logicCampus.anchoredPosition.y, Is.LessThan(-280f));
+            Assert.That(logicCampus.anchoredPosition.y, Is.InRange(-272f, -200f), "Bottom band but ABOVE the instruction strip (strip top edge is y -273).");
             Assert.That(logicCampus.sizeDelta.y, Is.LessThanOrEqualTo(44f));
             Assert.That(logicPrompt.fontSize, Is.LessThanOrEqualTo(18));
             Assert.That(logicPrompt.text, Does.Contain("case"));
