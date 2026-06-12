@@ -44,6 +44,9 @@ namespace CareerQuest
         /// <summary>U12-ready: synced one-button emote pop (P16).</summary>
         public const string EmotePop = "emote_pop";
 
+        /// <summary>P19: campus-evolution city piece arrival fanfare.</summary>
+        public const string CityPiecePop = "city_piece_pop";
+
         // ---- Ambient/music tier (looping; P4) ----
         public const string AmbientCampus = "ambient_campus";
         public const string AmbientDesignBuild = "ambient_design_build";
@@ -93,6 +96,7 @@ namespace CareerQuest
             RoomWipe,
             Footstep,
             EmotePop,
+            CityPiecePop,
             AmbientCampus,
             AmbientDesignBuild,
             AmbientHealthHero,

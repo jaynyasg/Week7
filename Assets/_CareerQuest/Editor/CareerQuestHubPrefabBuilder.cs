@@ -458,9 +458,11 @@ namespace CareerQuest.Editor
             // --- Band: mid trees and fences --------------------------------
             var mid = AddBand(root.transform, "Band_Mid", 0.4f);
             AddSprite(mid, "MidTreeA", Kenney("BackgroundElements/tree10.png"), new Vector2(-4.85f, 0.5f), new Vector2(1.15f, 1.55f), 120);
-            AddSprite(mid, "MidTreeB", Kenney("BackgroundElements/tree16.png"), new Vector2(4.85f, 0.55f), new Vector2(1.1f, 1.5f), 121);
+            // U11 owner-review swap: tree16/tree19 are cacti — desert props that
+            // read wrong on a green campus. Clear leafy trees instead.
+            AddSprite(mid, "MidTreeB", Kenney("BackgroundElements/tree06.png"), new Vector2(4.85f, 0.55f), new Vector2(1.1f, 1.5f), 121);
             AddSprite(mid, "MidTreeC", Kenney("BackgroundElements/tree04.png"), new Vector2(-1.6f, 0.62f), new Vector2(0.85f, 1.15f), 122);
-            AddSprite(mid, "MidTreeD", Kenney("BackgroundElements/tree19.png"), new Vector2(1.7f, 0.64f), new Vector2(0.85f, 1.2f), 123);
+            AddSprite(mid, "MidTreeD", Kenney("BackgroundElements/tree13.png"), new Vector2(1.7f, 0.64f), new Vector2(0.85f, 1.2f), 123);
             AddSprite(mid, "FenceLeft", Kenney("BackgroundElements/fence.png"), new Vector2(-3.95f, 0.06f), new Vector2(1.7f, 0.5f), 130);
             AddSprite(mid, "FenceRight", Kenney("BackgroundElements/fence.png"), new Vector2(3.95f, 0.06f), new Vector2(1.7f, 0.5f), 131);
 
@@ -475,7 +477,9 @@ namespace CareerQuest.Editor
             AddSprite(world, "GrassTuftB", Kenney("BackgroundElements/grass3.png"), new Vector2(2.25f, -1.5f), new Vector2(0.45f, 0.28f), 216);
             AddSprite(world, "GrassTuftC", Kenney("BackgroundElements/grass5.png"), new Vector2(-3.4f, -1.95f), new Vector2(0.45f, 0.28f), 217);
 
-            AddSprite(world, "NearTreeLeft", Kenney("BackgroundElements/tree07.png"), new Vector2(-4.8f, -0.55f), new Vector2(1.0f, 1.4f), 232);
+            // U11 owner-review swap: tree07 is a featureless brown blob at this
+            // scale — tree05's green rounded canopy reads clearly as a tree.
+            AddSprite(world, "NearTreeLeft", Kenney("BackgroundElements/tree05.png"), new Vector2(-4.8f, -0.55f), new Vector2(1.0f, 1.4f), 232);
             AddSprite(world, "NearTreeRight", Kenney("BackgroundElements/tree22.png"), new Vector2(4.8f, -0.45f), new Vector2(1.0f, 1.35f), 233);
 
             // Buildings: upgraded owned art (sign text via DoorSign TMP, never baked).

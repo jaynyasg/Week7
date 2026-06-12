@@ -52,6 +52,9 @@ namespace CareerQuest
         private bool _sessionChangedSubscribed;
         private AudioDirector _audioDirector;
         private CeremonySubPhase _lastCeremonySubPhase;
+        // P19: session-scoped memory of which city pieces already played their
+        // arrival fanfare — one fanfare per piece per app session.
+        private readonly HashSet<string> _cityPieceFanfares = new();
 
         public GameSession Session => _session;
         public ActivityRoute CurrentRoute => _router.CurrentRoute;
@@ -443,6 +446,15 @@ namespace CareerQuest
             _router.ShowCampus(_session);
             _world.ShowCampus(_session);
             _hub.Show(_session, this);
+            // R18/P19: earned-badge city pieces join the skyline on every
+            // campus entry; pieces that are new this session arrive with the
+            // fanfare (sparkle + cue + camera nudge) exactly once.
+            CampusEvolutionController.Mount(
+                _world.WorldRoot,
+                _session,
+                _cityPieceFanfares,
+                _world.CameraDirector,
+                () => _hub != null && _hub.Player != null ? _hub.Player.transform : null);
             ResetRoot();
             var hud = UiBuilder.Panel(_root, "CampusHud", new Color(0.93f, 0.98f, 0.95f, 0.78f));
             UiBuilder.Place(hud, 0f, 286f, 1050f, 78f);

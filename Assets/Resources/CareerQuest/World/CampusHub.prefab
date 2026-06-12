@@ -775,7 +775,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.85, y: 0.55, z: 0}
-  m_LocalScale: {x: 1.5714287, y: 1.0416666, z: 1}
+  m_LocalScale: {x: 0.85937506, y: 0.65217394, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6868196609877446861}
@@ -829,12 +829,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 121
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: fb74b34b6c7c6af46906262b969faa0b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cb618dc3de98f8a468199317e2260deb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.7, y: 1.44}
+  m_Size: {x: 1.28, y: 2.3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1368,7 +1368,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -4.8, y: -0.55, z: 0}
-  m_LocalScale: {x: 0.78125, y: 0.6086956, z: 1}
+  m_LocalScale: {x: 0.7751938, y: 0.6086956, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7371037475013194201}
@@ -1422,12 +1422,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 232
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 65793561ad6544e4b898e23ac4a4dde8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9a985857e68fe7e43ae7f280672a4ac7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.28, y: 2.3}
+  m_Size: {x: 1.29, y: 2.3}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -3302,7 +3302,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.7, y: 0.64, z: 0}
-  m_LocalScale: {x: 1.6037737, y: 0.8333333, z: 1}
+  m_LocalScale: {x: 1.7708334, y: 1.1428572, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6868196609877446861}
@@ -3356,12 +3356,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 123
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 9d099d0a1e1729e43826a02aa9ef856e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6eeca9b3a16a806488ef582625d025cc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.53, y: 1.44}
+  m_Size: {x: 0.48, y: 1.05}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

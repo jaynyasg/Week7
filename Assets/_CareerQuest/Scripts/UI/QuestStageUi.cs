@@ -96,7 +96,9 @@ namespace CareerQuest
 
         private static Color filledProgressColor(GameSession session)
         {
-            return session.RevealReady ? PathGold : new Color(0.85f, 0.88f, 0.92f);
+            // U11 owner-review fix: the in-progress state used a pale blue that
+            // disappeared on the cream locked card — Ink keeps it readable.
+            return session.RevealReady ? PathGold : Ink;
         }
 
         private static void MountBadgeSlot(RectTransform parent, int index, float x, float y, bool filled, CatalogEntry entry)

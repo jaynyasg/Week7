@@ -60,6 +60,7 @@ namespace CareerQuest.Editor
             (AudioCueIds.RoomWipe, $"{KenneyAudioRoot}/RpgAudio/bookFlip2.ogg"), // paper curtain = page flip
             (AudioCueIds.Footstep, $"{KenneyAudioRoot}/ImpactSounds/footstep_grass_001.ogg"),
             (AudioCueIds.EmotePop, $"{KenneyAudioRoot}/InterfaceSounds/bong_001.ogg"),
+            (AudioCueIds.CityPiecePop, $"{KenneyAudioRoot}/InterfaceSounds/confirmation_002.ogg"), // P19 city piece arrival
 
             // Ambient/music loops (P4) — longest jingle per family, see loop note
             (AudioCueIds.AmbientCampus, $"{KenneyAudioRoot}/MusicJingles/Steel jingles/jingles_STEEL07.ogg"),

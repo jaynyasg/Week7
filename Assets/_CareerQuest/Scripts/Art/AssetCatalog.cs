@@ -30,17 +30,27 @@ namespace CareerQuest
             Campus("campus.logic_court", "Logic Court", new Color(0.96f, 0.62f, 0.18f), new Color(0.68f, 0.36f, 0.03f)),
             Campus("campus.achievement_gallery", "Achievement Gallery", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
             Campus("campus.reveal_stage", "Career Reveal Stage", new Color(1f, 0.92f, 0.64f), new Color(0.28f, 0.66f, 0.94f)),
-            Campus("campus.space_lab", "Space Lab", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f), false),
-            Campus("campus.music_studio", "Music Studio", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f), false),
-            Campus("campus.green_energy_center", "Green Energy Center", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f), false),
-            Campus("campus.robotics_garage", "Robotics Garage", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f), false),
-            Campus("campus.community_kitchen", "Community Kitchen", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f), false),
+            // U11: optional-room campus buildings are required-for-acceptance —
+            // the upgraded owned building art (CareerQuestHubPrefabBuilder) is
+            // their final art, and the fallback gate now polices them.
+            Campus("campus.space_lab", "Space Lab", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f)),
+            Campus("campus.music_studio", "Music Studio", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
+            Campus("campus.green_energy_center", "Green Energy Center", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f)),
+            Campus("campus.robotics_garage", "Robotics Garage", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
+            Campus("campus.community_kitchen", "Community Kitchen", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
 
             Room("room.design_build", "Future City Room", new Color(0.94f, 0.34f, 0.28f), new Color(0.9f, 0.72f, 0.42f)),
             Room("room.health_hero", "Health Hero Room", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
             Room("room.logic_court", "Logic Court Room", new Color(0.96f, 0.62f, 0.18f), new Color(0.62f, 0.52f, 0.86f)),
             Room("room.gallery", "Achievement Gallery Room", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
             Room("room.reveal", "Reveal Ceremony Room", new Color(1f, 0.92f, 0.64f), new Color(0.55f, 0.85f, 1f)),
+            // U11 optional-room interiors (CareerQuestOptionalArtBuilder writes
+            // the final art; ids follow room.{activityId} so CampusRoomScenes
+            // resolves them from the CareerQuestCatalog entry id).
+            Room("room.ai_lab", "AI Space Lab Room", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Room("room.music_studio", "Music Studio Room", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
+            Room("room.robotics_garage", "Robotics Garage Room", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
+            Room("room.community_kitchen", "Community Kitchen Room", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
 
             Prop("prop.blueprint", "Blueprint", new Color(0.83f, 0.96f, 1f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_clinic", "Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.04f, 0.3f, 0.32f)),
@@ -48,6 +58,10 @@ namespace CareerQuest
             Prop("prop.city_piece_studio", "Studio City Piece", new Color(0.94f, 0.34f, 0.28f), new Color(0.55f, 0.12f, 0.12f)),
             Prop("prop.city_piece_lab", "Lab City Piece", new Color(0.28f, 0.66f, 0.94f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_art_tower", "Art Tower City Piece", new Color(0.62f, 0.52f, 0.86f), new Color(0.94f, 0.34f, 0.28f)),
+            // U11 campus-evolution pieces for the two optional rooms that had
+            // no skyline piece (CareerQuestOptionalArtBuilder writes final art).
+            Prop("prop.city_piece_garage", "Garage City Piece", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
+            Prop("prop.city_piece_kitchen", "Kitchen City Piece", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
             Prop("prop.thermometer", "Thermometer", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 1f, 1f)),
             Prop("prop.care_plan", "Care Plan", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.92f, 0.64f)),
             Prop("prop.evidence_card", "Evidence Card", new Color(0.83f, 0.96f, 1f), new Color(0.96f, 0.62f, 0.18f)),
@@ -64,6 +78,12 @@ namespace CareerQuest
             Badge("badge.health_hero", "Health Hero Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
             Badge("badge.logic_court", "Logic Court Badge", new Color(0.96f, 0.62f, 0.18f), new Color(0.62f, 0.52f, 0.86f)),
             Badge("badge.reveal_ready", "Reveal Ready Badge", new Color(1f, 0.92f, 0.64f), new Color(0.28f, 0.66f, 0.94f)),
+            // U11 optional-room badges — career identity colors per DESIGN.md
+            // (Science Blue, Music Lilac, Workshop Teal, kitchen leaf green).
+            Badge("badge.ai_lab", "AI Lab Badge", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Badge("badge.music_studio", "Music Studio Badge", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
+            Badge("badge.robotics_garage", "Robotics Garage Badge", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
+            Badge("badge.community_kitchen", "Community Kitchen Badge", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
 
             Ui("ui.exit", "Exit Game Icon", new Color(0.09f, 0.31f, 0.42f), new Color(1f, 1f, 1f)),
             Ui("ui.gallery", "Gallery Icon", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),

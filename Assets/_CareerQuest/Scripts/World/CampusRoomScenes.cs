@@ -217,19 +217,19 @@ namespace CareerQuest
 
         public static void ShowOptionalRoom(CampusWorldBuilder builder, GameSession session, CatalogEntry entry)
         {
+            // U11 at-bar dressing: optional rooms mount a themed interior
+            // backdrop (room.{activityId}, final art from
+            // CareerQuestOptionalArtBuilder — station, windows, pennants) at the
+            // same framing as the core rooms. The campus building exterior is
+            // only the safe fallback for an uncataloged id; the generic gold
+            // path strip and mismatched evidence-card prop are retired.
+            var roomAssetId = $"room.{entry.Id}";
             builder.AddCatalogSprite(
                 $"{entry.Id}RoomBackdrop",
-                entry.CampusAssetId,
-                new Vector2(0f, 0.12f),
-                new Vector2(7.4f, 4.16f),
+                AssetCatalog.TryGetDefinition(roomAssetId, out _) ? roomAssetId : entry.CampusAssetId,
+                new Vector2(0f, 0.18f),
+                new Vector2(8.35f, 4.7f),
                 0);
-            builder.AddPath(new Vector2(0f, -1.65f), new Vector2(8.6f, 0.36f), 0f);
-            builder.AddCatalogSprite(
-                $"{entry.Id}RoomProp",
-                "prop.evidence_card",
-                new Vector2(0f, -0.35f),
-                new Vector2(0.82f, 0.82f),
-                6);
             builder.AddCharacter(
                 session?.SelectedAvatar.DisplayName ?? "Explorer",
                 -1.2f,

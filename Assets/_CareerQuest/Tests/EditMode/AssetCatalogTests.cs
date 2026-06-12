@@ -16,6 +16,69 @@ namespace CareerQuest.Tests
             Assert.That(badge.Category, Is.EqualTo(AssetCategory.Badge));
         }
 
+        /// <summary>
+        /// U11: every CareerQuestCatalog badge art key — including the four
+        /// optional rooms — resolves to a cataloged Badge definition that the
+        /// fallback gate polices.
+        /// </summary>
+        [Test]
+        public void EveryCatalogBadgeArtKeyIsACatalogedPlayerFacingBadge()
+        {
+            foreach (var entry in CareerQuestCatalog.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(entry.BadgeArtKey, out var definition), Is.True, entry.BadgeArtKey);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Badge), entry.BadgeArtKey);
+                Assert.That(definition.RequiredInFirstPlayable, Is.True, entry.BadgeArtKey);
+                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.True, entry.BadgeArtKey);
+            }
+        }
+
+        [Test]
+        public void OptionalRoomBadgeDefinitionsExistWithDistinctCareerColors()
+        {
+            var badgeIds = new[]
+            {
+                "badge.ai_lab",
+                "badge.music_studio",
+                "badge.robotics_garage",
+                "badge.community_kitchen"
+            };
+
+            var colors = new System.Collections.Generic.List<Color>();
+            foreach (var badgeId in badgeIds)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(badgeId, out var definition), Is.True, badgeId);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Badge), badgeId);
+                colors.Add(definition.PrimaryColor);
+            }
+
+            // Career identity: the four badges must not share a ring color.
+            for (var a = 0; a < colors.Count; a++)
+            {
+                for (var b = a + 1; b < colors.Count; b++)
+                {
+                    Assert.That(colors[a] != colors[b], Is.True,
+                        $"{badgeIds[a]} and {badgeIds[b]} must use distinct career identity colors.");
+                }
+            }
+        }
+
+        [Test]
+        public void OptionalRoomInteriorAndCityPieceDefinitionsExist()
+        {
+            foreach (var roomId in new[] { "room.ai_lab", "room.music_studio", "room.robotics_garage", "room.community_kitchen" })
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(roomId, out var room), Is.True, roomId);
+                Assert.That(room.Category, Is.EqualTo(AssetCategory.Room), roomId);
+            }
+
+            foreach (var propId in new[] { "prop.city_piece_garage", "prop.city_piece_kitchen" })
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(propId, out var prop), Is.True, propId);
+                Assert.That(prop.Category, Is.EqualTo(AssetCategory.Prop), propId);
+            }
+        }
+
         [Test]
         public void FrameSetResolvesContiguousCuratedFrames()
         {
