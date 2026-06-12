@@ -295,7 +295,14 @@ namespace CareerQuest
         // Note: SnapToShot never rewrites _routeShot — only SetRouteShot does.
         private void SnapToShot(CameraShot shot)
         {
-            EnsureCamera();
+            // Adopt-only: restoration paths run during teardown (OnDisable on
+            // scene close), where lazily creating a camera would leak a fresh
+            // GameObject into the closing scene. ApplyShot guards null.
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
             _followTarget = null;
             ClearTween();
             _heldShot = shot;

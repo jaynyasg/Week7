@@ -21,7 +21,14 @@ namespace CareerQuest
 
         private AvatarRuntimeView _avatarView;
         private SpriteRenderer _spriteRenderer;
+        private AvatarNameTag _nameTag;
+        // Remote avatars derive walk/idle from observed position deltas with a
+        // deadzone + hysteresis (the network lerp produces residual motion that
+        // would flicker the walk state — U5 plan callout).
+        private readonly RemoteLocomotionFilter _remoteLocomotion = new();
+
         public string AvatarId => avatarId;
+        public AvatarNameTag NameTag => _nameTag;
 
         private void Awake()
         {
@@ -43,6 +50,8 @@ namespace CareerQuest
 
             ApplyColor();
             ApplyAvatar(AvatarConfig.GetAvatarAt(_networkAvatarIndex.Value).Id);
+            _remoteLocomotion.Reset(transform.position);
+            RefreshNameTag();
         }
 
         public override void OnNetworkDespawn()
@@ -64,11 +73,24 @@ namespace CareerQuest
                 {
                     SubmitMoveRpc(move, Time.deltaTime);
                 }
+
+                // Local player animates from its own input — no network round-trip.
+                _avatarView?.SetLocomotion(move.sqrMagnitude > 0f, move.x);
             }
 
             if (!IsServer)
             {
                 transform.position = Vector3.Lerp(transform.position, _networkPosition.Value, 20f * Time.deltaTime);
+            }
+
+            if (!IsOwner)
+            {
+                // Remote avatar: derive moving/idle/facing from position deltas
+                // through the deadzone filter so lerp residue never flickers it.
+                _remoteLocomotion.Step(transform.position, Time.deltaTime);
+                _avatarView?.SetLocomotion(
+                    _remoteLocomotion.IsMoving,
+                    _remoteLocomotion.IsMoving ? _remoteLocomotion.FacingX : 0f);
             }
         }
 
@@ -151,6 +173,26 @@ namespace CareerQuest
         {
             avatarId = AvatarConfig.GetAvatar(selectedAvatarId).Id;
             _avatarView?.ApplyAvatar(avatarId);
+            RefreshNameTag();
+        }
+
+        /// <summary>
+        /// P16: world-space identity tag above the avatar (fixed identity data,
+        /// never free text). Built on spawn, refreshed on avatar change.
+        /// </summary>
+        private void RefreshNameTag()
+        {
+            if (!IsSpawned)
+            {
+                return;
+            }
+
+            if (_nameTag == null)
+            {
+                _nameTag = GetComponent<AvatarNameTag>() ?? gameObject.AddComponent<AvatarNameTag>();
+            }
+
+            _nameTag.Configure(AvatarNameTag.IdentityTextFor(OwnerClientId, AvatarConfig.GetAvatar(avatarId)));
         }
     }
 }

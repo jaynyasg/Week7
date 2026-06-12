@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -67,6 +68,15 @@ namespace CareerQuest
 
         private static readonly Dictionary<string, AssetDefinition> _definitionsById = _definitions.ToDictionary(definition => definition.Id);
         private static readonly Dictionary<string, SpriteResolution> _resolutionCache = new();
+        private static readonly Dictionary<string, Sprite[]> _frameSetCache = new();
+
+        // Frame-set convention (U5, curated by CareerQuestCharacterArtCurator):
+        // Resources/CareerQuest/{Category}/{id}.{state}{n}.png — frame n of a
+        // named animation state, contiguous from 0. Known states:
+        public const string FrameStateWalk = "walk";
+        public const string FrameStateIdle = "idle";
+        public const string FrameStateCelebrate = "celebrate";
+        public const int MaxFramesPerState = 16;
 
         public static IReadOnlyList<AssetDefinition> Definitions => _definitions;
         public static IReadOnlyList<AssetDefinition> RequiredDefinitions => _definitions.Where(definition => definition.RequiredInFirstPlayable).ToArray();
@@ -97,6 +107,64 @@ namespace CareerQuest
 
             var walkId = baseSpriteAssetId.EndsWith(".walk") ? baseSpriteAssetId : $"{baseSpriteAssetId}.walk";
             return TryGetDefinition(walkId, out _) ? walkId : baseSpriteAssetId;
+        }
+
+        /// <summary>
+        /// Resolves the animation frame set for a cataloged base id and state by
+        /// probing Resources at "{ResourcePath}.{state}{n}" from n = 0 until the
+        /// first missing frame. Returns an empty list (never null, never throws)
+        /// when the id is uncataloged or no frames are curated — callers fall
+        /// back to the static sprite, which keeps the fallback path safe.
+        /// </summary>
+        public static IReadOnlyList<Sprite> FrameSetFor(string baseId, string state)
+        {
+            if (string.IsNullOrWhiteSpace(baseId) || string.IsNullOrWhiteSpace(state))
+            {
+                return Array.Empty<Sprite>();
+            }
+
+            var cacheKey = $"{baseId}.{state}";
+            if (_frameSetCache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            if (!TryGetDefinition(baseId, out var definition))
+            {
+                _frameSetCache[cacheKey] = Array.Empty<Sprite>();
+                return _frameSetCache[cacheKey];
+            }
+
+            var frames = new List<Sprite>();
+            for (var index = 0; index < MaxFramesPerState; index++)
+            {
+                var frame = Resources.Load<Sprite>($"{definition.ResourcePath}.{state}{index}");
+                if (frame == null)
+                {
+                    break;
+                }
+
+                frames.Add(frame);
+
+                // Frame sprites are imported curated art belonging to a cataloged
+                // definition — register them so IsFinalArtSprite/fallback scans
+                // classify them like any other catalog-resolved sprite.
+                var frameKey = $"{cacheKey}{index}";
+                if (!_resolutionCache.ContainsKey(frameKey))
+                {
+                    _resolutionCache[frameKey] = new SpriteResolution(frameKey, definition, frame, false, false);
+                }
+            }
+
+            var resolved = frames.ToArray();
+            _frameSetCache[cacheKey] = resolved;
+            return resolved;
+        }
+
+        /// <summary>Clears the frame-set cache (tests, post-curation in editor).</summary>
+        public static void ResetFrameCache()
+        {
+            _frameSetCache.Clear();
         }
 
         public static SpriteResolution ResolveSprite(string id)

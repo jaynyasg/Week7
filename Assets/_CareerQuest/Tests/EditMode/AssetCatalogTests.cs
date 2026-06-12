@@ -17,6 +17,36 @@ namespace CareerQuest.Tests
         }
 
         [Test]
+        public void FrameSetResolvesContiguousCuratedFrames()
+        {
+            // U5 frame-set convention: Resources/CareerQuest/{Category}/{id}.{state}{n}.png.
+            var walkFrames = AssetCatalog.FrameSetFor("avatar.sky_builder", AssetCatalog.FrameStateWalk);
+            Assert.That(walkFrames.Count, Is.GreaterThanOrEqualTo(2),
+                "Curated walk frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+            Assert.That(walkFrames, Is.All.Not.Null);
+
+            var celebrateFrames = AssetCatalog.FrameSetFor("avatar.sky_builder", AssetCatalog.FrameStateCelebrate);
+            Assert.That(celebrateFrames.Count, Is.GreaterThanOrEqualTo(2),
+                "Curated celebrate (cheer) frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+
+            var guideCelebrate = AssetCatalog.FrameSetFor("npc.campus_guide", AssetCatalog.FrameStateCelebrate);
+            Assert.That(guideCelebrate.Count, Is.GreaterThanOrEqualTo(2),
+                "NPC celebrate frames are missing — run CareerQuestCharacterArtCurator.Curate.");
+        }
+
+        [Test]
+        public void FrameSetIsSafeForMissingIdsAndStates()
+        {
+            // The fallback contract: missing frames yield an empty set, never throw.
+            Assert.That(AssetCatalog.FrameSetFor(null, AssetCatalog.FrameStateWalk), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("avatar.sky_builder", null), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("not.a.catalog.id", AssetCatalog.FrameStateWalk), Is.Empty);
+            Assert.That(AssetCatalog.FrameSetFor("avatar.sky_builder", "unknown_state"), Is.Empty);
+            // Props have no frame sets — empty, not an error.
+            Assert.That(AssetCatalog.FrameSetFor("prop.blueprint", AssetCatalog.FrameStateWalk), Is.Empty);
+        }
+
+        [Test]
         public void MissingAssetReturnsVisibleFallbackSprite()
         {
             var resolution = AssetCatalog.ResolveSprite("missing.asset.from.test");

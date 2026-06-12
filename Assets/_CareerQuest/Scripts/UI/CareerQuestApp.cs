@@ -56,6 +56,8 @@ namespace CareerQuest
         private void Awake()
         {
             _session = new GameSession();
+            // Fresh app session — the P10 first-run guide beat may play again.
+            FirstRunGuideBeat.ResetSessionFlag();
             _router = new SceneFlowRouter();
             _canvas = UiBuilder.EnsureCanvas();
             _root = _canvas.GetComponent<RectTransform>();
@@ -411,6 +413,9 @@ namespace CareerQuest
             {
                 CancelCeremony();
             }
+
+            // Session-scoped flags reset on disconnect (System-Wide Impact note).
+            FirstRunGuideBeat.ResetSessionFlag();
 
             UnbindCampusSessionState();
             if (networkManager != null && (networkManager.IsHost || networkManager.IsClient || networkManager.IsServer))

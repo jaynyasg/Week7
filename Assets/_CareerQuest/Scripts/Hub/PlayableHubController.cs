@@ -53,7 +53,13 @@ namespace CareerQuest
             var guideObject = new GameObject("CampusGuide", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(CampusGuideController));
             guideObject.transform.SetParent(transform, false);
             guideObject.transform.position = new Vector3(guideSpawn.x, guideSpawn.y, 0f);
-            guideObject.GetComponent<CampusGuideController>().Configure("Move to a door, then press E.");
+            var guide = guideObject.GetComponent<CampusGuideController>();
+            guide.Configure("Move to a door, then press E.");
+
+            // P10: first hub entry of the session — greet by avatar name and
+            // pulse the nearest unplayed door. No-ops on later hub entries.
+            var firstRunBeat = guideObject.AddComponent<FirstRunGuideBeat>();
+            firstRunBeat.TryBegin(session, guide, _entrances, playerSpawn);
 
             _cameraRig = gameObject.GetComponent<HubCameraRig>() ?? gameObject.AddComponent<HubCameraRig>();
             _cameraRig.Configure(CameraDirector.Ensure(), playerObject.transform);

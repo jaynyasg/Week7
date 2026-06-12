@@ -45,7 +45,8 @@ namespace CareerQuest
             }
             else
             {
-                _avatarView.SetLocomotion(false, transform.localScale.x);
+                // Facing is flipX-based now (U5); passing 0 keeps the last facing.
+                _avatarView.SetLocomotion(false, 0f);
             }
 
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.E))

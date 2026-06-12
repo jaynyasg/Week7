@@ -25,9 +25,67 @@ namespace CareerQuest
         [SerializeField] private float plateWidth = 1.55f;
         [SerializeField] private bool showPlate = true;
 
+        // DESIGN.md door focus pulse: soft loop within the 600-900 ms band.
+        private const float PulsePeriodSeconds = 0.75f;
+        private const float PulseAmplitude = 0.07f;
+
         private TextMeshPro _text;
+        private float _pulseClock;
+        private Vector3 _pulseBaseScale = Vector3.one;
+        private bool _pulseBaseCaptured;
 
         public string Label => label;
+
+        /// <summary>Real-time clock toggle. Tests set false and drive Tick directly.</summary>
+        public bool AutoTick { get; set; } = true;
+
+        public bool IsPulsing { get; private set; }
+
+        /// <summary>
+        /// First-run pointer / focus pulse: the sign and door pulse together
+        /// (the whole entrance object scales softly on a 600-900 ms loop).
+        /// </summary>
+        public void SetPulsing(bool active)
+        {
+            if (IsPulsing == active)
+            {
+                return;
+            }
+
+            if (active && !_pulseBaseCaptured)
+            {
+                _pulseBaseScale = transform.localScale;
+                _pulseBaseCaptured = true;
+            }
+
+            IsPulsing = active;
+            _pulseClock = 0f;
+
+            if (!active && _pulseBaseCaptured)
+            {
+                transform.localScale = _pulseBaseScale;
+            }
+        }
+
+        public void Tick(float deltaSeconds)
+        {
+            if (!IsPulsing || deltaSeconds <= 0f)
+            {
+                return;
+            }
+
+            _pulseClock += deltaSeconds;
+            var wave = 0.5f + 0.5f * Mathf.Sin(_pulseClock / PulsePeriodSeconds * 2f * Mathf.PI);
+            transform.localScale = _pulseBaseScale * (1f + PulseAmplitude * wave);
+        }
+
+        private void Update()
+        {
+            if (AutoTick)
+            {
+                Tick(Time.deltaTime);
+            }
+        }
 
         /// <summary>Editor-builder seam: sets serialized data without building (the label builds on Start).</summary>
         public void SetData(string signLabel, Color accent, float offsetY, int order, float size, float width, bool plate = true)
