@@ -153,14 +153,40 @@ the tune dial:
 
 This keeps every district mixed (no two adjacent stations share a verb).
 
-### Build order
+### Build order / status
 
-1. **Trace proof on Spaceport** — first verb end-to-end (kit rule + input +
-   renderer + EditMode tests + wire Spaceport + all-10 smoke green), the
-   Robotics-style proof gate before multiplying.
-2. Shoot proof on Robotics.
-3. Deduce proof on Newsroom.
-4. Roll each proven verb to its second station (Weather, AI Lab).
+1. **Trace proof on Spaceport** — ✅ DONE (commit `85017ab`). Spaceport is
+   TracePath: numbered waypoint stops along a drawn flight path, tapped in
+   order, over the existing host-validated action seam. EditMode 237/237,
+   PlayMode 229/229. Implemented as `ToyPatternId.TracePath` (ordered like
+   SequenceCards, per-waypoint `waypoint.{id}` targets) +
+   `PartyStationRenderer.MountTraceRoute` + `StationWaypoint` tap component.
+   FEEL FOLLOW-UP: currently tap-the-stops; upgrade to a continuous finger-drag
+   tracer on the same zones/rules; route layout (zigzag arc) could be prettier.
+2. **Shoot proof on Robotics** — NEXT. Pull-back-and-release launch at a target.
+   Mirror the trace pattern: new `ToyPatternId`, a renderer affordance (launch
+   arc / target), a small input component with a deterministic test seam, wire
+   Robotics, EditMode + PlayMode gate, screenshot.
+3. **Deduce proof on Newsroom** — after shoot. Tap-to-ELIMINATE candidates that
+   break a clue until one remains (NOT drag-to-bin). New completion logic
+   (distinct from the existing sort/match).
+4. Roll each proven verb to its second station (trace→Weather, deduce→AI Lab).
+
+Then Part B (toy art). Per-verb proof discipline: each lands as its own atomic
+commit, EditMode+PlayMode green (combined run), plus a station screenshot.
+
+### New-session pickup notes
+
+- Source of truth: this file (locked verbs + map above).
+- Pattern to copy from: the TracePath commit `85017ab` shows the full recipe
+  (enum + rules order/target + renderer mount + input component + Spaceport
+  wiring + the three test re-baselines).
+- Gotchas captured in memory: Unity single-instance/headless detach (trust the
+  results XML, not the launcher exit), TMP fallback churn (revert before
+  commit), and Bash-tool commit messages (use `git commit -F`, not `@'...'@`).
+- PlayMode has a pre-existing order-dependent flake (`AutoEntryPlayModeTests`
+  passes in isolation + combined order, fails PlayMode-only) — gate on the
+  combined EditMode+PlayMode run.
 
 Part B (toy art) stays gated behind verbs (Gate 2). Wave scope (first-six vs
 all-ten) confirmed per verb as it lands.
