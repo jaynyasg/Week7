@@ -79,15 +79,74 @@ namespace CareerQuest
         public const string GentleNoZoneFeedback = "Set the toy on a glowing spot to try it.";
 
         /// <summary>
-        /// Legacy optional rooms already converted to the real station surface.
-        /// U4 converts Robotics Rescue (the proof gate); U5 flips AI Lab,
-        /// Music, and Kitchen, then this list retires with the legacy bridge.
+        /// Legacy optional rooms converted to the real station surface. U4
+        /// converted Robotics Rescue (the proof gate); U5 flipped AI Lab,
+        /// Music, and Kitchen and retired the OptionalRoomController bridge —
+        /// every Party Pack id now mounts this controller.
         /// </summary>
-        public static readonly string[] ConvertedLegacyStationIds = { CareerQuestCatalog.RoboticsGarageId };
+        public static readonly string[] ConvertedLegacyStationIds =
+        {
+            CareerQuestCatalog.RoboticsGarageId,
+            CareerQuestCatalog.AiLabId,
+            CareerQuestCatalog.MusicStudioId,
+            CareerQuestCatalog.CommunityKitchenId
+        };
 
         public static bool IsConvertedLegacyStation(string stationId)
         {
             return Array.IndexOf(ConvertedLegacyStationIds, stationId) >= 0;
+        }
+
+        /// <summary>
+        /// U5 confirmation beat (design doc First-Wave contract): stations whose
+        /// verb identity includes one of these tags end on a distinct
+        /// interaction moment — Kitchen's serving confirmation ("match + serve")
+        /// and Game Studio's pitch ("compose + pitch"). The seed's non-chain toy
+        /// (kindness swap, thank-you stamp, playtest button, pitch mic) is the
+        /// confirmation toy; completion holds until the player taps it.
+        /// </summary>
+        public static readonly string[] ConfirmationVerbTags = { "serve", "pitch" };
+
+        /// <summary>
+        /// The toy that confirms completion for this seed (serving/pitch beat),
+        /// or null when the station has no confirmation moment. Data-driven:
+        /// the first non-chain toy of a seed on a serve/pitch station.
+        /// </summary>
+        public static string ConfirmationObjectIdFor(PartyStationDefinition definition, PartyStationSeedDefinition seed)
+        {
+            if (definition?.VerbTags == null || ConfirmationVerbFor(definition) == null)
+            {
+                return null;
+            }
+
+            foreach (var objectDefinition in definition.ResolveObjects(seed))
+            {
+                if (objectDefinition != null && !objectDefinition.IsChainRole)
+                {
+                    return objectDefinition.ObjectId;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The confirmation verb ("serve"/"pitch") for status copy, or null.</summary>
+        public static string ConfirmationVerbFor(PartyStationDefinition definition)
+        {
+            if (definition?.VerbTags == null)
+            {
+                return null;
+            }
+
+            foreach (var verbTag in definition.VerbTags)
+            {
+                if (Array.IndexOf(ConfirmationVerbTags, verbTag) >= 0)
+                {
+                    return verbTag;
+                }
+            }
+
+            return null;
         }
 
         private static readonly Color PathGold = new(0.953f, 0.769f, 0.357f);
@@ -120,6 +179,8 @@ namespace CareerQuest
         private float _idleSeconds;
         private int _renderedHintLevel;
         private string _partnerHeldObjectId;
+        private string _confirmationObjectId;
+        private bool _confirmationDone;
 
         public PartyStationRoomState State => _state;
         public PartyStationDefinition Definition => _definition;
@@ -139,6 +200,21 @@ namespace CareerQuest
 
         public bool IsIntroComplete => _introComplete;
         public bool IsSeedChoiceOpen { get; private set; }
+
+        /// <summary>
+        /// Serving/pitch beat state: the toy chain is complete but the result
+        /// holds until the player taps the seed's confirmation toy (the kit
+        /// pulses it and the status names it — pointer-first, R19).
+        /// </summary>
+        public bool IsAwaitingConfirmation =>
+            _confirmationObjectId != null
+            && !_confirmationDone
+            && _pattern != null
+            && !_pattern.ResultEmitted
+            && AuthoritativeComplete;
+
+        /// <summary>Test/QA seam: this seed's confirmation toy id, or null.</summary>
+        public string ConfirmationObjectId => _confirmationObjectId;
 
         public event Action<MiniGameResult> Completed;
 
@@ -300,6 +376,14 @@ namespace CareerQuest
                 return DropSubmitResult.RejectedUnknownPiece;
             }
 
+            // Serving/pitch beat: while the result holds for confirmation, the
+            // confirmation toy is the ONE live interaction — it lands before
+            // the completion drag-lock by design.
+            if (TryConfirmStation(pieceId))
+            {
+                return DropSubmitResult.Accepted;
+            }
+
             if (IsDragLocked)
             {
                 return DropSubmitResult.RejectedLocked;
@@ -358,6 +442,13 @@ namespace CareerQuest
             foreach (var action in _pattern.Rules.BuildGoldenActionSequence())
             {
                 TrySubmitDrop(action.ObjectId, action.TargetId, action.Value);
+            }
+
+            if (IsAwaitingConfirmation)
+            {
+                // Serving/pitch beat rides the same drop seam — no special-case
+                // completion code, quick/demo runs included.
+                TrySubmitDrop(_confirmationObjectId, null);
             }
 
             return AuthoritativeComplete;
@@ -466,6 +557,13 @@ namespace CareerQuest
 
         public bool CanBeginDrag(string pieceId)
         {
+            if (IsAwaitingConfirmation && string.Equals(pieceId, _confirmationObjectId, StringComparison.Ordinal))
+            {
+                // The confirmation toy stays draggable through the completion
+                // lock — tapping/dropping it anywhere serves/pitches.
+                return _app == null || !_app.IsCeremonyActive;
+            }
+
             return !IsDragLocked && !IsToyAccepted(pieceId);
         }
 
@@ -500,6 +598,12 @@ namespace CareerQuest
 
             if (zone == null)
             {
+                // The confirmation toy confirms wherever it is released.
+                if (TryConfirmStation(piece.PieceId))
+                {
+                    return;
+                }
+
                 if (!AuthoritativeComplete)
                 {
                     _guide?.ShowHint(GentleNoZoneFeedback);
@@ -533,6 +637,8 @@ namespace CareerQuest
 
             _seed = seed;
             _state.RecordSeedChoice(_definition.Id, seed.SeedId);
+            _confirmationObjectId = ConfirmationObjectIdFor(_definition, seed);
+            _confirmationDone = false;
 
             _pattern = new ToyPatternController(_definition, seed);
             _pattern.Completed += HandlePatternCompleted;
@@ -649,6 +755,16 @@ namespace CareerQuest
                 trayPositionFor: index => PartyStationRenderer.TrayPosition(index, pieceCount),
                 targetPositionFor: index => PartyStationRenderer.TargetPosition(index, targetCount));
             PartyStationRenderer.DecoratePlayfield(_kit, rules, _accent);
+
+            // U5 pointer-first meter widget (R19): every meter zone gets a
+            // tap-to-tune dial over the SAME drop seam — value steps wrap so a
+            // kid can always tap back into the green band, never a fail state.
+            PartyStationRenderer.MountMeterWidgets(
+                _kit,
+                rules,
+                _accent,
+                CurrentMeterValue,
+                (meterId, value) => TrySubmitDrop(meterId, ToyPatternRules.MeterTargetPrefix + meterId, value));
 
             // Pre-existing shared progress (joining a partner mid-attempt)
             // renders on mount without celebration spam.
@@ -835,6 +951,7 @@ namespace CareerQuest
             }
 
             _renderedAccepted.Clear();
+            _confirmationDone = false;
             _playElapsed = 0f;
             _idleSeconds = 0f;
             _guide?.ShowIntro();
@@ -856,7 +973,7 @@ namespace CareerQuest
                 }
             }
 
-            var highlight = HighlightObjectId;
+            var highlight = IsAwaitingConfirmation ? _confirmationObjectId : HighlightObjectId;
             if (highlight != null)
             {
                 _kit.SetHintHighlight(highlight);
@@ -880,6 +997,27 @@ namespace CareerQuest
             UpdateProgress();
         }
 
+        /// <summary>
+        /// Serving/pitch confirmation: the seed's confirmation toy, tapped or
+        /// dropped anywhere while the result holds, releases completion. Both
+        /// the drop seam and the pointer shell land here.
+        /// </summary>
+        private bool TryConfirmStation(string pieceId)
+        {
+            if (!IsAwaitingConfirmation
+                || !string.Equals(pieceId, _confirmationObjectId, StringComparison.Ordinal)
+                || (_app != null && _app.IsCeremonyActive))
+            {
+                return false;
+            }
+
+            _confirmationDone = true;
+            _kit.ClearHintHighlight();
+            PlayToyReaction(pieceId);
+            TryAutoComplete();
+            return true;
+        }
+
         private void PlayToyReaction(string objectId)
         {
             var piece = _kit.PieceFor(objectId);
@@ -900,6 +1038,15 @@ namespace CareerQuest
         {
             if (_pattern == null || _pattern.ResultEmitted || !AuthoritativeComplete)
             {
+                return;
+            }
+
+            if (IsAwaitingConfirmation)
+            {
+                // Serving/pitch beat: the chain is done but the result holds
+                // until the confirmation toy is tapped — pulse it and say so.
+                RefreshHintPresentation();
+                UpdateProgress();
                 return;
             }
 
@@ -959,6 +1106,12 @@ namespace CareerQuest
                 return;
             }
 
+            if (IsAwaitingConfirmation)
+            {
+                SetStatus(ConfirmationStatusLine());
+                return;
+            }
+
             if (AuthoritativeComplete)
             {
                 SetStatus("Quest complete! Badge ceremony starting...");
@@ -973,7 +1126,60 @@ namespace CareerQuest
 
             var required = _pattern.Rules.RequiredCount;
             var accepted = UsesNetworkState ? _network.AcceptedCount : _pattern.Rules.AcceptedCount;
-            SetStatus($"{accepted}/{required} toys placed.");
+
+            // Per-pattern wording stays in the ONE generic path (U5 handoff
+            // rule) — meter seeds get the tune prompt once the toys are in.
+            if (accepted >= required && _pattern.Rules.MeterObjectIds.Count > 0)
+            {
+                SetStatus(MeterTuneStatusLine());
+                return;
+            }
+
+            SetStatus($"{accepted}/{required} toys {ProgressVerbFor(_pattern.Pattern)}.");
+        }
+
+        /// <summary>Generic-path progress noun per toy pattern (never bespoke controllers).</summary>
+        private static string ProgressVerbFor(ToyPatternId pattern)
+        {
+            switch (pattern)
+            {
+                case ToyPatternId.SortToBin:
+                    return "sorted";
+                case ToyPatternId.PickMatchingTrio:
+                case ToyPatternId.MatchAndCare:
+                    return "matched";
+                case ToyPatternId.SequenceCards:
+                    return "in order";
+                case ToyPatternId.ComposeSet:
+                    return "mixed in";
+                case ToyPatternId.BalanceMeters:
+                    return "built";
+                default:
+                    return "placed";
+            }
+        }
+
+        private string ConfirmationStatusLine()
+        {
+            var verb = ConfirmationVerbFor(_definition) ?? "finish";
+            var toy = ObjectDefinitionFor(_confirmationObjectId);
+            var toyName = toy != null ? toy.DisplayName : "last toy";
+            return $"Now {verb}: tap the {toyName}!";
+        }
+
+        private string MeterTuneStatusLine()
+        {
+            foreach (var meterId in _pattern.Rules.MeterObjectIds)
+            {
+                var value = CurrentMeterValue(meterId);
+                if (value < ToyPatternRules.MeterGreenMin || value > ToyPatternRules.MeterGreenMax)
+                {
+                    var meter = ObjectDefinitionFor(meterId);
+                    return $"Tap the {(meter != null ? meter.DisplayName : "meter")} into the green band!";
+                }
+            }
+
+            return "Almost there!";
         }
 
         private void SetStatus(string message)
@@ -982,6 +1188,17 @@ namespace CareerQuest
             {
                 _statusText.text = message;
             }
+        }
+
+        /// <summary>Authoritative meter value for the widget/status (rules mirror the host in 2P).</summary>
+        private int CurrentMeterValue(string meterId)
+        {
+            if (_pattern == null)
+            {
+                return ToyPatternRules.MeterStartValue;
+            }
+
+            return UsesNetworkState ? _network.MeterValue(meterId) : _pattern.Rules.MeterValue(meterId);
         }
 
         private PartyStationObjectDefinition ObjectDefinitionFor(string objectId)
@@ -1040,6 +1257,8 @@ namespace CareerQuest
             _seedChoicePanel = null;
             _renderedAccepted.Clear();
             _partnerHeldObjectId = null;
+            _confirmationObjectId = null;
+            _confirmationDone = false;
             IsSeedChoiceOpen = false;
             _introComplete = false;
             _introElapsed = 0f;

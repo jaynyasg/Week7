@@ -127,8 +127,11 @@ namespace CareerQuest
                 "Teach the bubblegum sorter by putting each example in its matching bin.",
                 new[]
                 {
+                    // U5 sort tuning: fact and guess bubbles SORT APART — facts
+                    // land in the Reasoning bin, guesses in the Creativity bin
+                    // (a shared TraitHint would collapse the sort into one bin).
                     Obj(id, "blue_fact_bubbles", "Blue Fact Bubbles", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
-                    Obj(id, "pink_guess_bubbles", "Pink Guess Bubbles", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                    Obj(id, "pink_guess_bubbles", "Pink Guess Bubbles", PartyStationObjectRole.CoreTask, "", "react.pop", "Creativity"),
                     Obj(id, "training_tray", "Training Tray", PartyStationObjectRole.CoreTask, "", "react.glow", "Science"),
                     Obj(id, "test_button", "Test Button", PartyStationObjectRole.Reaction, "training_tray", "react.sparkle"),
                     Obj(id, "mystery_bubble", "Mystery Bubble", PartyStationObjectRole.CoreTask, "", "react.bounce", "Science")
@@ -168,7 +171,9 @@ namespace CareerQuest
                         "Sort clear sock signals from fuzzy static so the satellite can launch.",
                         new[]
                         {
-                            Obj(id, "striped_sock_signals", "Striped Sock Signals", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                            // U5 sort tuning: clear signals and fuzzy static must
+                            // land in DIFFERENT bins for the separation to play.
+                            Obj(id, "striped_sock_signals", "Striped Sock Signals", PartyStationObjectRole.CoreTask, "", "react.pop", "Communication"),
                             Obj(id, "star_stamps", "Star Stamps", PartyStationObjectRole.Clue, "striped_sock_signals", "react.glow", "Focus"),
                             Obj(id, "static_dots", "Static Dots", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
                             Obj(id, "training_bins", "Training Bins", PartyStationObjectRole.CoreTask, "", "react.glow", "Science"),
@@ -319,7 +324,7 @@ namespace CareerQuest
                         "Soften the sound layers and set the tempo to match the calm cue.",
                         "DJ Tempo whispers: this little robot needs a gentle lullaby.",
                         "Quiet sounds first — let each layer hum softly.",
-                        "Slide the speed dial down until the calm cue glows.",
+                        "Tap the speed dial until the calm cue glows green.",
                         "Shhh... the robot is humming along, cozy and calm.",
                         "Finish the lullaby to earn the Microphone!",
                         "You remixed a gentle robot lullaby and balanced the layers. You practiced Creativity + Communication. New gear: Microphone.",

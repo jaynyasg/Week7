@@ -94,6 +94,72 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(appObject);
         }
 
+        /// <summary>
+        /// U5: a creative station (Music Remix — ComposeSet + the meter widget)
+        /// and a care station (Vet Clinic — MatchAndCare) join the replay-churn
+        /// smoke after the Robotics baseline above. Meter widgets, mark zones,
+        /// and confirmation-free care surfaces must tear down like every other
+        /// transient station object.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CreativeAndCareStationChurnLeavesNoResidue()
+        {
+            var appObject = new GameObject("station-churn-pack-test");
+            var app = appObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            var controller = appObject.AddComponent<PartyStationController>();
+            controller.AutoTick = false;
+            controller.QuickPacing = true;
+
+            var rewardEvents = 0;
+            controller.RewardEventEmitted += _ => rewardEvents++;
+
+            // Music: 3 sound layers + 1 reaction toy (the meter is a zone).
+            // Vet: 1 clue + 1 helper + 3 care toys.
+            var churnStations = new (string StationId, int PieceCount, int MeterCount)[]
+            {
+                (CareerQuestCatalog.MusicStudioId, 4, 1),
+                (CareerQuestCatalog.VetClinicId, 5, 0)
+            };
+
+            for (var cycle = 0; cycle < 2; cycle++)
+            {
+                foreach (var (stationId, pieceCount, meterCount) in churnStations)
+                {
+                    Assert.That(app.ShowPartyStation(stationId), Is.True, $"{stationId} cycle {cycle}");
+                    yield return MountFrames();
+
+                    Assert.That(CountActive(ToyInteractionKit.DefaultPlayfieldName), Is.EqualTo(1), $"{stationId} cycle {cycle}");
+                    Assert.That(CountActive(PartyStationRenderer.SetRootName), Is.EqualTo(1), $"{stationId} cycle {cycle}");
+                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                        Is.EqualTo(pieceCount), $"{stationId} cycle {cycle}: pieces never accumulate");
+                    Assert.That(Object.FindObjectsByType<StationMeterWidget>(FindObjectsSortMode.None).Length,
+                        Is.EqualTo(meterCount), $"{stationId} cycle {cycle}: one widget per meter zone");
+
+                    app.ShowCampus();
+                    yield return null;
+                    yield return null; // deferred Destroy of the cleared world/UI
+
+                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                        Is.EqualTo(0), $"{stationId} cycle {cycle}: no orphaned drag pieces");
+                    Assert.That(Object.FindObjectsByType<StationMeterWidget>(FindObjectsSortMode.None).Length,
+                        Is.EqualTo(0), $"{stationId} cycle {cycle}: no orphaned meter widgets");
+                    Assert.That(CountActive(ToyInteractionKit.DefaultPlayfieldName), Is.EqualTo(0), $"{stationId} cycle {cycle}");
+                    Assert.That(CountActive(PartyStationRenderer.SetRootName), Is.EqualTo(0), $"{stationId} cycle {cycle}");
+                }
+            }
+
+            // One completion after all that churn still emits exactly once.
+            Assert.That(app.ShowPartyStation(CareerQuestCatalog.VetClinicId), Is.True);
+            yield return MountFrames();
+            Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
+            Assert.That(rewardEvents, Is.EqualTo(1), "Churned mounts must not stack completion subscriptions.");
+            Assert.That(app.Session.UniqueCompletedGames, Is.EqualTo(1));
+
+            Object.DestroyImmediate(appObject);
+        }
+
         [UnityTest]
         public IEnumerator RouteRaceRerenderMountsExactlyOnePlayfield()
         {

@@ -5,7 +5,6 @@ using NUnit.Framework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.UI;
 
 namespace CareerQuest.Tests
 {
@@ -32,20 +31,35 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(courtObject);
         }
 
+        /// <summary>
+        /// U5: the legacy optional routes (ShowMusicStudio and friends) now land
+        /// on the converted PartyStationController surface — the step/complete
+        /// button shell is retired, but the ceremony-before-gallery contract is
+        /// unchanged.
+        /// </summary>
         [UnityTest]
         public IEnumerator MusicStudioCompletionShowsCeremonyBeforeGallery()
         {
             var gameObject = new GameObject("optional-music-studio-test");
             var app = gameObject.AddComponent<CareerQuestApp>();
+            var controller = gameObject.AddComponent<PartyStationController>();
+            controller.AutoTick = false;
+            controller.QuickPacing = true;
 
             yield return null;
             app.ShowMusicStudio();
             yield return null;
+            yield return null;
+            yield return null; // room veil reveal + station playfield mount
 
-            CompleteOptionalRoom("MusicStudio");
+            Assert.That(app.CurrentRoute, Is.EqualTo(ActivityRoute.PartyStation),
+                "The legacy music route lands on the converted station surface.");
+            Assert.That(GameObject.Find("MusicStudioStepButton"), Is.Null,
+                "Station conversion retires the legacy step-button shell.");
+            Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
 
             var overlay = GameObject.Find("CeremonyOverlay");
-            Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after optional room completion.");
+            Assert.That(overlay, Is.Not.Null, "Ceremony overlay should appear after station completion.");
             Assert.That(overlay.activeSelf, Is.True);
 
             var gallery = GameObject.Find("AchievementGalleryPanel");
@@ -129,12 +143,6 @@ namespace CareerQuest.Tests
             var gameObject = GameObject.Find(objectName);
             Assert.That(gameObject, Is.Not.Null, $"{objectName} should exist.");
             return gameObject.GetComponent<RectTransform>();
-        }
-
-        private static void CompleteOptionalRoom(string panelPrefix)
-        {
-            GameObject.Find($"{panelPrefix}StepButton").GetComponent<Button>().onClick.Invoke();
-            GameObject.Find($"{panelPrefix}CompleteButton").GetComponent<Button>().onClick.Invoke();
         }
     }
 }

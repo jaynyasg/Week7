@@ -243,20 +243,81 @@ namespace CareerQuest
         }
 
         /// <summary>
-        /// U4 Party Pack station rooms: the same themed optional-room interior
-        /// (backdrop + avatar + guide NPC) plus the seed-independent station
-        /// set dressing from PartyStationRenderer. One scene path for every
+        /// U4/U5 Party Pack station rooms: a themed interior (the authored
+        /// room.{id} backdrop when its final art exists, otherwise the U5
+        /// code-built accent interior — never the campus building exterior or
+        /// a fallback-suffix sprite) plus the seed-independent station set
+        /// dressing from PartyStationRenderer. One scene path for every
         /// station — the seed-driven toy playfield mounts later through
         /// PartyStationController/ToyInteractionKit, after the veil reveals.
         /// </summary>
         public static void ShowPartyStation(CampusWorldBuilder builder, GameSession session, CatalogEntry entry)
         {
-            ShowOptionalRoom(builder, session, entry);
+            PartyStationDefinitions.TryGetById(entry.Id, out var definition);
 
-            if (PartyStationDefinitions.TryGetById(entry.Id, out var definition))
+            if (definition == null || AssetCatalog.TryGetDefinition($"room.{entry.Id}", out _))
+            {
+                ShowOptionalRoom(builder, session, entry);
+            }
+            else
+            {
+                BuildThemedStationInterior(builder, session, entry, definition);
+            }
+
+            if (definition != null)
             {
                 PartyStationRenderer.MountStationSet(builder.Root, definition);
             }
+        }
+
+        /// <summary>
+        /// U5 themed interior for stations whose final room art has not landed
+        /// (U11 owns final art): a handmade paper room — wall, floor, windows,
+        /// pennants, and a name sign — tinted with the station's badge accent.
+        /// Scan-safe shape sprites only, following the code-built fallback room
+        /// pattern the core rooms use.
+        /// </summary>
+        private static void BuildThemedStationInterior(
+            CampusWorldBuilder builder,
+            GameSession session,
+            CatalogEntry entry,
+            PartyStationDefinition definition)
+        {
+            var accent = PartyStationRenderer.AccentFor(definition);
+            var paper = new Color(1f, 0.97f, 0.88f);
+            var softAccent = new Color(accent.r, accent.g, accent.b, 0.45f);
+
+            builder.AddShape($"{entry.Id}RoomWall", CampusSpriteKind.Square, new Vector2(0f, 1.02f), new Vector2(8.35f, 3.06f), paper, 0);
+            builder.AddShape($"{entry.Id}RoomHeader", CampusSpriteKind.Square, new Vector2(0f, 2.38f), new Vector2(8.35f, 0.34f), accent, 1);
+            builder.AddShape($"{entry.Id}RoomFloor", CampusSpriteKind.Square, new Vector2(0f, -1.26f), new Vector2(8.35f, 2.58f), CampusWorldPalette.Plaza, 0);
+            builder.AddShape($"{entry.Id}RoomFloorEdge", CampusSpriteKind.Square, new Vector2(0f, 0.04f), new Vector2(8.35f, 0.1f), softAccent, 1);
+
+            builder.AddShape($"{entry.Id}RoomWindowA", CampusSpriteKind.Square, new Vector2(-2.95f, 1.35f), new Vector2(1.1f, 0.92f), CampusWorldPalette.Window, 1);
+            builder.AddShape($"{entry.Id}RoomWindowASill", CampusSpriteKind.Square, new Vector2(-2.95f, 0.85f), new Vector2(1.22f, 0.1f), softAccent, 2);
+            builder.AddShape($"{entry.Id}RoomWindowB", CampusSpriteKind.Square, new Vector2(2.95f, 1.35f), new Vector2(1.1f, 0.92f), CampusWorldPalette.Window, 1);
+            builder.AddShape($"{entry.Id}RoomWindowBSill", CampusSpriteKind.Square, new Vector2(2.95f, 0.85f), new Vector2(1.22f, 0.1f), softAccent, 2);
+
+            // Party pennant dots along the header (accent + gold, never color-only info).
+            for (var i = 0; i < 5; i++)
+            {
+                var x = -2.4f + i * 1.2f;
+                builder.AddShape($"{entry.Id}RoomPennant{i}", CampusSpriteKind.Circle, new Vector2(x, 2.06f), new Vector2(0.22f, 0.22f), i % 2 == 0 ? CampusWorldPalette.Gold : accent, 2);
+            }
+
+            builder.AddShape($"{entry.Id}RoomSign", CampusSpriteKind.Square, new Vector2(0f, 1.42f), new Vector2(3.3f, 0.66f), Color.white, 2);
+            builder.AddShape($"{entry.Id}RoomSignStripe", CampusSpriteKind.Square, new Vector2(0f, 1.14f), new Vector2(3.3f, 0.08f), accent, 3);
+            builder.AddLabel($"{entry.Id}RoomSignLabel", entry.BuildingName, 0f, 1.46f, CampusWorldBuilder.ItemLabelSize, CampusWorldPalette.Ink, 4);
+
+            builder.AddCharacter(
+                session?.SelectedAvatar.DisplayName ?? "Explorer",
+                -1.2f,
+                -1.35f,
+                session?.SelectedAvatar.ShirtColor ?? CampusWorldPalette.PlayerTeal,
+                0.2f,
+                true,
+                session?.SelectedAvatar.SpriteAssetId,
+                false);
+            builder.AddCharacter("Guide", 1.65f, -1.35f, CampusWorldPalette.PlayerBlue, 1.4f, true, "npc.campus_guide", false);
         }
 
         public static void ShowReveal(CampusWorldBuilder builder, GameSession session)

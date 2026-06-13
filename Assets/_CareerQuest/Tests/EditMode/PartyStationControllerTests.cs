@@ -20,21 +20,90 @@ namespace CareerQuest.Tests
             PartyStationDefinitions.GetById(CareerQuestCatalog.RoboticsGarageId);
 
         // ------------------------------------------------------------------
-        // Conversion boundary (U4: Robotics only; U5 flips the rest)
+        // Conversion boundary (U5: all four legacy optional rooms converted)
         // ------------------------------------------------------------------
 
         [Test]
-        public void RoboticsIsTheOnlyConvertedLegacyStation()
+        public void AllFourLegacyOptionalRoomsAreConvertedStations()
         {
-            Assert.That(PartyStationController.ConvertedLegacyStationIds,
-                Is.EqualTo(new[] { CareerQuestCatalog.RoboticsGarageId }));
-            Assert.That(PartyStationController.IsConvertedLegacyStation(CareerQuestCatalog.RoboticsGarageId), Is.True);
+            Assert.That(PartyStationController.ConvertedLegacyStationIds, Is.EquivalentTo(new[]
+            {
+                CareerQuestCatalog.RoboticsGarageId,
+                CareerQuestCatalog.AiLabId,
+                CareerQuestCatalog.MusicStudioId,
+                CareerQuestCatalog.CommunityKitchenId
+            }));
+            Assert.That(PartyStationController.IsConvertedLegacyStation(CareerQuestCatalog.AiLabId), Is.True);
 
-            // The other legacy optional rooms keep the OptionalRoomController
-            // bridge until U5; the six station-id entries never needed it.
-            Assert.That(PartyStationController.IsConvertedLegacyStation(CareerQuestCatalog.AiLabId), Is.False);
-            Assert.That(PartyStationController.IsConvertedLegacyStation(CareerQuestCatalog.MusicStudioId), Is.False);
+            // The six station-id entries never needed the legacy conversion
+            // list — they route by UsesStationIdRouting.
             Assert.That(PartyStationController.IsConvertedLegacyStation(CareerQuestCatalog.VetClinicId), Is.False);
+            Assert.That(CareerQuestCatalog.GetById(CareerQuestCatalog.VetClinicId).UsesStationIdRouting, Is.True);
+        }
+
+        // ------------------------------------------------------------------
+        // Serving/pitch confirmation beat (U5: kitchen + game studio)
+        // ------------------------------------------------------------------
+
+        [Test]
+        public void ConfirmationBeatDerivesFromServeAndPitchStationsOnly()
+        {
+            var kitchen = PartyStationDefinitions.GetById(CareerQuestCatalog.CommunityKitchenId);
+            Assert.That(PartyStationController.ConfirmationVerbFor(kitchen), Is.EqualTo("serve"));
+            Assert.That(PartyStationController.ConfirmationObjectIdFor(kitchen, kitchen.DefaultSeed),
+                Is.EqualTo("kindness_swap"), "The kindness swap is the default-seed serving confirmation.");
+            Assert.That(PartyStationController.ConfirmationObjectIdFor(kitchen, kitchen.AlternateSeeds[0]),
+                Is.EqualTo("thank_you_stamp"), "The thank-you stamp serves the picnic seed.");
+
+            var gameStudio = PartyStationDefinitions.GetById(CareerQuestCatalog.GameStudioId);
+            Assert.That(PartyStationController.ConfirmationVerbFor(gameStudio), Is.EqualTo("pitch"));
+            Assert.That(PartyStationController.ConfirmationObjectIdFor(gameStudio, gameStudio.DefaultSeed),
+                Is.EqualTo("playtest_button"), "The playtest button is the default-seed pitch beat.");
+            Assert.That(PartyStationController.ConfirmationObjectIdFor(gameStudio, gameStudio.AlternateSeeds[0]),
+                Is.EqualTo("pitch_mic"), "The pitch mic pitches the boss-battle seed.");
+
+            // No other station gains an accidental confirmation hold.
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                if (station.Id == kitchen.Id || station.Id == gameStudio.Id)
+                {
+                    continue;
+                }
+
+                Assert.That(PartyStationController.ConfirmationObjectIdFor(station, station.DefaultSeed),
+                    Is.Null, station.Id);
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Pointer-first meter tap rule (U5 widget; R19)
+        // ------------------------------------------------------------------
+
+        [Test]
+        public void MeterTapStepsWrapAndAlwaysReachTheGreenBand()
+        {
+            // Step from the authored start: 20 -> 35 -> 50 (green in two taps).
+            Assert.That(StationMeterWidget.NextTapValue(ToyPatternRules.MeterStartValue), Is.EqualTo(35));
+            Assert.That(StationMeterWidget.NextTapValue(35), Is.EqualTo(50));
+
+            // Past the top the dial wraps to the bottom — overshooting is
+            // always recoverable, never a fail state.
+            Assert.That(StationMeterWidget.NextTapValue(ToyPatternRules.MeterMax), Is.EqualTo(ToyPatternRules.MeterMin));
+
+            // From ANY value, repeated taps land inside the green band.
+            for (var start = ToyPatternRules.MeterMin; start <= ToyPatternRules.MeterMax; start++)
+            {
+                var value = start;
+                var taps = 0;
+                while ((value < ToyPatternRules.MeterGreenMin || value > ToyPatternRules.MeterGreenMax) && taps < 20)
+                {
+                    value = StationMeterWidget.NextTapValue(value);
+                    taps++;
+                }
+
+                Assert.That(value, Is.InRange(ToyPatternRules.MeterGreenMin, ToyPatternRules.MeterGreenMax),
+                    $"start {start} should tap into the green band (stopped at {value}).");
+            }
         }
 
         // ------------------------------------------------------------------

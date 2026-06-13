@@ -761,14 +761,18 @@ namespace CareerQuest
             AttachDebug();
         }
 
+        // U5: the three remaining legacy optional rooms join Robotics on the
+        // real station surface — every legacy entry point (hub door, QA
+        // states) lands on the generic station branch, and the
+        // OptionalRoomController bridge retires with them.
         public void ShowAiLab()
         {
-            ShowOptionalRoom(ActivityRoute.AiLab);
+            ShowPartyStation(CareerQuestCatalog.AiLabId);
         }
 
         public void ShowMusicStudio()
         {
-            ShowOptionalRoom(ActivityRoute.MusicStudio);
+            ShowPartyStation(CareerQuestCatalog.MusicStudioId);
         }
 
         public void ShowRoboticsGarage()
@@ -781,15 +785,15 @@ namespace CareerQuest
 
         public void ShowCommunityKitchen()
         {
-            ShowOptionalRoom(ActivityRoute.CommunityKitchen);
+            ShowPartyStation(CareerQuestCatalog.CommunityKitchenId);
         }
 
         /// <summary>
         /// U2 generic station branch (KTD3): the ONE mount path for every Party
         /// Pack station, keyed by station id — never one method per station.
-        /// Stations that still carry a legacy ActivityRoute bridge to the
-        /// optional-room path until U5 flips them to station-id routing.
-        /// Returns false for unknown/non-station ids.
+        /// U5 converted the last legacy optional rooms, so every Party Pack id
+        /// mounts the real station surface here. Returns false for
+        /// unknown/non-station ids.
         /// </summary>
         public bool ShowPartyStation(string stationId)
         {
@@ -801,14 +805,6 @@ namespace CareerQuest
             if (!CareerQuestCatalog.IsPartyStationId(stationId) || !CareerQuestCatalog.TryGetById(stationId, out var entry))
             {
                 return false;
-            }
-
-            if (!entry.UsesStationIdRouting && !PartyStationController.IsConvertedLegacyStation(entry.Id))
-            {
-                // Unconverted legacy room: same station, bespoke route + the
-                // OptionalRoomController shell until U5 flips it.
-                ShowOptionalRoom(entry.Route);
-                return true;
             }
 
             _hub.Hide();
@@ -1182,24 +1178,6 @@ namespace CareerQuest
             lifecycle.BeginCeremony();
             _router.BeginCeremony(_session);
             _ceremonyCoroutine = StartCoroutine(RunCeremony(result));
-        }
-
-        private void ShowOptionalRoom(ActivityRoute route)
-        {
-            if (_ceremonyActive)
-            {
-                return;
-            }
-
-            var entry = CareerQuestCatalog.GetByRoute(route);
-            _hub.Hide();
-            _router.ShowActivity(_session, route);
-            _world.ShowOptionalRoom(_session, entry);
-            ResetRoot();
-            var controller = gameObject.GetComponent<OptionalRoomController>() ?? gameObject.AddComponent<OptionalRoomController>();
-            controller.Render(_root, _session, this, CurrentResultSource(), entry.Id);
-            MountInstructionStrip();
-            AttachDebug();
         }
 
         private void ShowGalleryInternal()

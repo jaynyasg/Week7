@@ -49,8 +49,11 @@ namespace CareerQuest.Tests
             app.ShowCampus();
             yield return null;
 
+            // U5: legacy optional doors land on the converted station surface
+            // through the generic station branch (the door itself is unchanged).
             Assert.That(hub.TryEnter(ActivityRoute.MusicStudio), Is.True);
-            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.MusicStudio));
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.PartyStation));
+            Assert.That(app.CurrentStationId, Is.EqualTo(CareerQuestCatalog.MusicStudioId));
 
             // U2 generic station branch: a station-id door routes by station id
             // into ActivityRoute.PartyStation — no enum value per station.
