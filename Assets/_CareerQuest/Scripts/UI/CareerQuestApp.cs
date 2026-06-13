@@ -1291,11 +1291,7 @@ namespace CareerQuest
             _ceremonyActive = true;
             HideInstructionStrip();
             var presentation = FeedbackController.ForResult(result);
-            // U7: once reveal is ready, the station-end ceremony carries the
-            // synthesis snapshot so its strength preview matches the full reveal
-            // (one resolver — KTD9). Below the gate it stays a plain fanfare.
-            var revealPreview = _session.RevealReady ? RevealSynthesis.Resolve(_session) : null;
-            _ceremonyController = new CeremonyController(result, revealPreview);
+            _ceremonyController = new CeremonyController(result);
             BuildCeremonyOverlay(presentation);
 
             // U8: the fanfare rides the director's dedicated stoppable source —

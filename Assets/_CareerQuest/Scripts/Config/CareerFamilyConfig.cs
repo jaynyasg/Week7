@@ -97,11 +97,5 @@ namespace CareerQuest
         {
             return TryGet(family, out var presentation) ? presentation.DisplayName : family;
         }
-
-        /// <summary>Superpower phrase for a family key, or a safe generic fallback.</summary>
-        public static string SuperpowerFor(string family)
-        {
-            return TryGet(family, out var presentation) ? presentation.Superpower : "Campus Explorer";
-        }
     }
 }
