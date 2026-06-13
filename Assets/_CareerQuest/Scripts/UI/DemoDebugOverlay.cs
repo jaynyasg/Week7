@@ -28,9 +28,10 @@ namespace CareerQuest
 
         public void AttachTo(Transform parent)
         {
-            debugText = UiBuilder.Text(parent, "DemoDebugOverlay", string.Empty, 14, TextAnchor.UpperLeft, Color.white, TypeRole.Body, TypeWeight.SemiBold);
+            debugText = UiBuilder.Text(parent, "DemoDebugOverlay", string.Empty, 13, TextAnchor.UpperLeft, Color.white, TypeRole.Body, TypeWeight.SemiBold);
             debugText.color = Color.white;
-            UiBuilder.Place(debugText.rectTransform, -460f, 260f, 330f, 150f);
+            // U9: taller to fit the party-run + classroom-access observability block.
+            UiBuilder.Place(debugText.rectTransform, -460f, 210f, 340f, 280f);
             debugText.gameObject.SetActive(visible);
         }
 
@@ -63,7 +64,46 @@ namespace CareerQuest
                 $"Reveal style: {synthesis.Style}\n" +
                 $"Superpower: {synthesis.Superpower}\n" +
                 $"Family: {synthesis.FamilySubhead}\n" +
-                $"Primary combo: {combo}";
+                $"Primary combo: {combo}\n" +
+                PartyRunDebugBlock() +
+                ClassroomAccessDebugBlock();
+        }
+
+        /// <summary>
+        /// U9 observability (design doc): guided run active/complete flags,
+        /// current round index, ordered station ids, current station id, and the
+        /// selected seed id. Privacy-safe (KTD12) — every field is a content id,
+        /// a flag, or a count. No child names, rosters, free text, telemetry, or
+        /// persistent identifiers (those simply do not exist in this session
+        /// model). Earned accessory + matched combo ids are content ids too.
+        /// </summary>
+        private string PartyRunDebugBlock()
+        {
+            var run = _session.PartyRun;
+            var stations = run.StationIds.Count > 0 ? string.Join(",", run.StationIds) : "-";
+            var currentStation = run.CurrentStationId ?? "-";
+            var currentSeed = run.CurrentSeedId ?? "-";
+            var lastAccessory = "-";
+            var recent = _session.RewardLog.Recent(1);
+            if (recent.Count > 0 && !string.IsNullOrEmpty(recent[0].AccessoryRewardId))
+            {
+                lastAccessory = recent[0].AccessoryRewardId;
+            }
+
+            return
+                $"Run: active={run.IsActive} complete={run.IsComplete} round={run.CurrentRound}/{run.RoundCount}\n" +
+                $"Run stations: {stations}\n" +
+                $"Run current: {currentStation} seed={currentSeed}\n" +
+                $"Last accessory: {lastAccessory}\n";
+        }
+
+        /// <summary>U9 classroom-access observability — flags only, never child data.</summary>
+        private string ClassroomAccessDebugBlock()
+        {
+            var access = _session.ClassroomAccess;
+            return
+                $"Quiet: {access.QuietMode} · Pointer-first: {access.PointerFirst}\n" +
+                $"Non-color cues: {access.NonColorCues} · Early-reader: {access.EarlyReaderCopy}";
         }
 
         /// <summary>

@@ -55,6 +55,8 @@ namespace CareerQuest
         private PassportController _passport;
         private AccessorySpotlightController _accessorySpotlight;
         private PartyStationController _partyStation;
+        private PartyRunPresenter _partyRunPresenter;
+        private FacilitatorControlsController _facilitatorControls;
         private CeremonySubPhase _lastCeremonySubPhase;
         // P19: session-scoped memory of which city pieces already played their
         // arrival fanfare — one fanfare per piece per app session.
@@ -86,6 +88,16 @@ namespace CareerQuest
             // only — it never touches Time.timeScale in a networked session).
             _pauseMenu = PauseMenuController.AttachTo(gameObject);
             _pauseMenu.Bind(this, _audioDirector);
+
+            // U9: the guided Party Run presenter and the facilitator controls
+            // ride the app object (session-only; KTD7/R19). The presenter mounts
+            // on campus when a run is active; the facilitator controls live in
+            // the pause surface. Both are bound here, mounted on demand.
+            _partyRunPresenter = PartyRunPresenter.AttachTo(gameObject);
+            _partyRunPresenter.Bind(this, _session);
+            _facilitatorControls = FacilitatorControlsController.AttachTo(gameObject);
+            _facilitatorControls.Bind(this);
+            _pauseMenu.BindFacilitatorControls(_facilitatorControls);
 
             _networkBootstrap = GetComponent<NetworkBootstrap>();
             _entry = GetComponent<EntryScreenController>();
@@ -129,6 +141,11 @@ namespace CareerQuest
 
             UnbindCampusSessionState();
             UnsubscribeSessionChanged();
+
+            // U9: clear the process-wide quiet/reduced-motion gate so it never
+            // leaks into a later app instance (or test suite).
+            ClassroomAccessSettings.ResetStatics();
+            AudioCueCatalog.ResetQuietMode();
         }
 
         private void Start()
@@ -187,6 +204,185 @@ namespace CareerQuest
 
         /// <summary>Test/QA seam for the pause shell.</summary>
         public PauseMenuController PauseMenu => _pauseMenu;
+
+        /// <summary>U9 test/QA seam: the guided Party Run presenter.</summary>
+        public PartyRunPresenter PartyRunPresenter => _partyRunPresenter;
+
+        /// <summary>U9 test/QA seam: the facilitator controls.</summary>
+        public FacilitatorControlsController FacilitatorControls => _facilitatorControls;
+
+        // ------------------------------------------------------------------
+        // U9: guided Party Run + classroom access seams (R18/R19).
+        //
+        // KTD7 proof: the guided run is a PRESENTER over session-only state.
+        // Starting/continuing/quitting it changes ONLY PartyRunState — never the
+        // best results, accessories, badges, traits, or evolution pieces — and
+        // the campus doors stay free-choice the whole time (a station entered
+        // outside the run never advances it; see HandleStationRewardEvent).
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// The standard demo route (design doc 90-second demo): the first rounds
+        /// of the party row, each on its default seed (null = station default).
+        /// </summary>
+        public static readonly string[] DefaultDemoRouteStationIds =
+        {
+            CareerQuestCatalog.RoboticsGarageId,
+            CareerQuestCatalog.MusicStudioId,
+            CareerQuestCatalog.CommunityKitchenId,
+            CareerQuestCatalog.AiLabId
+        };
+
+        /// <summary>
+        /// Starts a guided Party Run over the given ordered station ids (seed ids
+        /// optional, parallel). Presenter only: it sets PartyRunState and re-shows
+        /// the campus so the run panel mounts. Earned results are untouched.
+        /// </summary>
+        public bool StartPartyRun(IReadOnlyList<string> stationIds, IReadOnlyList<string> seedIds = null)
+        {
+            if (_session == null || !_session.PartyRun.Start(stationIds, seedIds))
+            {
+                return false;
+            }
+
+            if (!_ceremonyActive)
+            {
+                ShowCampus();
+            }
+
+            return true;
+        }
+
+        /// <summary>Starts the standard demo route (U11 proof routes drive this).</summary>
+        public bool StartDemoRoute()
+        {
+            return StartPartyRun(DefaultDemoRouteStationIds);
+        }
+
+        /// <summary>
+        /// Continue the run: routes to the current round's station on its selected
+        /// seed. The station completion (not this call) advances the run. Returns
+        /// false when no run is active or the current station id is unknown.
+        /// </summary>
+        public bool ContinuePartyRun()
+        {
+            var run = _session?.PartyRun;
+            if (run == null || !run.IsActive || run.IsComplete)
+            {
+                return false;
+            }
+
+            var stationId = run.CurrentStationId;
+            if (string.IsNullOrEmpty(stationId))
+            {
+                return false;
+            }
+
+            return ShowPartyStation(stationId);
+        }
+
+        /// <summary>
+        /// Quit the run: clears ONLY guided sequencing (PartyRunState) and returns
+        /// to campus. Every earned result, accessory, badge, trait, and evolution
+        /// piece is preserved (design doc: "Quit clears only guided-run state").
+        /// </summary>
+        public void QuitPartyRun()
+        {
+            _session?.PartyRun.Clear();
+            if (!_ceremonyActive)
+            {
+                ShowCampus();
+            }
+        }
+
+        /// <summary>
+        /// Restart the guided demo route: a fresh pass over the SAME session
+        /// (re-seeds the run from round one) WITHOUT clearing earned results.
+        /// </summary>
+        public bool RestartDemoRoute()
+        {
+            _session?.PartyRun.Clear();
+            return StartDemoRoute();
+        }
+
+        /// <summary>Facilitator "return to campus" — leaves a room/run detour, clears nothing.</summary>
+        public void ReturnToCampus()
+        {
+            if (!_ceremonyActive)
+            {
+                ShowCampus();
+            }
+        }
+
+        /// <summary>
+        /// Facilitator "start over": the ONLY control that clears session-earned
+        /// results. Resets results + the guided run to a fresh play session and
+        /// returns to campus. Classroom access settings (a stickier preference)
+        /// are intentionally preserved.
+        /// </summary>
+        public void StartOver()
+        {
+            if (_session == null)
+            {
+                return;
+            }
+
+            _session.ResetResults(); // clears best results + PartyRunState
+            if (!_ceremonyActive)
+            {
+                ShowCampus();
+            }
+        }
+
+        /// <summary>
+        /// Sets the reduced-motion + quiet-audio classroom mode and threads the
+        /// flag to every gameplay surface (R19): the accessory spotlight, the
+        /// camera flourish, the scene wipes (static gate), and the audio gate —
+        /// while completion clarity is preserved. CareerQuestApp is the one
+        /// place the flag fans out from ClassroomAccessSettings.
+        /// </summary>
+        public void SetQuietMode(bool quiet)
+        {
+            if (_session == null)
+            {
+                return;
+            }
+
+            _session.ClassroomAccess.QuietMode = quiet; // pushes the static gate
+            ApplyClassroomAccess();
+        }
+
+        /// <summary>
+        /// Pushes the live ClassroomAccess flags to the held surfaces. Called on
+        /// every settings change AND on each campus/room (re)entry, so a
+        /// freshly-created CameraDirector or spotlight adopts the current mode.
+        /// </summary>
+        private void ApplyClassroomAccess()
+        {
+            if (_session == null)
+            {
+                return;
+            }
+
+            var quiet = _session.ClassroomAccess.QuietMode;
+
+            // The ClassroomAccess.QuietMode setter already mirrors the static
+            // reduced-motion/quiet-audio gate (read by SceneWipe). Here we drive
+            // the audio gate (idempotent) and push the flag to the HELD surfaces,
+            // so a CameraDirector/spotlight created by this (re)entry adopts the
+            // current mode even when the flag itself did not change.
+            AudioCueCatalog.SetQuietMode(quiet);
+
+            if (_world != null && _world.CameraDirector != null)
+            {
+                _world.CameraDirector.ReducedMotion = quiet;
+            }
+
+            if (_accessorySpotlight != null)
+            {
+                _accessorySpotlight.QuietMode = quiet;
+            }
+        }
 
         /// <summary>
         /// U13 Exit to Title: routes through the EXISTING teardown paths — the
@@ -580,6 +776,15 @@ namespace CareerQuest
             // the tabbed passport the same way the gallery is reached.
             MountPassportButton();
 
+            // U9: the guided Party Run panel mounts here ONLY when a run is
+            // active (free-choice campus shows nothing extra). The campus doors
+            // stay free-choice regardless — the panel is a presenter overlay.
+            _partyRunPresenter?.MountOnCampus(_root);
+
+            // U9: re-push the classroom access flags so a CameraDirector created
+            // by this campus build adopts the current reduced-motion mode.
+            ApplyClassroomAccess();
+
             AttachDebug();
         }
 
@@ -819,6 +1024,8 @@ namespace CareerQuest
             _router.ShowPartyStation(_session, stationId);
             _world.ShowPartyStation(_session, entry);
             ResetRoot();
+            // U9: a station-entry camera adopts the current reduced-motion mode.
+            ApplyClassroomAccess();
             MountPartyStationSurface(entry);
             MountInstructionStrip();
             AttachDebug();
@@ -863,6 +1070,13 @@ namespace CareerQuest
         private void HandleStationRewardEvent(StationRewardEvent stationEvent)
         {
             var rewardEvent = _session.AppendStationRewardEvent(stationEvent);
+
+            // U9 (KTD7): advance the guided run ONLY when this completion matches
+            // the run's current round. A free-choice or out-of-order completion
+            // never moves the sequence (PartyRunState owns the guard), so normal
+            // campus play stays fully independent of an active run.
+            _session.PartyRun.NoteStationCompleted(stationEvent.StationId);
+
             ShowAccessorySpotlight(rewardEvent);
         }
 
@@ -876,9 +1090,9 @@ namespace CareerQuest
             _accessorySpotlight ??= gameObject.GetComponent<AccessorySpotlightController>()
                 ?? gameObject.AddComponent<AccessorySpotlightController>();
 
-            // U9 seam: quiet mode (calm party-run) will gate the spotlight motion;
-            // until U9 wires its toggle the beat plays normally.
-            _accessorySpotlight.Show(_root, rewardEvent);
+            // U9: quiet mode (calm classroom/party run) gates the spotlight pulse
+            // + auto-dismiss; the card still renders so the unlock reads clearly.
+            _accessorySpotlight.Show(_root, rewardEvent, _session.ClassroomAccess.QuietMode);
         }
 
         public void ShowGallery()
@@ -930,6 +1144,9 @@ namespace CareerQuest
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
+            // U9: reduced motion reaches the reveal cinematic camera (the flourish
+            // tween snaps; the result copy over the lit stage still reads).
+            ApplyClassroomAccess();
             AnnounceRevealStartIfHost();
             _reveal.Render(_root, _session, this);
             AttachDebug();

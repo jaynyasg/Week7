@@ -22,6 +22,15 @@ namespace CareerQuest
         private readonly List<string> _networkCompletionOrder = new();
         private readonly Dictionary<string, CompletionTier> _networkBestTier = new();
 
+        // U9: session-only guided-run sequencing (R18/KTD7) and classroom access
+        // settings (R19). Both are hosted here so they survive route changes, but
+        // neither is scoring: the party run is a PRESENTER over results, and the
+        // access settings only soften presentation. A full session wipe
+        // (ResetResults / new game) clears the run; the access settings are
+        // stickier session preferences and only reset on explicit request.
+        private readonly PartyRunState _partyRun = new();
+        private readonly ClassroomAccessSettings _classroomAccess = new();
+
         public AppMode Mode { get; private set; } = AppMode.Entry;
         public ConnectionMode ConnectionMode { get; private set; } = ConnectionMode.None;
         public CareerDnaProfile CareerDna { get; } = new();
@@ -54,6 +63,15 @@ namespace CareerQuest
         /// only <see cref="AppendStationRewardEvent"/> writes to it.
         /// </summary>
         public RewardEventLog RewardLog => _rewardLog;
+
+        /// <summary>
+        /// The session-only guided "Party Run" sequence (U9, R18). A presenter
+        /// over results (KTD7) — it never gates scoring or reveal readiness.
+        /// </summary>
+        public PartyRunState PartyRun => _partyRun;
+
+        /// <summary>The session-only classroom access settings (U9, R19), local and resettable.</summary>
+        public ClassroomAccessSettings ClassroomAccess => _classroomAccess;
 
         public event Action Changed;
 
@@ -318,6 +336,11 @@ namespace CareerQuest
             _bestResults.Clear();
             _completionOrder.Clear();
             _rewardLog.Clear();
+            // U9: a full session wipe (new game / mode start) has no guided run
+            // in flight — clear ONLY the sequencing state. This is the session
+            // reset path, NOT the in-run Quit path (CareerQuestApp calls
+            // PartyRun.Clear directly for an explicit Quit, preserving results).
+            _partyRun.Clear();
             LastResultId = "None";
             CareerDna.Recompute(_bestResults.Values);
         }

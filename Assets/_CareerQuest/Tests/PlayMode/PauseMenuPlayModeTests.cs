@@ -291,6 +291,44 @@ namespace CareerQuest.Tests
         }
 
         // ------------------------------------------------------------------
+        // U9: facilitator controls live inside the pause surface
+        // ------------------------------------------------------------------
+
+        [UnityTest]
+        public IEnumerator PauseMenuHostsFacilitatorControlsThatToggleQuietAndTearDownOnClose()
+        {
+            yield return CreateAppOnCampus();
+
+            Assert.That(_app.TogglePauseMenu(), Is.True);
+            yield return null;
+
+            // The facilitator control row mounts alongside the existing pause
+            // card (design doc: controls live in the pause surface, not a
+            // separate educator product).
+            Assert.That(GameObject.Find(PauseMenuController.CardName), Is.Not.Null, "The pause card still mounts.");
+            Assert.That(GameObject.Find(FacilitatorControlsController.PanelName), Is.Not.Null,
+                "Facilitator controls mount inside the pause surface.");
+            Assert.That(GameObject.Find(FacilitatorControlsController.QuietToggleButtonName), Is.Not.Null);
+
+            // The quiet toggle from the pause surface flips the classroom mode.
+            Assert.That(_app.Session.ClassroomAccess.QuietMode, Is.False);
+            _app.FacilitatorControls.ToggleQuietMode();
+            Assert.That(_app.Session.ClassroomAccess.QuietMode, Is.True,
+                "The pause-hosted quiet control toggles reduced-motion/quiet mode.");
+            Assert.That(AudioCueCatalog.QuietMode, Is.True);
+
+            // Closing the menu tears the controls down with it; timescale stays 1.
+            _app.PauseMenu.Close();
+            yield return null;
+            Assert.That(GameObject.Find(FacilitatorControlsController.PanelName), Is.Null,
+                "Facilitator controls unmount when the pause menu closes.");
+            Assert.That(Time.timeScale, Is.EqualTo(1f), "Pause never touches Time.timeScale.");
+
+            // Reset the static gate this test armed.
+            _app.SetQuietMode(false);
+        }
+
+        // ------------------------------------------------------------------
         // Helpers
         // ------------------------------------------------------------------
 

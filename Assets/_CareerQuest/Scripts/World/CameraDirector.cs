@@ -77,6 +77,16 @@ namespace CareerQuest
         /// <summary>Real-time clock toggle. Tests set false and drive Tick directly.</summary>
         public bool AutoTick { get; set; } = true;
 
+        /// <summary>
+        /// U9 (R19) reduced-motion seam: when true, cinematic FLOURISH tweens
+        /// snap straight to their target shot instead of easing over time — the
+        /// camera move that conveys completion still LANDS (completion clarity is
+        /// preserved), only the swooping motion is suppressed. Route framing,
+        /// follow, and every restore path are untouched (they already snap).
+        /// CareerQuestApp pushes this from ClassroomAccessSettings.QuietMode.
+        /// </summary>
+        public bool ReducedMotion { get; set; }
+
         public CameraDirectorMode ActiveMode { get; private set; } = CameraDirectorMode.FixedShot;
 
         /// <summary>The only sanctioned source of the camera reference.</summary>
@@ -216,7 +226,9 @@ namespace CareerQuest
             var camera = EnsureCamera();
             _followTarget = null;
 
-            if (durationSeconds <= 0f)
+            // U9 reduced motion: the flourish swoop snaps to its destination —
+            // the shot still changes (completion reads), the motion does not.
+            if (durationSeconds <= 0f || ReducedMotion)
             {
                 SnapToShot(shot);
                 return;
