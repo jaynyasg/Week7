@@ -26,6 +26,10 @@ namespace CareerQuest
         public const string ZonePadName = "StationZonePad";
         public const string ZoneLabelName = "StationZoneLabel";
         public const string TokenLabelName = "ToyTokenLabel";
+        public const string TaskRingName = "ToyTaskRing";
+
+        /// <summary>Optional poke-toys render at this alpha so the actionable set stands out.</summary>
+        public const float OptionalToyAlpha = 0.45f;
 
         public const float TrayY = -2.35f;
         public const float TargetY = 0.55f;
@@ -142,10 +146,42 @@ namespace CareerQuest
                     continue;
                 }
 
+                // Clarity (design review #2): the quest completes on the
+                // chain-role toys (CoreTask/Clue/Meter); reaction-only toys
+                // (Helper/Wildcard/Reaction/Bonus) are optional pokes that never
+                // advance the "X/N toys placed" counter. With every toy drawn
+                // identically, players drag the decoys, see no progress, and
+                // think the game won't end. Mark the task toys with an accent
+                // halo and fade the optional pokes so the actionable set reads
+                // at a glance. Presentation only — no rules/scoring change.
+                var isTaskToy = definition.IsChainRole;
+
                 var renderer = piece.GetComponent<SpriteRenderer>();
                 if (renderer != null)
                 {
-                    renderer.color = TokenColorFor(accent, index);
+                    var color = TokenColorFor(accent, index);
+                    if (!isTaskToy)
+                    {
+                        color.a *= OptionalToyAlpha;
+                    }
+
+                    renderer.color = color;
+                }
+
+                if (isTaskToy)
+                {
+                    // Soft accent disc behind the toy (one sort below the piece)
+                    // so required toys read as "do these" without changing the
+                    // piece geometry or its drag hit area.
+                    var halo = new GameObject(TaskRingName, typeof(SpriteRenderer));
+                    halo.transform.SetParent(piece.transform, false);
+                    halo.transform.localScale = new Vector3(1.42f, 1.42f, 1f);
+                    var haloRenderer = halo.GetComponent<SpriteRenderer>();
+                    haloRenderer.sprite = CampusWorldSprites.Circle;
+                    var haloColor = accent;
+                    haloColor.a = 0.32f;
+                    haloRenderer.color = haloColor;
+                    haloRenderer.sortingOrder = ToyInteractionKit.PieceSortingOrder - 1;
                 }
 
                 AddWorldLabel(piece.transform, TokenLabelName, definition.DisplayName, new Vector3(0f, -0.68f, 0f), 1.5f, ToyInteractionKit.PieceSortingOrder + 2);
