@@ -125,6 +125,68 @@ namespace CareerQuest.Tests
             }
         }
 
+        // ------------------------------------------------------------------
+        // U7: reveal / family / superpower / combo copy stays strength-based.
+        // ------------------------------------------------------------------
+
+        [Test]
+        public void FamilyPresentationCopyPassesEarlyReaderAndSafetyScan()
+        {
+            foreach (var presentation in CareerFamilyConfig.All)
+            {
+                var context = presentation.Family;
+                // Display name + superpower are short labels: copy-safety only.
+                AssertClean(PartyStationValidator.CheckCopySafety(presentation.DisplayName, $"{context}.display"));
+                AssertClean(PartyStationValidator.CheckCopySafety(presentation.Superpower, $"{context}.superpower"));
+                // The blurb is a full guide-style line: early-reader + safety.
+                AssertClean(PartyStationValidator.CheckGuideLine(presentation.Blurb, $"{context}.blurb"));
+            }
+        }
+
+        [Test]
+        public void SynthesizedRevealHeadlineAndSubheadCopyStaysSafe()
+        {
+            // Drive synthesis across every completion bucket and scan the
+            // player-facing reveal copy (superpower headline + family subhead +
+            // primary combo copy) — the strings the ceremony actually shows.
+            var session = new GameSession();
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                session.RecordResult(StationResult(stationId));
+
+                var result = RevealSynthesis.Resolve(session);
+                AssertClean(PartyStationValidator.CheckCopySafety(result.Superpower, "reveal.superpower"));
+                AssertClean(PartyStationValidator.CheckCopySafety(result.FamilySubhead, "reveal.subhead"));
+                if (result.HasComboSpotlight)
+                {
+                    AssertClean(PartyStationValidator.CheckGuideLine(result.PrimaryCombo.RevealCopy, "reveal.combo"));
+                }
+            }
+        }
+
+        [Test]
+        public void RevealCopyValidationFailsOnDeterministicCareerPhrases()
+        {
+            // The reveal must reject "you will be a..." style destiny phrasing.
+            Assert.That(
+                PartyStationValidator.CheckCopySafety("You will be a robotics engineer.", "reveal"),
+                Has.Some.Contains("deterministic career phrase"));
+            Assert.That(
+                PartyStationValidator.CheckCopySafety("This is your future career path.", "reveal"),
+                Has.Some.Contains("deterministic career phrase"));
+            // The strength-based voice the reveal actually uses passes.
+            AssertClean(PartyStationValidator.CheckCopySafety(
+                "You might like these paths — a strength clue from your quest, not a life assignment.", "reveal"));
+            AssertClean(PartyStationValidator.CheckCopySafety("You practiced building. Your strengths today lead here.", "reveal"));
+        }
+
+        private static MiniGameResult StationResult(string stationId)
+        {
+            var definition = PartyStationDefinitions.GetById(stationId);
+            return PartyStationController.BuildResult(
+                definition, definition.DefaultSeed, ResultSource.Solo, complete: true, wrongAttempts: 0, playElapsedSeconds: 12f);
+        }
+
         [Test]
         public void AccessoryAndObjectDisplayNamesPassSafetyScan()
         {

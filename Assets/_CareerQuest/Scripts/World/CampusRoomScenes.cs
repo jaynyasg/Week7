@@ -401,8 +401,17 @@ namespace CareerQuest
                 RevealStageLayout.HeroAvatarPosition.y,
                 0f);
             builder.AddShape("RevealHeroShadow", CampusSpriteKind.Circle, new Vector2(0f, -0.52f), new Vector2(0.62f, 0.18f), CampusWorldPalette.Shadow, 307, 0f, heroObject.transform);
-            heroObject.GetComponent<AvatarRuntimeView>().ApplySpriteAsset(
+            var heroView = heroObject.GetComponent<AvatarRuntimeView>();
+            heroView.ApplySpriteAsset(
                 session?.SelectedAvatar?.SpriteAssetId ?? AvatarConfig.DefaultAvatar.SpriteAssetId);
+
+            // U6/U7 ceremony-context seam: the reveal stage hero is definitionally
+            // a ceremony avatar, so it binds its accessory layer in ceremony
+            // context at creation — surfacing ceremony-only accessories (Star Robe
+            // at 8, Reveal Flourish at 10) and keeping earned campus gear visible.
+            // Binding here (where the world owns the hero and has the session)
+            // avoids any race against a controller searching for it post-mount.
+            heroView.BindAccessories(session, ceremonyContext: true);
         }
 
         private static void SetSpriteAlpha(GameObject spriteObject, float alpha)

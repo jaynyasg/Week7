@@ -41,6 +41,14 @@ namespace CareerQuest
         private bool _sessionSubscribed;
         private bool _upgradeQueued;
 
+        /// <summary>
+        /// U7 synthesis snapshot for this render: top traits, top 5 paths,
+        /// family, superpower, combo spotlight, and the completion-count style.
+        /// One resolver (KTD9) — the unlocked card and the cinematic both read
+        /// from it instead of bespoke per-outcome logic.
+        /// </summary>
+        public RevealSynthesisResult Synthesis { get; private set; }
+
         /// <summary>Test/QA seam: the live beat sequencer (null before first render).</summary>
         public RevealCinematicDirector Director => _director;
 
@@ -52,6 +60,11 @@ namespace CareerQuest
 
             _session = session;
             _app = app;
+
+            // One synthesis pass per render (KTD9): every reveal beat and copy
+            // line below reads from this snapshot, never re-derives.
+            Synthesis = RevealSynthesis.Resolve(_session);
+
             _world = CampusWorldController.Ensure();
             _cameraDirector = _world.CameraDirector;
             _director = GetComponent<RevealCinematicDirector>();
@@ -153,6 +166,7 @@ namespace CareerQuest
             _director.Begin(new RevealCinematicContext
             {
                 Unlocked = true,
+                Style = Synthesis != null ? Synthesis.Style : RevealStyle.Simple,
                 EarnedCount = Mathf.Clamp(_session.UniqueCompletedGames, 0, RevealStageLayout.SlotCount),
                 EarnedEntries = EarnedEntries(),
                 WorldRoot = _world.WorldRoot,
@@ -222,37 +236,54 @@ namespace CareerQuest
             var stripe = UiBuilder.Panel(card, "RevealResultStripe", QuestStageUi.PathGold);
             UiBuilder.Place(stripe, 0f, 152f, 1020f, 10f);
 
+            var synthesis = Synthesis ?? RevealSynthesis.Resolve(_session);
+
             var banner = UiBuilder.Text(
                 card,
                 "RevealUnlockBanner",
                 "REVEAL UNLOCKED!",
-                30,
+                28,
                 TextAnchor.MiddleCenter,
                 QuestStageUi.WorkshopTeal,
                 TypeRole.Display,
                 TypeWeight.Bold);
-            UiBuilder.Place(banner.rectTransform, 0f, 112f, 560f, 42f);
+            UiBuilder.Place(banner.rectTransform, 0f, 128f, 560f, 38f);
 
-            var matches = _session.CoLeadMatches();
-            var names = string.Join("  +  ", matches.Select(match => match.Career.DisplayName));
-            var lead = UiBuilder.Text(card, "RevealLead", names, 36, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f), TypeRole.Display, TypeWeight.SemiBold);
-            UiBuilder.Place(lead.rectTransform, 0f, 62f, 940f, 50f);
+            // Headline leads with the superpower (design rule 6), then the
+            // family subhead, then the top paths — one synthesis snapshot, not a
+            // pile of bespoke labels.
+            var lead = UiBuilder.Text(card, "RevealLead", synthesis.Superpower, 36, TextAnchor.MiddleCenter, new Color(0.05f, 0.35f, 0.28f), TypeRole.Display, TypeWeight.SemiBold);
+            UiBuilder.Place(lead.rectTransform, 0f, 86f, 940f, 46f);
 
-            var confidence = UiBuilder.Text(card, "RevealConfidence", _session.ConfidencePhrase(), 24, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
-            UiBuilder.Place(confidence.rectTransform, 0f, 18f, 640f, 34f);
+            var subhead = UiBuilder.Text(card, "RevealSubhead", synthesis.FamilySubhead + " strengths", 22, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
+            UiBuilder.Place(subhead.rectTransform, 0f, 50f, 880f, 32f);
 
-            var top = _session.CareerMatches().FirstOrDefault();
-            var tagline = top?.Career.Tagline ?? "A path worth exploring.";
+            var pathNames = string.Join("   •   ", synthesis.TopPaths.Take(RevealSynthesis.TopPathCount).Select(match => match.Career.DisplayName));
+            var paths = UiBuilder.Text(card, "RevealPaths", "You might like: " + pathNames, 18, TextAnchor.MiddleCenter, QuestStageUi.Ink);
+            UiBuilder.Place(paths.rectTransform, 0f, 18f, 960f, 30f);
+
+            var confidence = UiBuilder.Text(card, "RevealConfidence", _session.ConfidencePhrase(), 20, TextAnchor.MiddleCenter, QuestStageUi.WorkshopTeal);
+            UiBuilder.Place(confidence.rectTransform, 0f, -12f, 640f, 28f);
+
+            // Hybrid spotlight layers on top of any completion-count style
+            // (design: Hybrid Spotlight) — only when a combo pair is eligible.
+            var bodyText = "This is a strength clue from your quest badges — not a life assignment.";
+            if (synthesis.HasComboSpotlight)
+            {
+                var combo = synthesis.PrimaryCombo;
+                bodyText = $"Hybrid spark: {combo.DisplayName}. {combo.RevealCopy}\n{bodyText}";
+            }
+
             var body = UiBuilder.Text(
                 card,
                 "RevealBody",
-                tagline + "\nThis is a strength clue from your quest badges — not a life assignment.",
-                20,
+                bodyText,
+                18,
                 TextAnchor.MiddleCenter,
                 QuestStageUi.Ink);
-            UiBuilder.Place(body.rectTransform, 0f, -42f, 920f, 68f);
+            UiBuilder.Place(body.rectTransform, 0f, -52f, 940f, 64f);
 
-            MountExitActions(card, -118f);
+            MountExitActions(card, -120f);
         }
 
         // ------------------------------------------------------------------
