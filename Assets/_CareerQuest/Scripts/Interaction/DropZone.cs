@@ -5,7 +5,9 @@ namespace CareerQuest
     /// <summary>
     /// A drop target with a stable zone id. Resolution is physics-based
     /// (<see cref="FindAt"/> uses Physics2D.OverlapPoint against trigger
-    /// colliders), so it works for any room without per-room raycast wiring.
+    /// colliders), so it works for any room — and for any Party Pack station
+    /// target mounted by <see cref="ToyInteractionKit"/> — without per-room
+    /// raycast wiring.
     /// Owns the P12 ghost slot preview: a faded copy of the dragged piece's
     /// sprite shown while the pointer hovers a valid empty zone.
     /// </summary>

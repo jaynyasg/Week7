@@ -285,14 +285,16 @@ namespace CareerQuest
 
         /// <summary>
         /// Server-side held-piece sweep for a departed client across all three
-        /// room states (U12 P17 — also a host-only test seam). Each call is a
-        /// safe no-op when the state is absent or the client held nothing.
+        /// room states (U12 P17 — also a host-only test seam) plus the generic
+        /// station layer (U3). Each call is a safe no-op when the state is
+        /// absent or the client held nothing.
         /// </summary>
         public static void ClearHeldPiecesFor(ulong clientId)
         {
             FindFirstObjectByType<DesignBuildNetworkState>()?.ApplyHeldPiece(-1, clientId);
             FindFirstObjectByType<HealthHeroNetworkState>()?.ApplyHeldPiece(-1, clientId);
             FindFirstObjectByType<LogicCourtNetworkState>()?.ApplyHeldPiece(-1, clientId);
+            FindFirstObjectByType<StationProgressNetworkState>()?.ApplyHeldPiece(-1, clientId);
         }
 
         private static void SyncPlayerCountFromServer(NetworkManager manager)

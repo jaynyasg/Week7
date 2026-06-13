@@ -52,6 +52,36 @@ namespace CareerQuest
         public event Action RevealStartAnnounced;
 
         private GameSession _boundHostSession;
+        private StationProgressNetworkState _stationProgress;
+
+        /// <summary>
+        /// U3 seam: the Party Pack station-progress shared state. It rides this
+        /// always-spawned NetworkObject as a second behaviour (EmoteRelay
+        /// precedent), so the generic station layer needs no new scene object.
+        /// </summary>
+        public StationProgressNetworkState StationProgress
+        {
+            get
+            {
+                if (_stationProgress == null)
+                {
+                    _stationProgress = GetComponent<StationProgressNetworkState>();
+                }
+
+                return _stationProgress;
+            }
+        }
+
+        private void Awake()
+        {
+            // U3: attach the station-progress state at scene-load Awake on EVERY
+            // peer, before any network spawn, so the NetworkBehaviour order on
+            // this object stays deterministic across host and clients.
+            if (GetComponent<StationProgressNetworkState>() == null)
+            {
+                gameObject.AddComponent<StationProgressNetworkState>();
+            }
+        }
 
         public override void OnNetworkSpawn()
         {
