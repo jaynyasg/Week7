@@ -163,11 +163,25 @@ This keeps every district mixed (no two adjacent stations share a verb).
    `PartyStationRenderer.MountTraceRoute` + `StationWaypoint` tap component.
    FEEL FOLLOW-UP: currently tap-the-stops; upgrade to a continuous finger-drag
    tracer on the same zones/rules; route layout (zigzag arc) could be prettier.
-2. **Shoot proof on Robotics** — NEXT. Pull-back-and-release launch at a target.
-   Mirror the trace pattern: new `ToyPatternId`, a renderer affordance (launch
-   arc / target), a small input component with a deterministic test seam, wire
-   Robotics, EditMode + PlayMode gate, screenshot.
-3. **Deduce proof on Newsroom** — after shoot. Tap-to-ELIMINATE candidates that
+2. **Shoot proof on Robotics** — ✅ DONE (commit `f7ed6ff`). Robotics is
+   ShootTarget: a launch pad + one shared goal (the rescue spot); chain toys fan
+   across the pad as pull-back-and-release launchers, flung at the goal in any
+   order over the existing host-validated action seam. EditMode 238/238, PlayMode
+   230/230. Implemented as `ToyPatternId.ShootTarget` (any-order onto the shared
+   `target.goal`) + `PartyStationRenderer.MountLaunchRange` + `StationLauncher`
+   input component (pure `Launch(pull)` seam: `landing = origin − pull`,
+   `PerfectPull` guarantees a hit; the spatial miss lives in the launcher, not a
+   rule branch). Re-verified the spine: Robotics is the shared reference station,
+   so network-state 2P, lifecycle churn, first-six smoke, kit, and rule suites
+   were re-baselined from per-toy slots to the shared goal (churn leak counts now
+   include inactive objects, since the launcher hides the kit pieces).
+   SCREENSHOT FOLLOW-UP: robotics.png re-capture pending — the graphics capture
+   triggers a full-res re-import that does not converge on the worktree's cold,
+   OneDrive-synced Library; the launcher proof test is the binding evidence.
+   FEEL FOLLOW-UP: the level-2 hint pulses the next toy on its hidden kit piece
+   (invisible for hide-all-pieces verbs like trace/shoot) — could pulse the
+   launcher instead.
+3. **Deduce proof on Newsroom** — NEXT. Tap-to-ELIMINATE candidates that
    break a clue until one remains (NOT drag-to-bin). New completion logic
    (distinct from the existing sort/match).
 4. Roll each proven verb to its second station (trace→Weather, deduce→AI Lab).
@@ -178,9 +192,11 @@ commit, EditMode+PlayMode green (combined run), plus a station screenshot.
 ### New-session pickup notes
 
 - Source of truth: this file (locked verbs + map above).
-- Pattern to copy from: the TracePath commit `85017ab` shows the full recipe
-  (enum + rules order/target + renderer mount + input component + Spaceport
-  wiring + the three test re-baselines).
+- Pattern to copy from: the TracePath commit `85017ab` and the ShootTarget
+  commit `f7ed6ff` show the full recipe (enum + rules order/target + renderer
+  mount + input component + station wiring + the test re-baselines). Shoot is the
+  closer analog for deduce if it needs a non-drag input verb; note Robotics is a
+  shared reference station, so a verb swap there re-baselines ~6 suites.
 - Gotchas captured in memory: Unity single-instance/headless detach (trust the
   results XML, not the launcher exit), TMP fallback churn (revert before
   commit), and Bash-tool commit messages (use `git commit -F`, not `@'...'@`).

@@ -101,7 +101,7 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 |---|---|---|
 | `campus.png` | Campus hub (10 stations) | The merged district map: Tech Lane (AI Lab, Robotics, Spaceport), Quest Yard core (Design Build, Logic Court, Health Hero), Story Street (Newsroom, Music Studio, Game Studio), plus Care Corner, Kitchen, Green City. Robot-guide first-run bubble, 0/3 badge HUD, "Move: WASD" hint, footer "Walk into a career door to start a quest. It opens on its own!" (U2 auto-entry). |
 | `avatar.png` | Hero selection | Four Kenney Toon heroes (Sky Builder selected, Care Captain, Logic Spark, Art Inventor) with career-color stripes, large preview card, Back / Enter Campus. |
-| `robotics.png` | Robotics Rescue (party station) | Guide *Bolt the Bench Buddy* ("upbeat build coach"), intro "A lunchbox robot lost its parts! Rebuild it and pick a rescue route.", **Tool Belt** reward preview, DragToSlot lots + task tray (Battery Toast, Wheel Sandwich, Sensor Sticker, Route Cards, Rescue Flag), NPC reaction line. |
+| `robotics.png` | Robotics Rescue (party station) | Guide *Bolt the Bench Buddy* ("upbeat build coach"), intro "Bolt beeps: the robot is built — launch every part to the rescue spot!", **Tool Belt** reward preview, **ShootTarget** launch pad + rescue-spot target ring + pull-back launch toys (Battery Toast, Wheel Sandwich, Sensor Sticker, Route Beacon, Rescue Flag), NPC reaction line. *(Verb swapped DragToSlot→ShootTarget in `f7ed6ff`; PNG re-capture pending — see plan build-order note.)* |
 | `ai-lab.png` | AI Lab Sort (party station) | Guide *Pixel the Pattern Pal*, intro "Teach the bubblegum sorter by putting each example in its matching bin.", **Lab Goggles** reward, SortToBin bins (Reasoning, Creativity, Science), example tray. |
 | `music.png` | Music Remix (party station) | Guide *DJ Tempo*, intro "Layer the storm sounds into a parade beat and keep the tempo steady.", **Microphone** reward, Mix Spot + Tempo Dial (compose/meter), sample tray. |
 | `kitchen.png` | Community Kitchen Match (party station) | Guide *Chef Sunny*, intro "Solve the soup clues and serve a bowl every guest can enjoy.", **Chef Hat** reward, Match Tray + serving bowl (PickMatchingTrio + serve), ingredient tray. |
@@ -120,11 +120,13 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 
 All 10 party stations now have a dedicated `-cq-visual-state` case and a captured
 screenshot, each showing full station identity (guide + intro + reward preview +
-toy pattern + task tray + NPC reaction). The seven supported toy patterns are all
-represented across the set: DragToSlot (robotics), SortToBin (ai-lab),
-ComposeSet/meter (music, game-studio, newsroom), PickMatchingTrio (kitchen),
-MatchAndCare (vet), SequenceCards (weather, spaceport), and BalanceMeters
-(green-city).
+toy pattern + task tray + NPC reaction). The toy patterns are represented across
+the set: SortToBin (ai-lab), ComposeSet/meter (music, game-studio, newsroom),
+PickMatchingTrio (kitchen), MatchAndCare (vet), SequenceCards (weather),
+BalanceMeters (green-city), plus the design-review #3 distinct verbs —
+TracePath (spaceport, `85017ab`) and ShootTarget (robotics, `f7ed6ff`).
+DragToSlot is no longer used by a shipped station (Robotics moved to ShootTarget)
+but remains a supported pattern.
 
 ### Accessory fit
 
