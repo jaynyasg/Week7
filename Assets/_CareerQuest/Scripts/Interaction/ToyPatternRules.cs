@@ -55,6 +55,7 @@ namespace CareerQuest
         public const string ComposeTargetId = "target.compose";
         public const string CareTargetId = "target.care";
         public const string BuildTargetId = "target.build";
+        public const string GoalTargetId = "target.goal";
         public const string SlotTargetPrefix = "slot.";
         public const string BinTargetPrefix = "bin.";
         public const string MarkTargetPrefix = "mark.";
@@ -503,6 +504,12 @@ namespace CareerQuest
                     return WaypointTargetPrefix + definition.ObjectId;
                 case ToyPatternId.ComposeSet:
                     return ComposeTargetId;
+                case ToyPatternId.ShootTarget:
+                    // One shared goal (the rescue spot): every shot lands in the
+                    // same target in any order. Distinct from SequenceCards/Trace
+                    // (ordered) and from per-toy slots — the variety is the launch
+                    // verb, validated onto a single goal zone.
+                    return GoalTargetId;
                 case ToyPatternId.MatchAndCare:
                     return definition.Role == PartyStationObjectRole.Clue
                         && !string.IsNullOrEmpty(definition.TargetId)

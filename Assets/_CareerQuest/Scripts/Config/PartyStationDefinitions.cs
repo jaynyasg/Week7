@@ -49,20 +49,20 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "Robotics Rescue",
-                new[] { "build", "rescue" },
-                ToyPatternId.DragToSlot,
+                new[] { "launch", "rescue" },
+                ToyPatternId.ShootTarget,
                 "Bolt the Bench Buddy",
                 "upbeat build coach",
-                "A lunchbox robot lost its parts! Rebuild it and pick a rescue route.",
+                "The lunchbox robot is rebuilt — launch each part to the rescue spot!",
                 new[]
                 {
                     Obj(id, "battery_toast", "Battery Toast", PartyStationObjectRole.CoreTask, "", "react.pop", "Building"),
                     Obj(id, "wheel_sandwich", "Wheel Sandwich", PartyStationObjectRole.CoreTask, "", "react.pop", "Building"),
                     Obj(id, "sensor_sticker", "Sensor Sticker", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
-                    Obj(id, "route_cards", "Route Cards", PartyStationObjectRole.Clue, "rescue_flag", "react.glow", "Reasoning"),
+                    Obj(id, "route_cards", "Route Beacon", PartyStationObjectRole.Clue, "rescue_flag", "react.glow", "Reasoning"),
                     Obj(id, "rescue_flag", "Rescue Flag", PartyStationObjectRole.Reaction, "route_cards", "react.cheer")
                 },
-                "Place three robot parts, then pick the route that matches the clue.",
+                "Pull back and launch each robot part to land it on the rescue spot.",
                 new[]
                 {
                     new TraitDelta("Building", 5),
@@ -82,34 +82,34 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Place three robot parts, then pick the route that matches the clue.",
-                        "Bolt beeps: the lunchbox robot lost its parts on the way to a rescue!",
-                        "Try a part that matches the empty slot shape.",
-                        "Watch the glowing slot — that part goes there next.",
-                        "Beep-beep! The robot is rebuilt and rolling on the steady route!",
+                        "Pull back and launch each robot part to land it on the rescue spot.",
+                        "Bolt beeps: the robot is built — launch every part to the rescue spot!",
+                        "Pull a part back from the pad, then let go to launch it.",
+                        "Aim for the glowing rescue spot, then release to fling it home.",
+                        "Beep-beep! Every part landed — the rescue rover rolls out!",
                         "Finish the rescue to earn the Tool Belt!",
-                        "You rebuilt the lunchbox robot and chose the steady rescue route. You practiced Building + Reasoning. New gear: Tool Belt.",
+                        "You launched every part onto the rescue spot and sent the rescue rover. You practiced Building + Reasoning. New gear: Tool Belt.",
                         "The rescued rover spins a happy little victory circle."),
                     new PartyStationSeedDefinition(
                         $"{id}.moon_cart",
-                        "Moon Cart Tune-Up",
+                        "Moon Cart Launch",
                         false,
-                        "The moon cart wobbled to a stop! Fix three systems and cross the crater.",
+                        "The moon cart parts scattered! Launch each one onto the rescue spot to rebuild it.",
                         new[]
                         {
                             Obj(id, "moon_wheel", "Moon Wheel", PartyStationObjectRole.CoreTask, "", "react.pop", "Building"),
                             Obj(id, "flashlight_eye", "Flashlight Eye", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Building"),
                             Obj(id, "antenna_straw", "Antenna Straw", PartyStationObjectRole.CoreTask, "", "react.pop", "Focus"),
                             Obj(id, "fuel_snack_pack", "Fuel Snack Pack", PartyStationObjectRole.Helper, "moon_wheel", "react.bounce"),
-                            Obj(id, "crater_map", "Crater Map", PartyStationObjectRole.Clue, "antenna_straw", "react.glow", "Reasoning")
+                            Obj(id, "crater_map", "Crater Beacon", PartyStationObjectRole.Clue, "antenna_straw", "react.glow", "Reasoning")
                         },
-                        "Repair three moon-cart systems, then choose the safest crater crossing.",
-                        "Bolt waves: this moon cart needs a tune-up before the crater crossing!",
-                        "Check the cart for a wobbly spot that needs a part.",
-                        "The crater map glows near the safest path — follow it.",
-                        "The moon cart hums across the crater like a champ!",
+                        "Pull back and launch each moon-cart part onto the rescue spot.",
+                        "Bolt waves: launch the moon-cart parts onto the rescue spot to rebuild it!",
+                        "Pull a part back from the pad, then let go to launch it.",
+                        "Aim for the glowing rescue spot, then release to fling it home.",
+                        "Every part landed — the moon cart hums back to life!",
                         "Tune up the cart to earn the Tool Belt!",
-                        "You tuned the moon cart and guided it across the safest crater path. You practiced Building + Focus. New gear: Tool Belt.",
+                        "You launched every moon-cart part onto the rescue spot. You practiced Building + Focus. New gear: Tool Belt.",
                         "The moon cart flashes its flashlight eye in thanks.")
                 });
         }

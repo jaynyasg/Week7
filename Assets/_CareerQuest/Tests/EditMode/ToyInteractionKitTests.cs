@@ -77,7 +77,8 @@ namespace CareerQuest.Tests
         {
             var kit = MountRobotics(out var controller, out _);
 
-            // Robotics (DragToSlot): one zone per chain toy's slot.
+            // Robotics (ShootTarget): one shared goal zone (the rescue spot); the
+            // kit still mounts one zone per rule TargetId, whatever the verb.
             Assert.That(kit.Zones.Count, Is.EqualTo(controller.Rules.TargetIds.Count));
             foreach (var targetId in controller.Rules.TargetIds)
             {
@@ -123,8 +124,8 @@ namespace CareerQuest.Tests
             Assert.That(controller.CurrentHintLine, Is.EqualTo(controller.Seed.EscalationHintLine));
             Assert.That(controller.HighlightObjectId, Is.EqualTo(controller.Rules.NextExpectedObjectId));
 
-            // An accepted action recovers the ladder.
-            controller.TrySubmitAction(new ToyAction("battery_toast", "slot.battery_toast"));
+            // An accepted action (a shot on the goal) recovers the ladder.
+            controller.TrySubmitAction(new ToyAction("battery_toast", ToyPatternRules.GoalTargetId));
             Assert.That(controller.HintLevel, Is.EqualTo(0));
             Assert.That(controller.HighlightObjectId, Is.Null);
         }
@@ -160,7 +161,7 @@ namespace CareerQuest.Tests
 
             // Locked: completion bounces further submissions gently and never
             // re-fires Completed (completion idempotence).
-            var locked = controller.TrySubmitAction(new ToyAction("battery_toast", "slot.battery_toast"));
+            var locked = controller.TrySubmitAction(new ToyAction("battery_toast", ToyPatternRules.GoalTargetId));
             Assert.That(locked.RejectReason, Is.EqualTo(ToyRejectReason.Locked));
             Assert.That(lastReject, Is.EqualTo(ToyRejectReason.Locked));
             Assert.That(completedCount, Is.EqualTo(1));
@@ -184,7 +185,7 @@ namespace CareerQuest.Tests
             Assert.That(controller.Complete, Is.False);
             Assert.That(controller.HintLevel, Is.EqualTo(0));
             Assert.That(controller.TrySubmitAction(
-                new ToyAction("battery_toast", "slot.battery_toast")).IsAccepted, Is.True);
+                new ToyAction("battery_toast", ToyPatternRules.GoalTargetId)).IsAccepted, Is.True);
         }
 
         [Test]

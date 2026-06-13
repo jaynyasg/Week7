@@ -78,7 +78,7 @@ namespace CareerQuest.Tests
             var rejectsBefore = state.LastRejectSubmissionId;
             var straggler = state.ApplySubmission(
                 state.ObjectIndexFor("battery_toast"),
-                state.TargetIndexFor("slot.battery_toast"),
+                state.TargetIndexFor(ToyPatternRules.GoalTargetId),
                 0,
                 99,
                 SimulatedPartnerClientId);
@@ -96,7 +96,7 @@ namespace CareerQuest.Tests
             var state = BeginRobotics();
             var hostClientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
             var batteryIndex = state.ObjectIndexFor("battery_toast");
-            var slotIndex = state.TargetIndexFor("slot.battery_toast");
+            var slotIndex = state.TargetIndexFor(ToyPatternRules.GoalTargetId);
 
             // Player A (host) lands the toy; partner B races the same toy.
             Assert.That(state.ApplySubmission(batteryIndex, slotIndex, 0, 1, hostClientId),
@@ -180,7 +180,7 @@ namespace CareerQuest.Tests
             // Mid-attempt join must never wipe partner progress.
             var attemptBefore = state.AttemptNumber;
             state.ApplySubmission(
-                state.ObjectIndexFor("battery_toast"), state.TargetIndexFor("slot.battery_toast"), 0, 1, hostClientId);
+                state.ObjectIndexFor("battery_toast"), state.TargetIndexFor(ToyPatternRules.GoalTargetId), 0, 1, hostClientId);
             state.BeginAttempt();
             Assert.That(state.AcceptedCount, Is.EqualTo(1), "Join-in-progress preserves partner progress.");
             Assert.That(state.AttemptNumber, Is.EqualTo(attemptBefore));
@@ -205,7 +205,7 @@ namespace CareerQuest.Tests
             Assert.That(state.Complete, Is.False);
             Assert.That(state.AttemptNumber, Is.EqualTo(attemptBefore + 1));
             Assert.That(state.ApplySubmission(
-                    state.ObjectIndexFor("battery_toast"), state.TargetIndexFor("slot.battery_toast"), 0, 50, hostClientId),
+                    state.ObjectIndexFor("battery_toast"), state.TargetIndexFor(ToyPatternRules.GoalTargetId), 0, 50, hostClientId),
                 Is.EqualTo(ToyActionSubmissionResult.Accepted),
                 "Submissions are accepted again on the fresh attempt.");
 
@@ -329,7 +329,7 @@ namespace CareerQuest.Tests
             Assert.That(state.HeldPieceIndexForPartner(0UL), Is.EqualTo(batteryIndex));
 
             state.ApplySubmission(
-                batteryIndex, state.TargetIndexFor("slot.battery_toast"), 0, 1, SimulatedPartnerClientId);
+                batteryIndex, state.TargetIndexFor(ToyPatternRules.GoalTargetId), 0, 1, SimulatedPartnerClientId);
             Assert.That(state.HeldPieceIndexFor(SimulatedPartnerClientId), Is.EqualTo(-1),
                 "Accepts clear the sender's held flag.");
 

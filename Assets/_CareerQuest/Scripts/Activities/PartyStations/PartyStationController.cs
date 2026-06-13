@@ -778,6 +778,18 @@ namespace CareerQuest
                     waypointId => TrySubmitDrop(waypointId, rules.ExpectedTargetFor(waypointId), 0));
             }
 
+            // Design-review #3: ShootTarget lays a launch pad + goal over the
+            // SAME drop seam (toys launched, not dragged onto pads) so the player
+            // aims and flings instead of placing tokens.
+            if (rules.Pattern == ToyPatternId.ShootTarget)
+            {
+                PartyStationRenderer.MountLaunchRange(
+                    _kit,
+                    rules,
+                    _accent,
+                    shotId => TrySubmitDrop(shotId, rules.ExpectedTargetFor(shotId), 0));
+            }
+
             // Pre-existing shared progress (joining a partner mid-attempt)
             // renders on mount without celebration spam.
             SyncFromNetwork(celebrateNew: false);
@@ -1168,6 +1180,8 @@ namespace CareerQuest
                     return "built";
                 case ToyPatternId.TracePath:
                     return "traced";
+                case ToyPatternId.ShootTarget:
+                    return "launched";
                 default:
                     return "placed";
             }

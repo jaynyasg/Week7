@@ -25,7 +25,18 @@ namespace CareerQuest
         /// SequenceCards (strict authored order); only the input verb and the
         /// route layout differ, so it routes the same host-validated action seam.
         /// </summary>
-        TracePath
+        TracePath,
+
+        /// <summary>
+        /// Design-review #3 (distinct verbs): the player pulls a toy back from a
+        /// launch pad and releases to LAUNCH it at one shared goal (the rescue
+        /// spot) — aim + power, not placement. Each chain toy lands in the goal
+        /// in any order (acceptance is any-order like ComposeSet); the spatial
+        /// "did this shot reach the goal?" skill lives in the launcher input
+        /// component, while the rules just validate the toy onto the shared goal
+        /// target — so it routes the same host-validated action seam.
+        /// </summary>
+        ShootTarget
     }
 
     /// <summary>

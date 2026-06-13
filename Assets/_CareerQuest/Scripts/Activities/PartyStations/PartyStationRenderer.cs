@@ -29,6 +29,9 @@ namespace CareerQuest
         public const string TaskRingName = "ToyTaskRing";
         public const string TraceRouteName = "StationTraceRoute";
         public const string TraceStepLabelName = "StationTraceStep";
+        public const string LaunchPadName = "StationLaunchPad";
+        public const string LaunchGoalName = "StationLaunchGoal";
+        public const string LaunchToyName = "StationLaunchToy";
 
         /// <summary>Optional poke-toys render at this alpha so the actionable set stands out.</summary>
         public const float OptionalToyAlpha = 0.45f;
@@ -319,6 +322,112 @@ namespace CareerQuest
         }
 
         /// <summary>
+        /// Design-review #3 ShootTarget range: parks the (single) shared goal
+        /// zone at the top as the "Rescue Spot" target ring, lays a launch pad at
+        /// the bottom, hides the kit's tray pieces, and fans the chain toys across
+        /// the pad as pull-back-and-release launchers over the SAME drop seam. The
+        /// player drags a toy back from the pad and lets go to fling it at the
+        /// goal — aim + power, a distinct verb from dragging a token onto a pad.
+        /// A short shot just bounces back (no harsh fail, R19); a shot that lands
+        /// in the goal submits through the host-validated seam. Non-color cues:
+        /// the target ring (shape), the pad (position), the aim guide while
+        /// dragging (motion). Launchers ride their own objects under the kit root,
+        /// so kit teardown still owns them.
+        /// </summary>
+        public static void MountLaunchRange(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitShot)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitShot == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // ShootTarget launches the toys; the tray pieces are not dragged onto
+            // pads. Hide every kit piece so only the pad launchers are interactable.
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            // The one shared goal zone becomes the rescue-spot target ring at the
+            // top. Repositioning the kit zone keeps its drop seam + label intact.
+            var goalLocal = new Vector3(0f, 2.45f, 0f);
+            var goalRadius = 0.85f;
+            var goalZone = kit.ZoneFor(ToyPatternRules.GoalTargetId);
+            if (goalZone != null)
+            {
+                goalZone.transform.localPosition = goalLocal;
+
+                // Concentric target ring (shape cue): an accent disc with a paper
+                // bullseye, drawn under the launch toys so a landed shot reads.
+                var ring = new GameObject(LaunchGoalName, typeof(SpriteRenderer));
+                ring.transform.SetParent(goalZone.transform, false);
+                ring.transform.localScale = new Vector3(goalRadius * 2f, goalRadius * 2f, 1f);
+                var ringRenderer = ring.GetComponent<SpriteRenderer>();
+                ringRenderer.sprite = CampusWorldSprites.Circle;
+                var ringColor = accent;
+                ringColor.a = 0.45f;
+                ringRenderer.color = ringColor;
+                ringRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 2;
+
+                var bullseye = new GameObject($"{LaunchGoalName}Inner", typeof(SpriteRenderer));
+                bullseye.transform.SetParent(goalZone.transform, false);
+                bullseye.transform.localScale = new Vector3(goalRadius, goalRadius, 1f);
+                var bullRenderer = bullseye.GetComponent<SpriteRenderer>();
+                bullRenderer.sprite = CampusWorldSprites.Circle;
+                bullRenderer.color = PaperColor;
+                bullRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 1;
+            }
+
+            // Launch pad at the bottom: a wide paper plate the toys sit on.
+            var padLocal = new Vector3(0f, -2.3f, 0f);
+            var pad = new GameObject(LaunchPadName, typeof(SpriteRenderer));
+            pad.transform.SetParent(kit.Root, false);
+            pad.transform.localPosition = padLocal;
+            pad.transform.localScale = new Vector3(4.6f, 0.5f, 1f);
+            var padRenderer = pad.GetComponent<SpriteRenderer>();
+            padRenderer.sprite = CampusWorldSprites.Square;
+            padRenderer.color = PadColor;
+            padRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 3;
+
+            // Fan the chain toys across the pad, each its own pull-back launcher.
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var origin = new Vector3(Mathf.Lerp(-1.9f, 1.9f, t), padLocal.y + 0.55f, 0f);
+
+                var toy = new GameObject($"{LaunchToyName}{i}", typeof(SpriteRenderer));
+                toy.transform.SetParent(kit.Root, false);
+                toy.transform.localPosition = origin;
+                toy.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+                var toyRenderer = toy.GetComponent<SpriteRenderer>();
+                toyRenderer.sprite = CampusWorldSprites.Circle;
+                toyRenderer.color = accent;
+                toyRenderer.sortingOrder = ToyInteractionKit.PieceSortingOrder;
+
+                AddWorldLabel(toy.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -0.62f, 0f), 1.4f, ToyInteractionKit.PieceSortingOrder + 2);
+
+                var localId = objectId;
+                var launcher = toy.AddComponent<StationLauncher>();
+                launcher.Configure(localId, accent, origin, goalLocal, goalRadius, () => submitShot(localId));
+            }
+        }
+
+        /// <summary>
         /// Kid-readable label for a rule target, derived from the seed objects
         /// (slot/mark/meter targets name their toy; shared targets name the
         /// pattern verb). Never an internal target id string.
@@ -368,6 +477,8 @@ namespace CareerQuest
                     return "Care Spot";
                 case ToyPatternRules.BuildTargetId:
                     return "Build Spot";
+                case ToyPatternRules.GoalTargetId:
+                    return "Rescue Spot";
                 default:
                     return "Drop Spot";
             }
@@ -700,6 +811,218 @@ namespace CareerQuest
             renderer.sprite = CampusWorldSprites.Circle;
             renderer.color = _accent;
             renderer.sortingOrder = (pieceRenderer != null ? pieceRenderer.sortingOrder : ToyInteractionKit.ZoneSortingOrder) + 5;
+        }
+    }
+
+    /// <summary>
+    /// Design-review #3 ShootTarget launcher: one pull-back-and-release toy on
+    /// the launch pad. Dragging the toy back from its pad origin loads aim +
+    /// power; releasing flings it the opposite way — a shot that lands within
+    /// the goal radius submits through the station's drop seam, a short/wide
+    /// shot bounces gently back to the pad (never a fail). The flight model is
+    /// deliberately simple and pure (landing = origin − pull), so the launch
+    /// decision is deterministic and the tests drive the same <see cref="Launch"/>
+    /// seam the pointer does (house idiom, mirrors <see cref="StationWaypoint.Tap"/>
+    /// and StationMeterWidget). The spatial aim skill lives here; the rules only
+    /// validate the toy onto the shared goal.
+    /// </summary>
+    public class StationLauncher : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    {
+        public const string AimGuideName = "LaunchAimGuide";
+        public const string ScoredMarkName = "LaunchScored";
+
+        /// <summary>Max pull-back distance (world units) — clamps a wild yank.</summary>
+        public const float MaxPull = 6f;
+
+        private string _objectId;
+        private Color _accent;
+        private Vector3 _originLocal;
+        private Vector3 _goalLocal;
+        private float _goalRadius;
+        private Func<DropSubmitResult> _submit;
+        private bool _scored;
+        private SpriteRenderer _aimGuide;
+
+        public string ObjectId => _objectId;
+        public bool Scored => _scored;
+
+        /// <summary>
+        /// The exact pull that lands a shot dead-center in the goal — drives the
+        /// golden/test path so a launch is a guaranteed hit without a camera.
+        /// </summary>
+        public Vector2 PerfectPull => (Vector2)(_originLocal - _goalLocal);
+
+        public void Configure(string objectId, Color accent, Vector3 originLocal, Vector3 goalLocal, float goalRadius, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _originLocal = originLocal;
+            _goalLocal = goalLocal;
+            _goalRadius = goalRadius;
+            _submit = submit;
+        }
+
+        /// <summary>Where a shot with this pull-back lands (pure: opposite the pull, same distance).</summary>
+        public Vector2 LandingFor(Vector2 pull)
+        {
+            return (Vector2)_originLocal - pull;
+        }
+
+        public bool IsHit(Vector2 pull)
+        {
+            return Vector2.Distance(LandingFor(pull), _goalLocal) <= _goalRadius;
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (_scored)
+            {
+                return;
+            }
+
+            AudioCueCatalog.TryPlay(AudioCueIds.DragPickup);
+            EnsureAimGuide();
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (_scored)
+            {
+                return;
+            }
+
+            var pull = PullFromPointer(eventData);
+            transform.localPosition = _originLocal - (Vector3)pull;
+            UpdateAimGuide(pull);
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            if (_scored)
+            {
+                return;
+            }
+
+            var pull = PullFromPointer(eventData);
+            ClearAimGuide();
+            Launch(pull);
+        }
+
+        /// <summary>
+        /// THE launch seam (pointer + tests share it). Returns true when the shot
+        /// landed in the goal AND the rules accepted it; a miss or a bounced
+        /// submit returns the toy to the pad, gently.
+        /// </summary>
+        public bool Launch(Vector2 pull)
+        {
+            if (_submit == null || _scored)
+            {
+                return false;
+            }
+
+            if (!IsHit(pull))
+            {
+                ReturnToPad();
+                AudioCueCatalog.TryPlay(AudioCueIds.DropReject);
+                return false; // short/wide shot: bounce back, never a fail
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                ReturnToPad();
+                return false;
+            }
+
+            _scored = true;
+            transform.localPosition = _goalLocal;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            MarkScored();
+            return true;
+        }
+
+        private Vector2 PullFromPointer(PointerEventData eventData)
+        {
+            var camera = Camera.main;
+            if (camera == null || transform.parent == null)
+            {
+                return Vector2.zero;
+            }
+
+            var screen = new Vector3(eventData.position.x, eventData.position.y, -camera.transform.position.z);
+            var world = camera.ScreenToWorldPoint(screen);
+            var local = transform.parent.InverseTransformPoint(world);
+            var pull = (Vector2)(_originLocal - local);
+            return Vector2.ClampMagnitude(pull, MaxPull);
+        }
+
+        private void EnsureAimGuide()
+        {
+            if (_aimGuide != null || transform.parent == null)
+            {
+                return;
+            }
+
+            var guide = new GameObject(AimGuideName, typeof(SpriteRenderer));
+            guide.transform.SetParent(transform.parent, false);
+            _aimGuide = guide.GetComponent<SpriteRenderer>();
+            _aimGuide.sprite = CampusWorldSprites.Square;
+            var color = _accent;
+            color.a = 0.4f;
+            _aimGuide.color = color;
+            _aimGuide.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 2;
+        }
+
+        private void UpdateAimGuide(Vector2 pull)
+        {
+            if (_aimGuide == null)
+            {
+                return;
+            }
+
+            var landing = LandingFor(pull);
+            var a = (Vector2)_originLocal;
+            var delta = landing - a;
+            var length = delta.magnitude;
+            if (length < 0.001f)
+            {
+                _aimGuide.enabled = false;
+                return;
+            }
+
+            _aimGuide.enabled = true;
+            var t = _aimGuide.transform;
+            t.localPosition = (Vector3)((a + landing) * 0.5f);
+            t.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+            t.localScale = new Vector3(length, 0.06f, 1f);
+        }
+
+        private void ClearAimGuide()
+        {
+            if (_aimGuide != null)
+            {
+                Destroy(_aimGuide.gameObject);
+                _aimGuide = null;
+            }
+        }
+
+        private void ReturnToPad()
+        {
+            transform.localPosition = _originLocal;
+        }
+
+        private void MarkScored()
+        {
+            var pieceRenderer = GetComponent<SpriteRenderer>();
+            var mark = new GameObject(ScoredMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(1.25f, 1.25f, 1f);
+            var renderer = mark.GetComponent<SpriteRenderer>();
+            renderer.sprite = CampusWorldSprites.Circle;
+            var glow = _accent;
+            glow.a = 0.5f;
+            renderer.color = glow;
+            renderer.sortingOrder = (pieceRenderer != null ? pieceRenderer.sortingOrder : ToyInteractionKit.PieceSortingOrder) - 1;
         }
     }
 }

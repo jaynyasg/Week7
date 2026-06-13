@@ -53,22 +53,27 @@ namespace CareerQuest.Tests
                 Assert.That(CountActive(PartyStationRenderer.SetRootName), Is.EqualTo(1), $"cycle {cycle}");
                 Assert.That(CountActive(StationGuideView.PanelName), Is.EqualTo(1), $"cycle {cycle}");
                 Assert.That(CountActive(StationRewardPreview.PanelName), Is.EqualTo(1), $"cycle {cycle}");
-                Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                // ShootTarget hides the kit's launcher-source pieces (the player
+                // launches them off the pad), so count inactive too — the leak
+                // check is about non-accumulation, not on-screen visibility.
+                Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                     Is.EqualTo(RoboticsPieceCount), $"cycle {cycle}: pieces never accumulate");
 
                 // Raise a level-2 hint highlight so churn covers pulse teardown.
+                // ShootTarget pulses the next-expected toy on its (hidden) kit
+                // piece, so count inactive too — same as the piece count above.
                 controller.TrySubmitDrop("battery_toast", "slot.wheel_sandwich");
                 controller.TrySubmitDrop("battery_toast", "slot.wheel_sandwich");
-                Assert.That(Object.FindObjectsByType<ToyHintPulse>(FindObjectsSortMode.None).Length,
+                Assert.That(Object.FindObjectsByType<ToyHintPulse>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                     Is.EqualTo(1), $"cycle {cycle}: the hint pulse is live before exit");
 
                 app.ShowCampus();
                 yield return null;
                 yield return null; // deferred Destroy of the cleared world/UI
 
-                Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                     Is.EqualTo(0), $"cycle {cycle}: no orphaned drag pieces on campus");
-                Assert.That(Object.FindObjectsByType<ToyHintPulse>(FindObjectsSortMode.None).Length,
+                Assert.That(Object.FindObjectsByType<ToyHintPulse>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                     Is.EqualTo(0), $"cycle {cycle}: no orphaned hint pulses");
                 Assert.That(CountActive(ToyInteractionKit.DefaultPlayfieldName), Is.EqualTo(0), $"cycle {cycle}");
                 Assert.That(CountActive(PartyStationRenderer.SetRootName), Is.EqualTo(0), $"cycle {cycle}");
@@ -185,11 +190,11 @@ namespace CareerQuest.Tests
             Assert.That(CountActive(ToyInteractionKit.DefaultPlayfieldName), Is.EqualTo(1),
                 "A rerender race never stacks playfields.");
             Assert.That(CountActive(StationGuideView.PanelName), Is.EqualTo(1));
-            Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+            Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                 Is.EqualTo(RoboticsPieceCount));
 
-            // The surviving surface is fully playable.
-            Assert.That(controller.TrySubmitDrop("battery_toast", "slot.battery_toast"),
+            // The surviving surface is fully playable — a shot on the goal lands.
+            Assert.That(controller.TrySubmitDrop("battery_toast", ToyPatternRules.GoalTargetId),
                 Is.EqualTo(DropSubmitResult.Accepted));
 
             Object.DestroyImmediate(appObject);

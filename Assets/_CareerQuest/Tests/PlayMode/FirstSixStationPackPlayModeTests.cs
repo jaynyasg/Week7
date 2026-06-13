@@ -22,7 +22,7 @@ namespace CareerQuest.Tests
         /// <summary>The first-six pack with each station's pattern proof (plan U5).</summary>
         private static readonly (string StationId, ToyPatternId Pattern)[] FirstSixStations =
         {
-            (CareerQuestCatalog.RoboticsGarageId, ToyPatternId.DragToSlot),
+            (CareerQuestCatalog.RoboticsGarageId, ToyPatternId.ShootTarget),
             (CareerQuestCatalog.AiLabId, ToyPatternId.SortToBin),
             (CareerQuestCatalog.CommunityKitchenId, ToyPatternId.PickMatchingTrio),
             (CareerQuestCatalog.MusicStudioId, ToyPatternId.ComposeSet),

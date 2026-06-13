@@ -293,7 +293,9 @@ namespace CareerQuest.Tests
         public void TargetLabelsDeriveFromSeedObjects()
         {
             var roboticsRules = ToyPatternRules.ForSeed(Robotics, Robotics.DefaultSeed);
-            Assert.That(PartyStationRenderer.TargetLabelFor(roboticsRules, "slot.battery_toast"), Is.EqualTo("Battery Toast"));
+            // Robotics is ShootTarget: every shot lands on the one shared goal,
+            // labeled the rescue spot.
+            Assert.That(PartyStationRenderer.TargetLabelFor(roboticsRules, ToyPatternRules.GoalTargetId), Is.EqualTo("Rescue Spot"));
 
             var kitchen = PartyStationDefinitions.GetById(CareerQuestCatalog.CommunityKitchenId);
             var kitchenRules = ToyPatternRules.ForSeed(kitchen, kitchen.DefaultSeed);

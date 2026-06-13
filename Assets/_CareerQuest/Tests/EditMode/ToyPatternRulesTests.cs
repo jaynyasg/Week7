@@ -48,22 +48,58 @@ namespace CareerQuest.Tests
         }
 
         [Test]
-        public void DragToSlotRejectsWrongSlotUnknownAndEmptySubmissions()
+        public void ShootTargetRejectsWrongGoalUnknownAndEmptySubmissions()
         {
+            // Robotics is the ShootTarget proof (design-review #3): every shot
+            // lands on ONE shared goal (the rescue spot), so a shot aimed at any
+            // other target bounces gently as a wrong target — the spatial "did it
+            // reach the goal?" miss lives in the launcher, not the rules.
             var rules = RulesFor(CareerQuestCatalog.RoboticsGarageId);
 
-            // Wrong slot: a chain toy only lands on its own slot.
-            var wrongSlot = rules.Submit(new ToyAction("battery_toast", ToyPatternRules.SlotTargetPrefix + "wheel_sandwich"));
-            Assert.That(wrongSlot.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
+            Assert.That(rules.ExpectedTargetFor("battery_toast"), Is.EqualTo(ToyPatternRules.GoalTargetId));
+
+            // A shot at anything but the shared goal -> wrong target.
+            var wrongGoal = rules.Submit(new ToyAction("battery_toast", ToyPatternRules.SlotTargetPrefix + "wheel_sandwich"));
+            Assert.That(wrongGoal.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
 
             // Unknown and empty toys bounce as unknown.
-            Assert.That(rules.Submit(new ToyAction("mystery_widget", "slot.mystery_widget")).RejectReason,
+            Assert.That(rules.Submit(new ToyAction("mystery_widget", ToyPatternRules.GoalTargetId)).RejectReason,
                 Is.EqualTo(ToyRejectReason.UnknownObject));
             Assert.That(rules.Submit(new ToyAction(null, null)).RejectReason,
                 Is.EqualTo(ToyRejectReason.UnknownObject));
             Assert.That(rules.Submit(default).RejectReason, Is.EqualTo(ToyRejectReason.UnknownObject));
 
             Assert.That(rules.AcceptedCount, Is.EqualTo(0), "Rejects never advance progress.");
+        }
+
+        [Test]
+        public void ShootTargetLandsShotsInGoalInAnyOrder()
+        {
+            // The ShootTarget signature (design-review #3): unlike SequenceCards/
+            // TracePath (strict order) or DragToSlot (one slot per toy), every
+            // chain toy launches onto the SAME shared goal in ANY order, and the
+            // station completes once they have all landed.
+            var rules = RulesFor(CareerQuestCatalog.RoboticsGarageId);
+
+            // Every chain toy resolves to the one shared goal target.
+            foreach (var objectId in rules.DraggableObjectIds)
+            {
+                Assert.That(rules.ExpectedTargetFor(objectId), Is.EqualTo(ToyPatternRules.GoalTargetId), objectId);
+            }
+
+            // Launch out of authored order — any order is accepted (no OutOfOrder).
+            Assert.That(rules.Submit(new ToyAction("sensor_sticker", ToyPatternRules.GoalTargetId)).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("battery_toast", ToyPatternRules.GoalTargetId)).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("route_cards", ToyPatternRules.GoalTargetId)).IsAccepted, Is.True);
+            Assert.That(rules.Complete, Is.False, "Still one shot short of the goal.");
+
+            // The last shot lands and completes the rescue.
+            Assert.That(rules.Submit(new ToyAction("wheel_sandwich", ToyPatternRules.GoalTargetId)).StationCompleted, Is.True);
+
+            // The rescue flag is a reaction poke — it acknowledges, never advances.
+            var freshRules = RulesFor(CareerQuestCatalog.RoboticsGarageId);
+            Assert.That(freshRules.Submit(new ToyAction("rescue_flag", ToyPatternRules.GoalTargetId)).Kind,
+                Is.EqualTo(ToySubmissionKind.ReactionOnly));
         }
 
         [Test]

@@ -17,6 +17,12 @@ namespace CareerQuest.Tests
     /// ceremony, gallery/evolution/reveal compatibility, alternate-seed replay
     /// without completion-count inflation, and the 2P submit seam (mirrors the
     /// *NetworkSeamPlayModeTests single-process pattern).
+    ///
+    /// Robotics is the ShootTarget proof (design-review #3): the player pulls a
+    /// toy back from the launch pad and releases to fling it at the shared goal
+    /// (the rescue spot) — every shot routes the SAME host-validated drop seam,
+    /// so the lifecycle/result/2P contract above is unchanged; only the input
+    /// verb differs. RoboticsProvesShootTargetLaunchToGoal drives the launcher.
     /// </summary>
     public class PartyStationRoboticsPlayModeTests
     {
@@ -63,7 +69,8 @@ namespace CareerQuest.Tests
             // plus the reaction toy, one zone per slot target.
             Assert.That(controller.PieceFor("battery_toast"), Is.Not.Null);
             Assert.That(controller.PieceFor("rescue_flag"), Is.Not.Null, "Reaction toys mount too (no dead toys).");
-            Assert.That(controller.ZoneFor("slot.battery_toast"), Is.Not.Null);
+            Assert.That(controller.ZoneFor(ToyPatternRules.GoalTargetId), Is.Not.Null,
+                "ShootTarget lays one shared goal (the rescue spot), not per-toy slots.");
             Assert.That(GameObject.Find(PartyStationRenderer.SetRootName), Is.Not.Null,
                 "The station set dressing mounts with the room scene.");
 
@@ -90,7 +97,8 @@ namespace CareerQuest.Tests
 
             var seed = Robotics.DefaultSeed;
 
-            // Wrong attempt -> gentle bounce + the seed's level-1 hint line.
+            // Wrong attempt (a shot at anything but the shared goal) -> gentle
+            // bounce + the seed's level-1 hint line.
             Assert.That(controller.TrySubmitDrop("battery_toast", "slot.wheel_sandwich"),
                 Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
             Assert.That(TmpText(StationGuideView.LineTextName), Is.EqualTo(seed.HintLine));
@@ -103,8 +111,8 @@ namespace CareerQuest.Tests
             Assert.That(ToyHintPulse.IsShownOn(controller.PieceFor("battery_toast").gameObject), Is.True,
                 "The level-2 hint pulses the next expected toy.");
 
-            // An accepted action recovers the ladder back to the intro line.
-            Assert.That(controller.TrySubmitDrop("battery_toast", "slot.battery_toast"),
+            // A shot that lands in the goal recovers the ladder back to the intro line.
+            Assert.That(controller.TrySubmitDrop("battery_toast", ToyPatternRules.GoalTargetId),
                 Is.EqualTo(DropSubmitResult.Accepted));
             Assert.That(TmpText(StationGuideView.LineTextName), Is.EqualTo(seed.IntroLine));
             Assert.That(ToyHintPulse.IsShownOn(controller.PieceFor("battery_toast").gameObject), Is.False);
@@ -169,7 +177,7 @@ namespace CareerQuest.Tests
 
             // Duplicate gate: double-submit bounces gently, no second result,
             // no second reward event.
-            Assert.That(controller.TrySubmitDrop("battery_toast", "slot.battery_toast"),
+            Assert.That(controller.TrySubmitDrop("battery_toast", ToyPatternRules.GoalTargetId),
                 Is.EqualTo(DropSubmitResult.RejectedLocked));
             Assert.That(rewardEvents.Count, Is.EqualTo(1));
             Assert.That(app.Session.UniqueCompletedGames, Is.EqualTo(1));
@@ -261,9 +269,9 @@ namespace CareerQuest.Tests
 
             var batteryIndex = state.ObjectIndexFor("battery_toast");
 
-            // Wrong object/target from the partner: rejected, targeted at the
-            // SUBMITTER only, echoing the submission id — shared progress is
-            // untouched on every peer's read model.
+            // Wrong target from the partner (a shot at anything but the shared
+            // goal): rejected, targeted at the SUBMITTER only, echoing the
+            // submission id — shared progress is untouched on every peer's model.
             Assert.That(state.ApplySubmission(
                     batteryIndex, state.TargetIndexFor("slot.wheel_sandwich"), 0, 31, SimulatedPartnerClientId),
                 Is.EqualTo(ToyActionSubmissionResult.Rejected));
@@ -273,10 +281,10 @@ namespace CareerQuest.Tests
             Assert.That(state.LastRejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
             Assert.That(state.AcceptedCount, Is.EqualTo(0));
 
-            // Right object next: accepted into the host-validated shared state
-            // both players render from.
+            // The shot lands in the goal next: accepted into the host-validated
+            // shared state both players render from.
             Assert.That(state.ApplySubmission(
-                    batteryIndex, state.TargetIndexFor("slot.battery_toast"), 0, 32, SimulatedPartnerClientId),
+                    batteryIndex, state.TargetIndexFor(ToyPatternRules.GoalTargetId), 0, 32, SimulatedPartnerClientId),
                 Is.EqualTo(ToyActionSubmissionResult.Accepted));
             Assert.That(state.IsObjectAccepted("battery_toast"), Is.True,
                 "Both players see accepted progress from the shared read model.");
@@ -284,6 +292,75 @@ namespace CareerQuest.Tests
             Assert.That(state.Complete, Is.False);
 
             yield return NetcodePlayModeHarness.ShutdownNetwork();
+        }
+
+        // ------------------------------------------------------------------
+        // ShootTarget verb proof (design-review #3)
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Robotics proves ShootTarget through the real launcher input: each
+        /// chain toy is a pull-back-and-release launcher fanned across the pad. A
+        /// short shot (no power) lands shy of the goal and bounces gently —
+        /// progress is untouched, never a fail. A pull aimed dead at the rescue
+        /// spot lands in the goal and submits through the SAME host-validated drop
+        /// seam, so launching every part completes the station and emits the one
+        /// normal result. The launcher's Launch() seam is the one the pointer
+        /// drives too (house idiom, mirrors StationWaypoint.Tap()).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator RoboticsProvesShootTargetLaunchToGoal()
+        {
+            var appObject = new GameObject("party-robotics-shoot-test");
+            var app = appObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            var controller = PrepareController(appObject, quickPacing: true);
+            app.ShowPartyStation(CareerQuestCatalog.RoboticsGarageId);
+            yield return MountFrames();
+
+            // The intro beat holds launches; hand off into the challenge.
+            controller.Tick(PartyStationController.IntroHoldSeconds);
+
+            var rules = controller.Pattern.Rules;
+
+            // One launcher per chain toy (the reaction flag is a hidden poke, not
+            // a launcher), each resolving to the single shared goal target.
+            var launchers = Object.FindObjectsByType<StationLauncher>(FindObjectsSortMode.None)
+                .ToDictionary(l => l.ObjectId, l => l);
+            CollectionAssert.AreEquivalent(rules.DraggableObjectIds, launchers.Keys,
+                "Every chain toy mounts as a pad launcher.");
+            Assert.That(launchers.ContainsKey("rescue_flag"), Is.False, "Reaction pokes are not launchers.");
+
+            var battery = launchers["battery_toast"];
+            Assert.That(battery.ObjectId, Is.EqualTo("battery_toast"));
+
+            // A short shot (no power) lands at the pad, well shy of the goal: the
+            // launcher refuses it, never submits, and progress stays at zero.
+            Assert.That(battery.IsHit(Vector2.zero), Is.False, "A no-power shot falls short.");
+            Assert.That(battery.Launch(Vector2.zero), Is.False, "A short shot bounces, gently.");
+            Assert.That(battery.Scored, Is.False);
+            Assert.That(controller.IsToyAccepted("battery_toast"), Is.False, "A miss never advances progress.");
+
+            // A pull aimed dead-center at the rescue spot lands in the goal and
+            // submits through the host seam — the part is accepted.
+            Assert.That(battery.Launch(battery.PerfectPull), Is.True, "A shot on the goal scores.");
+            Assert.That(battery.Scored, Is.True);
+            Assert.That(controller.IsToyAccepted("battery_toast"), Is.True);
+
+            // Launch the remaining parts onto the goal in any order — the rescue
+            // completes and emits exactly one normal result through the seam.
+            foreach (var objectId in rules.DraggableObjectIds.Where(id => id != "battery_toast"))
+            {
+                Assert.That(launchers[objectId].Launch(launchers[objectId].PerfectPull), Is.True, objectId);
+            }
+
+            var result = app.Session.GetBestResult(CareerQuestCatalog.RoboticsGarageId);
+            Assert.That(result, Is.Not.Null, "Launching every part completes the station.");
+            Assert.That(result.Accuracy, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(app.Session.UniqueCompletedGames, Is.EqualTo(1));
+
+            Object.DestroyImmediate(appObject);
         }
 
         // ------------------------------------------------------------------
