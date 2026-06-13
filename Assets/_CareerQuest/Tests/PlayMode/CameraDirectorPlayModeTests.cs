@@ -69,21 +69,21 @@ namespace CareerQuest.Tests
 
             Assert.That(director.ActiveMode, Is.EqualTo(CameraDirectorMode.Follow));
             Assert.That(director.IsRestored, Is.False);
-            Assert.That(director.Camera.orthographicSize, Is.EqualTo(4.15f).Within(0.001f));
+            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.0f).Within(0.001f));
 
             TickMany(director, 120, 0.05f);
             var position = director.Camera.transform.position;
-            Assert.That(position.x, Is.EqualTo(0.8f).Within(0.01f), "follow should clamp at the hub's +x edge");
+            Assert.That(position.x, Is.EqualTo(3.5f).Within(0.01f), "follow should clamp at the hub's +x edge");
             Assert.That(position.y, Is.EqualTo(0f).Within(0.001f));
             Assert.That(position.z, Is.EqualTo(-10f).Within(0.001f));
 
             target.transform.position = new Vector3(-10f, 0f, 0f);
             TickMany(director, 120, 0.05f);
-            Assert.That(director.Camera.transform.position.x, Is.EqualTo(-0.8f).Within(0.01f), "follow should clamp at the hub's -x edge");
+            Assert.That(director.Camera.transform.position.x, Is.EqualTo(-3.5f).Within(0.01f), "follow should clamp at the hub's -x edge");
 
             target.transform.position = new Vector3(2f, 0f, 0f);
             TickMany(director, 120, 0.05f);
-            Assert.That(director.Camera.transform.position.x, Is.EqualTo(0.4f).Within(0.01f), "inside the clamp the camera tracks x * 0.2");
+            Assert.That(director.Camera.transform.position.x, Is.EqualTo(2f).Within(0.01f), "inside the clamp the camera tracks the player x 1:1");
             yield return null;
         }
 
@@ -212,11 +212,11 @@ namespace CareerQuest.Tests
 
             Assert.That(director.ActiveMode, Is.EqualTo(CameraDirectorMode.Follow));
             Assert.That(director.Camera.orthographic, Is.True);
-            Assert.That(director.Camera.orthographicSize, Is.EqualTo(4.15f).Within(0.001f), "legacy hub framing size preserved");
+            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.0f).Within(0.001f), "campus framing size (zoomed-in follow)");
 
             TickMany(director, 120, 0.05f);
             var position = director.Camera.transform.position;
-            Assert.That(position.x, Is.EqualTo(0.6f).Within(0.01f), "legacy framing: clamp(target.x * 0.2, +-0.8)");
+            Assert.That(position.x, Is.EqualTo(3.0f).Within(0.01f), "campus follow: clamp(target.x * 1.0, +-3.5)");
             Assert.That(position.y, Is.EqualTo(0f).Within(0.001f));
             Assert.That(position.z, Is.EqualTo(-10f).Within(0.001f));
 

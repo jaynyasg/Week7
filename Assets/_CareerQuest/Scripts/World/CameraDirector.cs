@@ -40,13 +40,22 @@ namespace CareerQuest
         public float PlaneY;
         public float PlaneZ;
 
-        /// <summary>Framing that matches the legacy HubCameraRig behavior exactly.</summary>
+        /// <summary>
+        /// Campus follow framing (design review #1: "the environment is too small
+        /// to fit everything practically"). The legacy framing showed the whole
+        /// 12.4-wide campus at once (orthoSize 4.15, near-fixed: x * 0.2 clamped
+        /// to ±0.8), so 13 doors + labels shrank to fit one screen. This zooms in
+        /// (~40% bigger content) and tracks the player 1:1 across the campus,
+        /// clamped so the view stays inside the widened grass band
+        /// (CampusWorldBuilder.AddGround). At orthoSize 3.0 the view half-width is
+        /// ~5.33; the ±3.5 clamp keeps the far edge at ±8.83, inside the ±9 grass.
+        /// </summary>
         public static CameraFollowSettings HubDefault => new CameraFollowSettings
         {
-            OrthographicSize = 4.15f,
-            HorizontalFactor = 0.2f,
-            HorizontalClamp = 0.8f,
-            LerpSpeed = 4f,
+            OrthographicSize = 3.0f,
+            HorizontalFactor = 1f,
+            HorizontalClamp = 3.5f,
+            LerpSpeed = 5f,
             PlaneY = 0f,
             PlaneZ = -10f
         };
