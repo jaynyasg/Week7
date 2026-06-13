@@ -69,6 +69,12 @@ namespace CareerQuest
         {
             _avatarView ??= GetComponent<AvatarRuntimeView>();
             _avatarView.ApplyAvatar(session?.SelectedAvatar ?? AvatarConfig.DefaultAvatar);
+
+            // U6: the local hub avatar wears its earned accessories in campus
+            // play (campus context = not ceremony). Derived from the session
+            // read model; follows this avatar's transform/flip for free.
+            _avatarView.BindAccessories(session, ceremonyContext: false);
+
             _entrances = entrances ?? Array.Empty<BuildingEntrance>();
             _onDestination = onDestination;
             _entryLatched = false;

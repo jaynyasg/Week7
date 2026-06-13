@@ -52,6 +52,9 @@ namespace CareerQuest
         private bool _sessionChangedSubscribed;
         private AudioDirector _audioDirector;
         private PauseMenuController _pauseMenu;
+        private PassportController _passport;
+        private AccessorySpotlightController _accessorySpotlight;
+        private PartyStationController _partyStation;
         private CeremonySubPhase _lastCeremonySubPhase;
         // P19: session-scoped memory of which city pieces already played their
         // arrival fanfare — one fanfare per piece per app session.
@@ -572,6 +575,11 @@ namespace CareerQuest
                 UiBuilder.Place(reveal.GetComponent<RectTransform>(), 520f, 0f, 140f, 46f);
             }
 
+            // U6 passport entry point: a kid-large corner button in every campus
+            // mode (the instruction-strip play path has no action bar), reaching
+            // the tabbed passport the same way the gallery is reached.
+            MountPassportButton();
+
             AttachDebug();
         }
 
@@ -826,7 +834,51 @@ namespace CareerQuest
         private void MountPartyStationSurface(CatalogEntry entry)
         {
             var controller = gameObject.GetComponent<PartyStationController>() ?? gameObject.AddComponent<PartyStationController>();
+
+            // U6 reward seam: every station completion appends exactly one
+            // reward event to the session log (R11). The controller is reused
+            // across mounts, so subscribe once (unsubscribe-then-subscribe is
+            // idempotent) and feed the session, never a second scoring channel.
+            if (_partyStation != controller)
+            {
+                if (_partyStation != null)
+                {
+                    _partyStation.RewardEventEmitted -= HandleStationRewardEvent;
+                }
+
+                controller.RewardEventEmitted -= HandleStationRewardEvent;
+                controller.RewardEventEmitted += HandleStationRewardEvent;
+                _partyStation = controller;
+            }
+
             controller.Render(_root, _session, this, CurrentResultSource(), entry.Id);
+        }
+
+        /// <summary>
+        /// U6: one reward event per station completion. The session log appends
+        /// it (combo-spark eligibility derives from the completed set), then the
+        /// station-end accessory spotlight plays the "you unlocked X!" beat over
+        /// the room. Presentation only (KTD8) — scoring already happened.
+        /// </summary>
+        private void HandleStationRewardEvent(StationRewardEvent stationEvent)
+        {
+            var rewardEvent = _session.AppendStationRewardEvent(stationEvent);
+            ShowAccessorySpotlight(rewardEvent);
+        }
+
+        private void ShowAccessorySpotlight(RewardEvent rewardEvent)
+        {
+            if (rewardEvent == null || _root == null)
+            {
+                return;
+            }
+
+            _accessorySpotlight ??= gameObject.GetComponent<AccessorySpotlightController>()
+                ?? gameObject.AddComponent<AccessorySpotlightController>();
+
+            // U9 seam: quiet mode (calm party-run) will gate the spotlight motion;
+            // until U9 wires its toggle the beat plays normally.
+            _accessorySpotlight.Show(_root, rewardEvent);
         }
 
         public void ShowGallery()
@@ -837,6 +889,34 @@ namespace CareerQuest
             }
 
             ShowGalleryInternal();
+        }
+
+        /// <summary>
+        /// U6 Quest Passport surface: the tabbed Badges/Gear/Combos/Results book,
+        /// all session-derived. It shares the Gallery route + phase (it is the
+        /// gallery's richer cousin — both are "book" surfaces), so no new
+        /// ActivityRoute value or replicated route int is introduced. Reached the
+        /// same way the gallery is (a campus HUD button + a gallery cross-link).
+        /// </summary>
+        public void ShowPassport()
+        {
+            ShowPassport(PassportController.PassportPage.Badges);
+        }
+
+        public void ShowPassport(PassportController.PassportPage page)
+        {
+            if (_ceremonyActive)
+            {
+                return;
+            }
+
+            _hub.Hide();
+            _router.ShowGallery(_session);
+            _world.ShowGallery(_session);
+            ResetRoot();
+            _passport ??= gameObject.GetComponent<PassportController>() ?? gameObject.AddComponent<PassportController>();
+            _passport.Render(_root, _session, this, page);
+            AttachDebug();
         }
 
         public void ShowReveal()
@@ -907,6 +987,18 @@ namespace CareerQuest
             UiBuilder.Place(button.GetComponent<RectTransform>(), x, y, 230f, 46f);
         }
 
+        /// <summary>
+        /// U6: the always-available campus Passport button (top-right corner,
+        /// under the Exit button). Both campus modes mount it, so the passport
+        /// is reachable in normal play where the action bar is absent.
+        /// </summary>
+        private void MountPassportButton()
+        {
+            var passport = UiBuilder.SmallButton(_root, "CampusPassportButton", "Passport", ShowPassport);
+            UiBuilder.Place(passport.GetComponent<RectTransform>(), 535f, 268f, 150f, 42f);
+            QuestStageUi.StyleSecondaryButton(passport);
+        }
+
         private static void StyleConnectionButton(Button button, Color color, int fontSize)
         {
             button.GetComponent<Image>().color = color;
@@ -929,6 +1021,10 @@ namespace CareerQuest
             // so a live reveal cinematic always stops, active drags cancel, and
             // the camera restores before the next screen mounts.
             _reveal?.CancelCinematic();
+
+            // U6: the station-end accessory spotlight is a _root child — drop it
+            // explicitly so its active state never outlives the surface.
+            _accessorySpotlight?.Dismiss();
 
             UiBuilder.Clear(_root);
             _instructionStripText = null;

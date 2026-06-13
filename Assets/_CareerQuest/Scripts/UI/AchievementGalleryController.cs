@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -57,6 +58,7 @@ namespace CareerQuest
 
             MountBadgeGrid(book, session);
             MountSkillTallies(book, session);
+            MountGearRow(book, session);
 
             var revealProgress = UiBuilder.Text(
                 book,
@@ -70,13 +72,62 @@ namespace CareerQuest
             UiBuilder.Place(revealProgress.rectTransform, 40f, -195f, 680f, 36f);
 
             var reveal = UiBuilder.Button(book, "RevealButton", session.RevealReady ? "Reveal Careers!" : "Reveal (Locked)", app.ShowReveal);
-            UiBuilder.Place(reveal.GetComponent<RectTransform>(), -120f, -250f, 260f, 58f);
+            UiBuilder.Place(reveal.GetComponent<RectTransform>(), -250f, -250f, 250f, 58f);
             QuestStageUi.StylePrimaryButton(reveal);
             reveal.interactable = session.RevealReady;
 
+            // U6: the gallery cross-links to the tabbed passport (Gear/Combos/
+            // Results) — the same session-derived surface, richer view.
+            var passport = UiBuilder.Button(book, "GalleryPassportButton", "Passport", () => app.ShowPassport());
+            UiBuilder.Place(passport.GetComponent<RectTransform>(), 8f, -250f, 220f, 58f);
+            QuestStageUi.StyleSecondaryButton(passport);
+
             var campus = UiBuilder.Button(book, "GalleryCampusButton", "Campus", app.ShowCampus);
-            UiBuilder.Place(campus.GetComponent<RectTransform>(), 160f, -250f, 220f, 58f);
+            UiBuilder.Place(campus.GetComponent<RectTransform>(), 250f, -250f, 220f, 58f);
             QuestStageUi.StyleSecondaryButton(campus);
+        }
+
+        /// <summary>
+        /// U6 gear row: a compact strip of EARNED accessories (resolver-derived,
+        /// newest-first), each a tinted placeholder token + name until the
+        /// accessory art pass. Empty until the first completion derives gear.
+        /// Presentation only (KTD8) — reads the session, never scoring.
+        /// </summary>
+        private static void MountGearRow(RectTransform book, GameSession session)
+        {
+            var earned = AccessoryResolver.ResolveEarned(session);
+            if (earned.Count == 0)
+            {
+                return;
+            }
+
+            // Newest-first, de-duplicated for a clean strip (the resolver lists
+            // in earn order; the gallery surfaces the most recent gear first).
+            var distinct = new List<AccessoryDefinition>();
+            var seen = new HashSet<string>();
+            for (var i = earned.Count - 1; i >= 0; i--)
+            {
+                if (seen.Add(earned[i].Id))
+                {
+                    distinct.Add(earned[i]);
+                }
+            }
+
+            // Right-margin vertical stack (clear of the badge grid and the trait
+            // pills): a small "gear earned" tally of newest-first token chips.
+            var label = UiBuilder.Text(book, "GalleryGearLabel", "Gear", 14, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Body, TypeWeight.SemiBold);
+            UiBuilder.Place(label.rectTransform, 392f, 150f, 80f, 22f);
+
+            var shown = Mathf.Min(distinct.Count, 4);
+            var step = -52f;
+            for (var i = 0; i < shown; i++)
+            {
+                var accessory = distinct[i];
+                var chipColor = AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition)
+                    ? definition.PrimaryColor
+                    : QuestStageUi.PathGold;
+                UiBuilder.Circle(book, $"GalleryGearChip{i}", chipColor, 392f, 118f + i * step, 40f, 40f);
+            }
         }
 
         private static void MountBadgeGrid(RectTransform book, GameSession session)
