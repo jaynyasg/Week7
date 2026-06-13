@@ -43,9 +43,8 @@ namespace CareerQuest.Tests
             Assert.That(app.CurrentStationId, Is.EqualTo(CareerQuestCatalog.VetClinicId));
             yield return null;
 
-            // The placeholder station surface (U2->U4 seam) is playable and can
-            // return to campus.
-            Assert.That(GameObject.Find("OptionalRoomPanel"), Is.Not.Null,
+            // U4: the generic station branch mounts the real station surface.
+            Assert.That(GameObject.Find(PartyStationController.PanelName), Is.Not.Null,
                 "The generic station branch mounts a playable station surface.");
 
             // Route cooldown: the latched avatar cannot double-enter while the

@@ -773,7 +773,10 @@ namespace CareerQuest
 
         public void ShowRoboticsGarage()
         {
-            ShowOptionalRoom(ActivityRoute.RoboticsGarage);
+            // U4 (KTD6): Robotics Rescue is the first converted Party Pack
+            // station — every legacy entry point (hub door, QA states) lands on
+            // the real station surface through the generic station branch.
+            ShowPartyStation(CareerQuestCatalog.RoboticsGarageId);
         }
 
         public void ShowCommunityKitchen()
@@ -800,16 +803,17 @@ namespace CareerQuest
                 return false;
             }
 
-            if (!entry.UsesStationIdRouting)
+            if (!entry.UsesStationIdRouting && !PartyStationController.IsConvertedLegacyStation(entry.Id))
             {
-                // Converted legacy room: same station, bespoke route until U5.
+                // Unconverted legacy room: same station, bespoke route + the
+                // OptionalRoomController shell until U5 flips it.
                 ShowOptionalRoom(entry.Route);
                 return true;
             }
 
             _hub.Hide();
             _router.ShowPartyStation(_session, stationId);
-            _world.ShowOptionalRoom(_session, entry);
+            _world.ShowPartyStation(_session, entry);
             ResetRoot();
             MountPartyStationSurface(entry);
             MountInstructionStrip();
@@ -818,15 +822,14 @@ namespace CareerQuest
         }
 
         /// <summary>
-        /// U2->U4 seam: mounts the station play surface for a station-id routed
-        /// entry. U4 swaps this placeholder (the generic OptionalRoomController
-        /// shell, which already proves room lifecycle, one-result emission, and
-        /// return-to-campus) for the real PartyStationController without
-        /// touching the routing path above.
+        /// U4: mounts the real station play surface (PartyStationController —
+        /// definition-driven render, seed selection, toy play, hint ladder, and
+        /// exactly one MiniGameResult through the duplicate gate) for every
+        /// station-id routed entry. The U2 routing path above is untouched.
         /// </summary>
         private void MountPartyStationSurface(CatalogEntry entry)
         {
-            var controller = gameObject.GetComponent<OptionalRoomController>() ?? gameObject.AddComponent<OptionalRoomController>();
+            var controller = gameObject.GetComponent<PartyStationController>() ?? gameObject.AddComponent<PartyStationController>();
             controller.Render(_root, _session, this, CurrentResultSource(), entry.Id);
         }
 

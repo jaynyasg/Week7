@@ -242,6 +242,23 @@ namespace CareerQuest
             builder.AddCharacter("Guide", 1.65f, -1.35f, CampusWorldPalette.PlayerBlue, 1.4f, true, "npc.campus_guide", false);
         }
 
+        /// <summary>
+        /// U4 Party Pack station rooms: the same themed optional-room interior
+        /// (backdrop + avatar + guide NPC) plus the seed-independent station
+        /// set dressing from PartyStationRenderer. One scene path for every
+        /// station — the seed-driven toy playfield mounts later through
+        /// PartyStationController/ToyInteractionKit, after the veil reveals.
+        /// </summary>
+        public static void ShowPartyStation(CampusWorldBuilder builder, GameSession session, CatalogEntry entry)
+        {
+            ShowOptionalRoom(builder, session, entry);
+
+            if (PartyStationDefinitions.TryGetById(entry.Id, out var definition))
+            {
+                PartyStationRenderer.MountStationSet(builder.Root, definition);
+            }
+        }
+
         public static void ShowReveal(CampusWorldBuilder builder, GameSession session)
         {
             // U7: the reveal route mounts the authored RevealStage prefab
