@@ -134,5 +134,61 @@ namespace CareerQuest.Tests
                     $"Entrance '{entrance.Id}' needs a readable district label.");
             }
         }
+
+        /// <summary>
+        /// U8 readable-districts layout: the full 13-door campus groups into four
+        /// spatial clusters (Quest Yard core + Tech Lane + Story Street + Care
+        /// Corner). Every door sits nearer its own district than any other, so
+        /// the campus reads as districts rather than one crowded row.
+        /// </summary>
+        [Test]
+        public void TenStationLayoutGroupsIntoReadableDistrictClusters()
+        {
+            WorldAnchors.PrefabResourcePathOverride = "CareerQuest/World/DoesNotExist";
+
+            var entrances = WorldAnchors.ActiveEntrancesWithStations;
+            var grouping = WorldAnchors.ValidateDistrictGrouping(entrances);
+            Assert.That(grouping, Is.Empty,
+                $"District clusters must read cleanly. Errors: {string.Join(" | ", grouping)}");
+
+            // Each of the four districts owns a distinct cluster centroid.
+            var centers = new System.Collections.Generic.List<Vector2>();
+            foreach (var district in WorldAnchors.DistrictOrder)
+            {
+                Assert.That(WorldAnchors.TryGetDistrictCenter(entrances, district, out var center), Is.True, district);
+                centers.Add(center);
+            }
+
+            for (var first = 0; first < centers.Count; first++)
+            {
+                for (var second = first + 1; second < centers.Count; second++)
+                {
+                    Assert.That(Vector2.Distance(centers[first], centers[second]), Is.GreaterThan(1.5f),
+                        $"District centroids {WorldAnchors.DistrictOrder[first]} and {WorldAnchors.DistrictOrder[second]} must be visibly apart.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// U8 controlled auto-entry radii (10-station campus layout rule): the
+        /// real entry circles stay small (core 0.6, station 0.5) even though the
+        /// visual building markers/signs render larger, so walking the campus
+        /// never trips an unintended door.
+        /// </summary>
+        [Test]
+        public void AutoEntryRadiiStayControlledForEveryDoor()
+        {
+            WorldAnchors.PrefabResourcePathOverride = "CareerQuest/World/DoesNotExist";
+
+            foreach (var entrance in WorldAnchors.ActiveEntrancesWithStations)
+            {
+                Assert.That(entrance.Radius, Is.GreaterThan(0f), entrance.Id);
+                Assert.That(entrance.Radius, Is.LessThanOrEqualTo(WorldAnchors.CoreEntranceRadius), entrance.Id);
+                if (entrance.IsStationEntrance)
+                {
+                    Assert.That(entrance.Radius, Is.EqualTo(WorldAnchors.StationEntranceRadius), entrance.Id);
+                }
+            }
+        }
     }
 }

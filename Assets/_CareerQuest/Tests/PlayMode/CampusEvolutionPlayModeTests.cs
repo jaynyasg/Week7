@@ -146,6 +146,58 @@ namespace CareerQuest.Tests
             Object.DestroyImmediate(rootObject);
         }
 
+        /// <summary>
+        /// U8: every Party Pack station owns a skyline evolution slot, and the
+        /// piece appears purely from a recorded GameSession best result — never
+        /// a station-controller side effect (KTD4/R9). Recording a result for
+        /// each station id (the exact thing PartyStationController emits) and
+        /// re-entering the hub pops its city piece.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EveryPartyStationUnlocksItsEvolutionPieceFromSessionCompletion()
+        {
+            // Static contract: each station has a resolvable evolution prop and a
+            // skyline slot, so completion can derive the piece (no side effect).
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                Assert.That(CampusEvolutionController.EvolutionActivityIds, Does.Contain(stationId),
+                    $"Station '{stationId}' needs a campus evolution skyline slot.");
+                Assert.That(CampusEvolutionController.TryGetEvolutionPropAssetId(stationId, out var propId), Is.True, stationId);
+                Assert.That(AssetCatalog.TryGetDefinition(propId, out _), Is.True, propId);
+            }
+
+            var rootObject = new GameObject("evolution-station-derivation-root");
+            var session = new GameSession();
+            var memory = new HashSet<string>();
+            yield return null;
+
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                // No piece before the result exists — pieces derive from the
+                // session, so an un-completed station has no skyline presence.
+                var before = CampusEvolutionController.Mount(rootObject.transform, session, memory, null, null);
+                before.AutoTick = false;
+                Assert.That(before.HasPiece(stationId), Is.False, $"{stationId}: no piece before completion.");
+                Object.DestroyImmediate(before.gameObject);
+
+                // Record the station result the way PartyStationController does.
+                var definition = PartyStationDefinitions.GetById(stationId);
+                session.RecordResult(PartyStationController.BuildResult(
+                    definition, definition.DefaultSeed, ResultSource.Solo,
+                    complete: true, wrongAttempts: 0, playElapsedSeconds: 12f));
+
+                // Re-mounting the hub now pops the station's piece — derived from
+                // the session best result alone.
+                var after = CampusEvolutionController.Mount(rootObject.transform, session, memory, null, null);
+                after.AutoTick = false;
+                Assert.That(after.HasPiece(stationId), Is.True,
+                    $"{stationId}: completing the station unlocks its campus evolution piece.");
+                Object.DestroyImmediate(after.gameObject);
+            }
+
+            Object.DestroyImmediate(rootObject);
+        }
+
         private static void DriveToCompletion(CampusEvolutionController evolution, CameraDirector director)
         {
             var guard = 0;

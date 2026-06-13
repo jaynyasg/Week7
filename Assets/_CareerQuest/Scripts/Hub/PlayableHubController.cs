@@ -39,10 +39,17 @@ namespace CareerQuest
             // plus the station-id fallback entrances for Party Pack stations
             // the authored set does not cover yet (U2).
             var anchors = WorldAnchors.ResolveActive();
-            foreach (var entranceAnchor in WorldAnchors.ActiveEntrancesWithStations)
+            var entranceSet = WorldAnchors.ActiveEntrancesWithStations;
+            foreach (var entranceAnchor in entranceSet)
             {
                 AddEntrance(entranceAnchor);
             }
+
+            // U8: one readable header per district above its door cluster, so the
+            // ten-station campus reads as four districts (Quest Yard / Tech Lane /
+            // Story Street / Care Corner) rather than one crowded row — on both
+            // the authored prefab and the fallback ground.
+            AddDistrictHeaders(entranceSet);
 
             var playerSpawn = anchors != null ? anchors.PlayerSpawn : WorldAnchors.FallbackPlayerSpawn;
             var playerObject = new GameObject("HubPlayer", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(PlayerAvatarController));
@@ -114,6 +121,48 @@ namespace CareerQuest
             // TextMesh labels died in U4 per plan.
             var sign = entranceObject.AddComponent<DoorSign>();
             sign.Configure(anchor.Label, anchor.AccentColor, -0.62f, 330);
+        }
+
+        /// <summary>
+        /// U8 readable-district headers: a Fredoka world label centered over each
+        /// district's door cluster (just above its highest door). The header uses
+        /// the district's accent (the first entrance's color) and the WorldAnchors
+        /// district centroid, so prefab and fallback campuses read the same four
+        /// clusters. Districts with no live door are skipped.
+        /// </summary>
+        private void AddDistrictHeaders(IReadOnlyList<WorldAnchorEntrance> entranceSet)
+        {
+            foreach (var district in WorldAnchors.DistrictOrder)
+            {
+                if (!WorldAnchors.TryGetDistrictCenter(entranceSet, district, out var center))
+                {
+                    continue;
+                }
+
+                var topY = float.MinValue;
+                var accent = new Color(0.96f, 0.77f, 0.36f);
+                var found = false;
+                foreach (var entrance in entranceSet)
+                {
+                    if (WorldAnchors.DistrictLabelFor(entrance.Id) != district)
+                    {
+                        continue;
+                    }
+
+                    if (!found)
+                    {
+                        accent = entrance.AccentColor;
+                        found = true;
+                    }
+
+                    topY = Mathf.Max(topY, entrance.Position.y);
+                }
+
+                var headerObject = new GameObject($"District_{district.Replace(' ', '_')}");
+                headerObject.transform.SetParent(transform, false);
+                headerObject.transform.position = new Vector3(center.x, topY + 0.95f, 0f);
+                headerObject.AddComponent<DoorSign>().Configure(district, accent, 0f, 332);
+            }
         }
 
         private static void AddEntranceMarker(Transform parent, string name, Color color)

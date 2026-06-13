@@ -59,10 +59,31 @@ namespace CareerQuest
                 $"Last result: {_session.LastResultId}\n" +
                 $"Source: {_session.DebugSourceSummary}\n" +
                 $"Unique done: {_session.UniqueCompletedGames}\n" +
+                $"Stations: {CompletedStationCount()}/{CareerQuestCatalog.PartyStationIds.Length} (skyline pieces)\n" +
                 $"Reveal style: {synthesis.Style}\n" +
                 $"Superpower: {synthesis.Superpower}\n" +
                 $"Family: {synthesis.FamilySubhead}\n" +
                 $"Primary combo: {combo}";
+        }
+
+        /// <summary>
+        /// U8 observability: how many of the ten in-plan stations have a recorded
+        /// best result this session — the same derivation the campus skyline
+        /// evolution pieces use (session-derived, presentation-only; no child
+        /// data, KTD12). Surfaces station-pack progress at a glance for demos/QA.
+        /// </summary>
+        private int CompletedStationCount()
+        {
+            var count = 0;
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                if (_session.GetBestResult(stationId) != null)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>

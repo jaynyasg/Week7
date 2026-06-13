@@ -42,7 +42,22 @@ namespace CareerQuest.Tests
 
             var anchors = hub.GetComponent<WorldAnchors>();
             Assert.That(anchors, Is.Not.Null, "The prefab root must export WorldAnchors.");
-            Assert.That(anchors.Entrances.Count, Is.EqualTo(7));
+
+            // U8 re-authored the prefab to the full readable 10-station district
+            // map: the three Quest Yard core doors, the four converted
+            // legacy-route stations, and the six station-id doors (13 total).
+            Assert.That(anchors.Entrances.Count, Is.EqualTo(13),
+                "The campus shows all 10 in-plan stations plus the 3 core rooms.");
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                Assert.That(anchors.Entrances.Count(entrance => entrance.ResolveStationId() == stationId), Is.EqualTo(1),
+                    $"The authored prefab must export exactly one entrance for station '{stationId}'.");
+            }
+
+            Assert.That(WorldAnchors.ValidateEntrances(anchors.Entrances), Is.Empty,
+                "The authored prefab entrance set must validate clean (no overlap, readable district labels).");
+            Assert.That(WorldAnchors.ValidateDistrictGrouping(anchors.Entrances), Is.Empty,
+                "The authored prefab doors must read as four district clusters, not one crowded row.");
 
             var ambient = hub.GetComponentsInChildren<AmbientMotion>();
             Assert.That(ambient.Length, Is.GreaterThanOrEqualTo(3), "Living campus (P9): clouds, flag, butterflies.");

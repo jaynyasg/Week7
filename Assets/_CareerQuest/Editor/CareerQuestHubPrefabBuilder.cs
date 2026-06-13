@@ -408,6 +408,48 @@ namespace CareerQuest.Editor
             });
             WritePng(butterfly, $"{HubArtFolder}/hub_butterfly.png");
             UnityEngine.Object.DestroyImmediate(butterfly);
+
+            // U8 station construction-site marker (campus visibility rule): a
+            // soft, friendly "coming soon" scaffold — base plot, a little A-frame
+            // building outline, and warning-stripe banner posts. White-tinted so
+            // AddStationSite can recolor it per station accent.
+            var site = DrawWithPixels(180, 180, (pixels, w, h) =>
+            {
+                var scaffold = new Color(0.55f, 0.42f, 0.3f);
+                var plot = new Color(0.86f, 0.82f, 0.7f);
+                var stripe = PathGold;
+
+                // Ground shadow + plot pad.
+                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.1f), (int)(w * 0.44f), (int)(h * 0.06f), SoftShadow);
+                FillRoundedRect(pixels, w, h, (int)(w * 0.14f), (int)(h * 0.1f), (int)(w * 0.72f), (int)(h * 0.16f), 10, plot);
+
+                // A-frame building-to-be outline.
+                for (var x = 0; x < w; x++)
+                {
+                    var t = (float)x / w;
+                    var roofHalf = (int)((h * 0.42f) * (1f - System.Math.Abs(t - 0.5f) * 2f));
+                    if (roofHalf < 1)
+                    {
+                        continue;
+                    }
+
+                    FillRect(pixels, w, h, x, (int)(h * 0.26f), 1, System.Math.Min(roofHalf, (int)(h * 0.34f)), Color.Lerp(plot, Color.white, 0.3f));
+                }
+
+                // Scaffold poles + warning-stripe banner across the top.
+                FillRoundedRect(pixels, w, h, (int)(w * 0.16f), (int)(h * 0.24f), 8, (int)(h * 0.56f), 4, scaffold);
+                FillRoundedRect(pixels, w, h, (int)(w * 0.79f), (int)(h * 0.24f), 8, (int)(h * 0.56f), 4, scaffold);
+                var bannerY = (int)(h * 0.74f);
+                var bannerStripes = 6;
+                var stripeW = (int)(w * 0.66f) / bannerStripes;
+                for (var i = 0; i < bannerStripes; i++)
+                {
+                    var color = i % 2 == 0 ? stripe : new Color(1f, 0.97f, 0.88f);
+                    FillRoundedRect(pixels, w, h, (int)(w * 0.17f) + i * stripeW, bannerY, stripeW, (int)(h * 0.06f), 2, color);
+                }
+            });
+            WritePng(site, $"{HubArtFolder}/hub_station_site.png");
+            UnityEngine.Object.DestroyImmediate(site);
         }
 
         // ------------------------------------------------------------------
@@ -472,20 +514,19 @@ namespace CareerQuest.Editor
         {
             var root = new GameObject("CampusHub");
             var anchors = root.AddComponent<WorldAnchors>();
+
+            // U8: serialize the SAME 13-door district set the fallback exposes,
+            // so the live prefab and the hard fallback agree exactly (ids,
+            // positions, radii, walk bounds) and ValidateEntrances passes
+            // identically with or without the prefab. The three Quest Yard core
+            // doors and the four converted legacy-route stations keep their
+            // ActivityRoute; the six station-id doors route through the generic
+            // PartyStation branch.
             anchors.SetData(
-                new[]
-                {
-                    new WorldAnchorEntrance("design_build", ActivityRoute.DesignBuild, "Design Build", new Vector2(-3f, -0.26f), Coral, 0.72f),
-                    new WorldAnchorEntrance("health_hero", ActivityRoute.HealthHero, "Health Hero", new Vector2(0f, -0.18f), Mint, 0.72f),
-                    new WorldAnchorEntrance("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(3f, -0.26f), Amber, 0.72f),
-                    new WorldAnchorEntrance("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-4.45f, -1.75f), ScienceBlue, 0.72f),
-                    new WorldAnchorEntrance("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(-2.05f, -2f), MusicLilac, 0.72f),
-                    new WorldAnchorEntrance("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(2.05f, -2f), WorkshopTeal, 0.72f),
-                    new WorldAnchorEntrance("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(4.45f, -1.75f), KitchenLeaf, 0.72f)
-                },
-                new Rect(-5.25f, -2.45f, 10.5f, 3.0f),
-                new Vector2(0f, -1.55f),
-                new Vector2(1.65f, -1.55f));
+                WorldAnchors.FallbackEntrancesWithStations,
+                WorldAnchors.FallbackWalkBounds,
+                WorldAnchors.FallbackPlayerSpawn,
+                WorldAnchors.FallbackGuideSpawn);
 
             // --- Band: sky (glued almost fully to the camera) -------------
             var sky = AddBand(root.transform, "Band_Sky", 0.93f);
@@ -528,15 +569,37 @@ namespace CareerQuest.Editor
             AddSprite(world, "NearTreeLeft", Kenney("BackgroundElements/tree05.png"), new Vector2(-4.8f, -0.55f), new Vector2(1.0f, 1.4f), 232);
             AddSprite(world, "NearTreeRight", Kenney("BackgroundElements/tree22.png"), new Vector2(4.8f, -0.45f), new Vector2(1.0f, 1.35f), 233);
 
-            // Buildings: upgraded owned art (sign text via DoorSign TMP, never baked).
-            AddMainBuilding(world, "DesignBuildStudio", "campus.design_build_studio", "Design Build", Coral, new Vector2(-3f, 0.82f));
-            AddMainBuilding(world, "HealthHeroClinic", "campus.health_hero_clinic", "Health Hero", Mint, new Vector2(0f, 1.02f));
-            AddMainBuilding(world, "LogicCourt", "campus.logic_court", "Logic Court", Amber, new Vector2(3f, 0.82f));
+            // U8 district layout: buildings sit just behind their door, grouped
+            // into four readable clusters (Quest Yard core / Tech Lane left /
+            // Story Street right / Care Corner bottom) that mirror the
+            // WorldAnchors entrance districts. Sign text is DoorSign TMP (never
+            // baked); PlayableHubController adds the per-door label at runtime.
 
-            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-4.45f, -1.52f));
-            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(-2.05f, -1.78f));
-            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(2.05f, -1.78f));
-            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(4.45f, -1.52f));
+            // Quest Yard (core quad) — upgraded owned building art.
+            AddMainBuilding(world, "DesignBuildStudio", "campus.design_build_studio", "Design Build", Coral, new Vector2(-1.3f, 1.3f));
+            AddMainBuilding(world, "HealthHeroClinic", "campus.health_hero_clinic", "Health Hero", Mint, new Vector2(0f, 1.65f));
+            AddMainBuilding(world, "LogicCourt", "campus.logic_court", "Logic Court", Amber, new Vector2(1.3f, 1.3f));
+
+            // Tech Lane (left column) + Story Street (right column): the four
+            // converted optional rooms keep their owned small-building art.
+            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-5f, 0.85f));
+            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-5.2f, -0.45f));
+            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(3.9f, 0.15f));
+            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-1.8f, -1.75f));
+
+            // U8: the six station-id stations show a temporary construction-site
+            // marker until the U11 final-art pass writes their campus.{id} PNGs
+            // (campus visibility rule: development builds may flag unbuilt-art
+            // stations as construction sites; the final build replaces them).
+            // The site marker is a generated placeholder sprite so the prefab
+            // never fails on missing station building art, and the readable
+            // station label still mounts at runtime via the door sign.
+            AddStationSite(world, "SpaceportSite", ScienceBlue, new Vector2(-3.9f, 0.1f));
+            AddStationSite(world, "GameStudioSite", MusicLilac, new Vector2(5.2f, -0.5f));
+            AddStationSite(world, "NewsroomSite", Amber, new Vector2(5f, 0.8f));
+            AddStationSite(world, "VetClinicSite", Mint, new Vector2(-0.6f, -2.1f));
+            AddStationSite(world, "WeatherLabSite", ScienceBlue, new Vector2(0.6f, -2.1f));
+            AddStationSite(world, "GreenCitySite", SuccessGreen, new Vector2(1.8f, -1.8f));
 
             // Living-campus beats (P9): waving flag and butterflies.
             AddSprite(world, "FlagPole", Hub("hub_flag_pole.png"), new Vector2(1.05f, -0.05f), new Vector2(0.08f, 1.35f), 246);
@@ -582,6 +645,24 @@ namespace CareerQuest.Editor
         private static void AddSmallBuilding(Transform parent, string name, string assetId, Vector2 position)
         {
             AddSprite(parent, name, Campus(assetId), position, new Vector2(1.45f, 1.3f), 238);
+        }
+
+        /// <summary>
+        /// U8 construction-site marker for a station whose final campus art has
+        /// not landed yet (campus visibility rule). A generated placeholder
+        /// scaffold sprite, tinted with the station accent, plus a small "Soon"
+        /// banner — the readable station name still mounts at runtime via the
+        /// door sign. U11 replaces these with the real campus.{id} buildings.
+        /// </summary>
+        private static void AddStationSite(Transform parent, string name, Color accent, Vector2 position)
+        {
+            var site = AddSprite(parent, name, Hub("hub_station_site.png"), position, new Vector2(1.2f, 1.1f), 238);
+            site.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.white, accent, 0.35f);
+
+            var banner = new GameObject($"{name}Banner");
+            banner.transform.SetParent(parent, false);
+            banner.transform.localPosition = new Vector3(position.x, position.y + 0.18f, 0f);
+            banner.AddComponent<DoorSign>().SetData("Soon", accent, 0f, 260, 1.1f, 1.2f, plate: true);
         }
 
         /// <summary>

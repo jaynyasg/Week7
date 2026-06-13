@@ -97,32 +97,58 @@ namespace CareerQuest
 
         public static string ActivePrefabResourcePath => _prefabResourcePathOverride ?? PrefabResourcePath;
 
-        /// <summary>Hard fallback walk bounds (legacy PlayerAvatarController literals).</summary>
-        public static readonly Rect FallbackWalkBounds = new(-5.25f, -2.45f, 10.5f, 3.0f);
+        /// <summary>
+        /// U8 ten-station campus walk bounds. Widened from the U2 rect so the
+        /// full 13-door district map (3 core + 10 stations) lays out as four
+        /// readable clusters with non-overlapping auto-entry circles instead of
+        /// one crowded row. Player/guide spawn on the central plaza between the
+        /// Quest Yard and the station rows.
+        /// </summary>
+        public static readonly Rect FallbackWalkBounds = new(-6.2f, -3.2f, 12.4f, 5f);
 
-        public static readonly Vector2 FallbackPlayerSpawn = new(0f, -1.55f);
-        public static readonly Vector2 FallbackGuideSpawn = new(1.65f, -1.55f);
+        public static readonly Vector2 FallbackPlayerSpawn = new(0f, -1.1f);
+        public static readonly Vector2 FallbackGuideSpawn = new(1.5f, -1.1f);
 
         private static string _prefabResourcePathOverride;
         private static WorldAnchors _assetAnchors;
         private static bool _assetSearched;
 
+        /// <summary>
+        /// U8 core auto-entry radius (Quest Yard). Slightly larger than the
+        /// station radius so the three flagship rooms read as the front-and-
+        /// center quad; the visual building markers/signs render larger still.
+        /// </summary>
+        public const float CoreEntranceRadius = 0.6f;
+
+        /// <summary>
+        /// U8 readable district layout — the three core Quest Yard doors. The
+        /// six converted-optional / first-six station rows sit below them via
+        /// <see cref="FallbackStationEntrancesData"/>; together the authored
+        /// prefab and these fallbacks form one clustered 13-door campus.
+        /// </summary>
         private static readonly WorldAnchorEntrance[] FallbackEntrancesData =
         {
-            new("design_build", ActivityRoute.DesignBuild, "Design Build", new Vector2(-3f, -0.26f), new Color(0.94f, 0.34f, 0.28f), 0.72f),
-            new("health_hero", ActivityRoute.HealthHero, "Health Hero", new Vector2(0f, -0.18f), new Color(0.36f, 0.78f, 0.6f), 0.72f),
-            new("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(3f, -0.26f), new Color(0.96f, 0.62f, 0.18f), 0.72f),
-            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-4.45f, -1.75f), new Color(0.28f, 0.66f, 0.94f), 0.72f),
-            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(-2.05f, -2f), new Color(0.62f, 0.52f, 0.86f), 0.72f),
-            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(2.05f, -2f), new Color(0.13f, 0.55f, 0.58f), 0.72f),
-            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(4.45f, -1.75f), new Color(0.55f, 0.82f, 0.5f), 0.72f)
+            // Quest Yard (core quad) — compact cluster, top and center.
+            new("design_build", ActivityRoute.DesignBuild, "Design Build", new Vector2(-1.3f, 0.7f), new Color(0.94f, 0.34f, 0.28f), CoreEntranceRadius),
+            new("health_hero", ActivityRoute.HealthHero, "Health Hero", new Vector2(0f, 1.05f), new Color(0.36f, 0.78f, 0.6f), CoreEntranceRadius),
+            new("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(1.3f, 0.7f), new Color(0.96f, 0.62f, 0.18f), CoreEntranceRadius),
+            // Tech Lane (left column) — converted optional rooms route by their
+            // legacy ActivityRoute; spaceport joins via the station fallback.
+            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-5f, 0.3f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(-5.2f, -1f), new Color(0.13f, 0.55f, 0.58f), StationEntranceRadius),
+            // Story Street (right column) — music routes by legacy route;
+            // game studio + newsroom join via the station fallback.
+            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(3.9f, -0.4f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            // Care Corner (bottom row) — kitchen routes by legacy route; vet,
+            // weather, and green city join via the station fallback.
+            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-1.8f, -2.3f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
         };
 
         /// <summary>
-        /// U2 auto-entry radius for the six new station entrances: smaller than
-        /// the legacy 0.72 so ten non-overlapping zones fit the walk rect (U8
-        /// re-spaces the final district layout; markers/signs may render larger
-        /// than the actual entry circle).
+        /// U2 auto-entry radius for the station-id entrances: smaller than the
+        /// core radius so the four district clusters fit the walk rect with
+        /// non-overlapping zones. The visual marker/sign may render larger than
+        /// the actual entry circle (10-station campus layout rule).
         /// </summary>
         public const float StationEntranceRadius = 0.5f;
 
@@ -130,39 +156,58 @@ namespace CareerQuest
         /// U2 station-id entrances for the six Party Pack stations without a
         /// legacy route. They enter via the generic PartyStation branch and are
         /// appended to any authored entrance set that does not include them
-        /// (see <see cref="ActiveEntrancesWithStations"/>). Positions sit inside
-        /// the fallback walk rect and keep every entry circle non-overlapping.
+        /// (see <see cref="ActiveEntrancesWithStations"/>). U8 placed them into
+        /// their districts (Tech Lane / Story Street / Care Corner) so the full
+        /// 13-door campus reads as four clusters; every circle is non-overlapping
+        /// and inside the fallback walk rect.
         /// </summary>
         public static readonly WorldAnchorEntrance[] FallbackStationEntrancesData =
         {
-            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-4.8f, 0.45f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
-            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(-1.6f, 0.45f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
-            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(1.6f, 0.45f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
-            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(4.8f, 0.45f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
-            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(0f, -2.35f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
-            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(-3.3f, -2.4f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
+            // Tech Lane (left column, continues ai_lab + robotics).
+            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(-3.9f, -0.4f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
+            // Story Street (right column, continues music_studio).
+            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(5.2f, -1f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(5f, 0.3f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
+            // Care Corner (bottom row, continues community_kitchen).
+            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-0.6f, -2.6f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
+            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(0.6f, -2.6f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(1.8f, -2.3f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
         };
 
         /// <summary>
         /// Readable district label per entrance id (U2 anchor-data seam; U8 owns
-        /// the visual district layout). Validation fails on any entrance id
-        /// without a district label.
+        /// the visual district layout that places each cluster spatially).
+        /// Validation fails on any entrance id without a district label.
         /// </summary>
         private static readonly Dictionary<string, string> DistrictLabels = new()
         {
-            ["design_build"] = "Quest Yard",
-            ["health_hero"] = "Quest Yard",
-            ["logic_court"] = "Quest Yard",
-            ["ai_lab"] = "Tech Lane",
-            ["robotics_garage"] = "Tech Lane",
-            ["spaceport"] = "Tech Lane",
-            ["music_studio"] = "Story Street",
-            ["game_studio"] = "Story Street",
-            ["newsroom"] = "Story Street",
-            ["community_kitchen"] = "Care Corner",
-            ["vet_clinic"] = "Care Corner",
-            ["weather_lab"] = "Care Corner",
-            ["green_city"] = "Care Corner"
+            ["design_build"] = QuestYardDistrict,
+            ["health_hero"] = QuestYardDistrict,
+            ["logic_court"] = QuestYardDistrict,
+            ["ai_lab"] = TechLaneDistrict,
+            ["robotics_garage"] = TechLaneDistrict,
+            ["spaceport"] = TechLaneDistrict,
+            ["music_studio"] = StoryStreetDistrict,
+            ["game_studio"] = StoryStreetDistrict,
+            ["newsroom"] = StoryStreetDistrict,
+            ["community_kitchen"] = CareCornerDistrict,
+            ["vet_clinic"] = CareCornerDistrict,
+            ["weather_lab"] = CareCornerDistrict,
+            ["green_city"] = CareCornerDistrict
+        };
+
+        public const string QuestYardDistrict = "Quest Yard";
+        public const string TechLaneDistrict = "Tech Lane";
+        public const string StoryStreetDistrict = "Story Street";
+        public const string CareCornerDistrict = "Care Corner";
+
+        /// <summary>The four readable campus districts (U8 layout), in front-to-back order.</summary>
+        public static readonly string[] DistrictOrder =
+        {
+            QuestYardDistrict,
+            TechLaneDistrict,
+            StoryStreetDistrict,
+            CareCornerDistrict
         };
 
         [SerializeField] private List<WorldAnchorEntrance> entrances = new();
@@ -182,6 +227,24 @@ namespace CareerQuest
             walkBounds = bounds;
             playerSpawn = player;
             guideSpawn = guide;
+        }
+
+        /// <summary>
+        /// U8 single source of truth for the full authored 13-door campus: the
+        /// three Quest Yard core doors plus the four converted legacy-route
+        /// stations, then the six station-id doors. The hub prefab builder
+        /// serializes EXACTLY this set so the live prefab and the fallback agree
+        /// (same ids, positions, radii) and <see cref="ValidateEntrances"/>
+        /// passes identically whether or not the prefab has been rebuilt.
+        /// </summary>
+        public static IReadOnlyList<WorldAnchorEntrance> FallbackEntrancesWithStations
+        {
+            get
+            {
+                var combined = new List<WorldAnchorEntrance>(FallbackEntrancesData);
+                combined.AddRange(FallbackStationEntrancesData);
+                return combined;
+            }
         }
 
         /// <summary>
@@ -303,6 +366,99 @@ namespace CareerQuest
         public static string DistrictLabelFor(string entranceId)
         {
             return entranceId != null && DistrictLabels.TryGetValue(entranceId, out var label) ? label : null;
+        }
+
+        /// <summary>
+        /// U8 district-cluster centroid: the mean position of every entrance in
+        /// <paramref name="entranceSet"/> tagged with <paramref name="district"/>.
+        /// Returns false when the district has no entrances in the set.
+        /// </summary>
+        public static bool TryGetDistrictCenter(
+            IReadOnlyList<WorldAnchorEntrance> entranceSet,
+            string district,
+            out Vector2 center)
+        {
+            center = Vector2.zero;
+            if (entranceSet == null || string.IsNullOrEmpty(district))
+            {
+                return false;
+            }
+
+            var sum = Vector2.zero;
+            var count = 0;
+            foreach (var entrance in entranceSet)
+            {
+                if (DistrictLabelFor(entrance.Id) == district)
+                {
+                    sum += entrance.Position;
+                    count++;
+                }
+            }
+
+            if (count == 0)
+            {
+                return false;
+            }
+
+            center = sum / count;
+            return true;
+        }
+
+        /// <summary>
+        /// U8 readability gate (10-station campus layout rule): every entrance
+        /// sits closer to its own district's other doors than to the nearest
+        /// door of any OTHER district, so the four clusters read as districts
+        /// rather than one crowded row. Returns the offending pairs (empty when
+        /// the layout groups cleanly). Singleton districts are skipped (no
+        /// within-district pair to compare against).
+        /// </summary>
+        public static IReadOnlyList<string> ValidateDistrictGrouping(IReadOnlyList<WorldAnchorEntrance> entranceSet)
+        {
+            var errors = new List<string>();
+            if (entranceSet == null || entranceSet.Count == 0)
+            {
+                errors.Add("Entrance set is empty.");
+                return errors;
+            }
+
+            foreach (var entrance in entranceSet)
+            {
+                var district = DistrictLabelFor(entrance.Id);
+                if (string.IsNullOrEmpty(district))
+                {
+                    continue; // missing-district is reported by ValidateEntrances
+                }
+
+                var nearestSame = float.MaxValue;
+                var nearestOther = float.MaxValue;
+                foreach (var other in entranceSet)
+                {
+                    if (ReferenceEquals(other, entrance) || other.Id == entrance.Id)
+                    {
+                        continue;
+                    }
+
+                    var distance = Vector2.Distance(entrance.Position, other.Position);
+                    if (DistrictLabelFor(other.Id) == district)
+                    {
+                        nearestSame = Mathf.Min(nearestSame, distance);
+                    }
+                    else
+                    {
+                        nearestOther = Mathf.Min(nearestOther, distance);
+                    }
+                }
+
+                // Only enforce for districts that actually have a sibling door.
+                if (nearestSame < float.MaxValue && nearestSame >= nearestOther)
+                {
+                    errors.Add(
+                        $"Entrance '{entrance.Id}' ({district}) is closer to another district " +
+                        $"(d={nearestOther:F2}) than to its own ({nearestSame:F2}) — districts must read as clusters.");
+                }
+            }
+
+            return errors;
         }
 
         /// <summary>Validates the active hub entrance set (fallback-aware).</summary>
