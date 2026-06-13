@@ -105,6 +105,12 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 | `ai-lab.png` | AI Lab Sort (party station) | Guide *Pixel the Pattern Pal*, intro "Teach the bubblegum sorter by putting each example in its matching bin.", **Lab Goggles** reward, SortToBin bins (Reasoning, Creativity, Science), example tray. |
 | `music.png` | Music Remix (party station) | Guide *DJ Tempo*, intro "Layer the storm sounds into a parade beat and keep the tempo steady.", **Microphone** reward, Mix Spot + Tempo Dial (compose/meter), sample tray. |
 | `kitchen.png` | Community Kitchen Match (party station) | Guide *Chef Sunny*, intro "Solve the soup clues and serve a bowl every guest can enjoy.", **Chef Hat** reward, Match Tray + serving bowl (PickMatchingTrio + serve), ingredient tray. |
+| `vet.png` | Vet Clinic Diagnose (party station) | Guide *Nurse Nova* ("calm care guide"), intro "Read the care clues and pick a gentle plan for the hiccuping dragon.", **Care Cape** reward, MatchAndCare (Gentle Care Tool / Care Spot), tray (Care Clue Cards, Water Bowl, Comfort Blanket, Cozy Temp Sticker, Gentle Care Tool), pretend-play-safe NPC line. |
+| `game-studio.png` | Game Studio Compose (party station) | Guide *Captain Loop* ("playful design lead"), intro "Pick a goal, an obstacle, and a rule that fit, then run the playtest.", **Sketchbook** reward, Mix Spot (compose), tray (Hero Token, Obstacle Tile, Rule Card, Power-Up Sketch, Playtest Button). |
+| `weather.png` | Weather Lab Rescue (party station) | Guide *Radar Rae* ("alert safety planner"), intro "Order the forecast clues, then set up shelter before the parade starts.", **Weather Goggles** reward, Next Step (sequence), tray (Forecast Tiles, Umbrella Sign, Route Cones, Calm Radio, Shelter Flag), safe weather/emergency copy. |
+| `spaceport.png` | Spaceport Pilot (party station) | Guide *Commander Orbit* ("focused mission guide"), intro "Sequence launch, orbit, delivery, and landing to fly the snack probe.", **Mission Patch** reward, Next Step (SequenceCards), tray (Launch Checklist, Fuel Bead, Snack Crate, Orbit Arrow, Landing Pad). |
+| `newsroom.png` | Newsroom Story Sprint (party station) | Guide *Scoop Rivera* ("fact-checking reporter"), intro "Match the checked facts to who, what, and where, then stamp the headline.", **Press Badge** reward, Mix Spot (compose/match), tray (Who Card, What Photo, Where Map, Quote Recorder, Fact-Check Stamp), source-safe copy. |
+| `green-city.png` | Green City Builder (party station) | Guide *Grid Green* ("practical systems planner"), intro "Place four city pieces while keeping both meters happy and green.", **Green Hardhat** reward, **BalanceMeters** — Budget Meter + Happy Meter tap-dials with needles + Build Spot, four-piece tray (Solar Tile, Garden Block, Bike Path, Water Wheel). |
 | `design-build.png` | Design Build (core room) | "Future City Workshop" — drag each city piece onto its matching lot, 0/5 placed, five pastel slot pads, city-piece tray, builder NPC. |
 | `health.png` | Health Hero (core room) | "Health Hero Clinic" — bring symptom clipboard to the patient first, 0/3 care steps, patient on exam bed, clipboard/thermometer/care-plan tools. |
 | `logic.png` | Logic Court (core room) | "Logic Court" — review the case file on the podium then sort each evidence card, 0/3 sorted, two sort zones, evidence tray, judge NPC. |
@@ -112,21 +118,37 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 | `reveal-locked.png` | Reveal locked branch | "Career Reveal Stage", three dark "?" slots, "0/3 quest badges collected" bar, "Complete 3 unique quest badges… 3 games to go", **no Skip control** — matches the locked-branch contract. |
 | `reveal-unlocked.png` | Reveal resolved | "REVEAL UNLOCKED! **Future Maker** — Future Tech + Design + Build strengths · You might like: AI Engineer · Architect · Lawyer · Robotics Engineer · City Planner · Very strong match · Hybrid spark: Courtroom Inventor · 'a strength clue from your quest badges — not a life assignment.'" — `RevealSynthesis` family + superpower + paths + hybrid/combo + non-deterministic copy (U7). |
 
-The six stations without a dedicated visual-state case (Vet Clinic, Game Studio,
-Weather Lab, Spaceport, Newsroom, Green City) are visible as entrances in
-`campus.png` and are machine-verified playable by `StationPackSmokePlayModeTests`
-and `Wave2StationPackPlayModeTests`.
+All 10 party stations now have a dedicated `-cq-visual-state` case and a captured
+screenshot, each showing full station identity (guide + intro + reward preview +
+toy pattern + task tray + NPC reaction). The seven supported toy patterns are all
+represented across the set: DragToSlot (robotics), SortToBin (ai-lab),
+ComposeSet/meter (music, game-studio, newsroom), PickMatchingTrio (kitchen),
+MatchAndCare (vet), SequenceCards (weather, spaceport), and BalanceMeters
+(green-city).
+
+### Accessory fit
+
+Per-slot accessory fit (anchor, sorting, facing-flip, no float/clip, one-visible-
+per-slot, ceremony gating) is rigorously machine-verified by
+`AvatarAccessoryLayerPlayModeTests` + `AccessoryResolverTests`. The runtime
+accessory layer binds to the campus player avatar via
+`PlayerAvatarController` → `AvatarRuntimeView.BindAccessories(session)`, and the
+`accessory-fit` QA visual-state seeds the full earned set onto it for manual /
+zoomed inspection. A *static* 1280×720 frame is not included: accessories render
+only on the runtime `AvatarRuntimeView` (campus avatar / station-end spotlight /
+passport / reveal), and at campus scale individual accessories are too small to
+read in a still — a legible large-avatar still would need a dedicated preview
+surface, which is out of this pass.
 
 ## Known issues (minor, non-blocking)
 
-1. **Guide speech-band overlaps tray labels** — in the party-station screens
-   (`robotics`, `ai-lab`, `music`, `kitchen`) the bottom-left guide-reaction
-   band sits over the lower edge of the rightmost task-tray labels (e.g.
-   "Route Cards", "Rescue Flag", "Serving Bowl", "Kindness Swap" are partly
-   occluded). Labels remain mostly legible and the tray objects are clear;
-   this is a HUD layering/placement nit, not a play blocker. Candidate for a
-   follow-up polish pass (raise tray labels above the band, mirroring the
-   wow-pass fix for optional-room action buttons).
+1. ~~**Guide speech-band overlaps tray labels**~~ — **RESOLVED** (this pass): the
+   party-station guide was reworked from a wide bottom bar (whose live line/
+   reaction text reached screen-center) into a compact bottom-left card with the
+   line + reaction stacked left-aligned, so the whole card stays left of the
+   centered tray-label row. Verified in the refreshed `robotics`/`ai-lab`/`music`/
+   `kitchen` captures (tray labels fully visible) and across all six new station
+   captures. `StationGuideView` text/lifecycle tests remain green.
 
 ## Privacy posture (KTD12)
 

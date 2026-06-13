@@ -52,25 +52,32 @@ namespace CareerQuest
                 return null;
             }
 
+            // Compact bottom-left card: portrait/name/voice on top, the live
+            // line + reaction stacked left-aligned beneath. The old wide single
+            // row pushed the line/reaction text into screen-center, where it
+            // overlapped the world-space tray-object labels; keeping the whole
+            // card narrow and left of the centered tray row removes that overlap.
             var panel = UiBuilder.Panel(parent, PanelName, PaperColor);
-            UiBuilder.Place(panel, -254f, -238f, 690f, 56f);
-            UiBuilder.Shape(panel, "StationGuideStripe", accent, -340f, 0f, 10f, 56f);
-            UiBuilder.Circle(panel, "StationGuidePortrait", accent, -308f, 0f, 38f, 38f);
+            UiBuilder.Place(panel, -462f, -202f, 332f, 124f);
+            UiBuilder.Shape(panel, "StationGuideStripe", accent, -161f, 0f, 10f, 124f);
+            UiBuilder.Circle(panel, "StationGuidePortrait", accent, -128f, 38f, 38f, 38f);
 
             var name = UiBuilder.Text(panel, NameTextName, definition.GuideName, 15, TextAnchor.MiddleLeft, InkColor, TypeRole.Display, TypeWeight.SemiBold);
-            UiBuilder.Place(name.rectTransform, -158f, 13f, 250f, 22f);
+            UiBuilder.Place(name.rectTransform, 14f, 46f, 210f, 22f);
 
             var voice = UiBuilder.Text(panel, VoiceTextName, definition.GuideVoice, 11, TextAnchor.MiddleLeft, SoftInkColor);
-            UiBuilder.Place(voice.rectTransform, -158f, -13f, 250f, 18f);
+            UiBuilder.Place(voice.rectTransform, 14f, 26f, 210f, 16f);
 
-            var line = UiBuilder.Text(panel, LineTextName, seed.IntroLine, 14, TextAnchor.MiddleLeft, InkColor);
-            UiBuilder.Place(line.rectTransform, 175f, 8f, 330f, 28f);
+            var line = UiBuilder.Text(panel, LineTextName, seed.IntroLine, 13, TextAnchor.UpperLeft, InkColor);
+            UiBuilder.Place(line.rectTransform, 0f, -10f, 300f, 46f);
+            line.textWrappingMode = TextWrappingModes.Normal;
             line.enableAutoSizing = true;
             line.fontSizeMin = 10;
-            line.fontSizeMax = 14;
+            line.fontSizeMax = 13;
 
-            var reaction = UiBuilder.Text(panel, ReactionTextName, seed.NpcReaction, 11, TextAnchor.MiddleLeft, SoftInkColor);
-            UiBuilder.Place(reaction.rectTransform, 175f, -16f, 330f, 18f);
+            var reaction = UiBuilder.Text(panel, ReactionTextName, seed.NpcReaction, 11, TextAnchor.UpperLeft, SoftInkColor);
+            UiBuilder.Place(reaction.rectTransform, 0f, -46f, 300f, 26f);
+            reaction.textWrappingMode = TextWrappingModes.Normal;
             reaction.gameObject.SetActive(false);
 
             return new StationGuideView(seed, line, reaction);

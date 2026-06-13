@@ -500,6 +500,36 @@ namespace CareerQuest
                     BeginPlay();
                     ShowCommunityKitchen();
                     return true;
+                case "vet":
+                case "vet-clinic":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.VetClinicId);
+                case "game-studio":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.GameStudioId);
+                case "weather":
+                case "weather-lab":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.WeatherLabId);
+                case "spaceport":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.SpaceportId);
+                case "newsroom":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.NewsroomId);
+                case "green-city":
+                    BeginPlay();
+                    return ShowPartyStation(CareerQuestCatalog.GreenCityId);
+                case "accessory-fit":
+                    // Complete the party stations (their results carry the
+                    // station accessories AccessoryRewardConfig maps — unlike the
+                    // showcase core-room seed, which earns none) and stay on
+                    // campus: the campus player avatar is the accessory-bearing
+                    // AvatarRuntimeView (the mid-play station hero is a plain
+                    // figure), so it wears the derived one-per-slot set here.
+                    BeginPlay();
+                    SeedAccessoryFitResults(null);
+                    return true;
                 case "gallery":
                     BeginPlay();
                     ShowGallery();
@@ -1469,6 +1499,33 @@ namespace CareerQuest
                     result.TimeRemaining,
                     result.Accuracy,
                     result.Summary));
+            }
+        }
+
+        /// <summary>
+        /// QA-only seed for the accessory-fit visual state: completes the party
+        /// stations (pass a station id to skip one, or null to complete all), so
+        /// AccessoryResolver derives the one-per-slot set the campus avatar
+        /// renders. Mirrors the DemoDebugOverlay proof seam; session-only and
+        /// presentation-only (KTD8/KTD12).
+        /// </summary>
+        private void SeedAccessoryFitResults(string exceptStationId)
+        {
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                if (stationId == exceptStationId)
+                {
+                    continue;
+                }
+
+                var definition = PartyStationDefinitions.GetById(stationId);
+                _session.RecordResult(PartyStationController.BuildResult(
+                    definition,
+                    definition.DefaultSeed,
+                    ResultSource.Solo,
+                    complete: true,
+                    wrongAttempts: 0,
+                    playElapsedSeconds: 12f));
             }
         }
 
