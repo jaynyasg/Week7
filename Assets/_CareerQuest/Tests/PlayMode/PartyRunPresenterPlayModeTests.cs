@@ -254,6 +254,158 @@ namespace CareerQuest.Tests
         }
 
         // ------------------------------------------------------------------
+        // U11 proof routes (R18/R20): the 90-second demo route AND the 3-minute
+        // impressive proof route both DRIVE THROUGH THE U9 PARTY-RUN SEAMS and
+        // reach the reveal showing the synthesis output (top traits, top paths,
+        // superpower, family, hybrid identity) with visible avatar accessories.
+        //
+        // Each test drives the run start + a REAL first-round station completion
+        // through the controller (proving the cadence plays a real toy), then
+        // seeds the remaining rounds' completions directly to reach the target
+        // reveal richness without N ceremony waits (the same seed-to-gate pattern
+        // RevealHandoffAppearsOnlyWhenTheSynthesisSnapshotIsRevealReady uses), and
+        // hands off to reveal through the presenter. The reveal cinematic is left
+        // to mount its stage; the synthesis snapshot + the ceremony-context hero
+        // accessories are the assertion surface (a unit test cannot pixel-judge
+        // the cinematic — that stays an owner visual gate).
+        // ------------------------------------------------------------------
+
+        [UnityTest]
+        public IEnumerator NinetySecondDemoRouteReachesRevealWithSynthesisAndVisibleAccessories()
+        {
+            yield return CreateAppOnCampus();
+            var controller = PrepareController(quickPacing: true);
+
+            // Drive the standard demo route (design doc 90-second demo): 4 rounds,
+            // Robotics → Music → Kitchen → AI Lab (>= 3 reaches the reveal gate).
+            Assert.That(_app.StartDemoRoute(), Is.True);
+            var run = _app.Session.PartyRun;
+            Assert.That(run.StationIds, Is.EqualTo(CareerQuestApp.DefaultDemoRouteStationIds));
+
+            // Round one for real through the cadence (Continue → station → golden).
+            Assert.That(_app.PartyRunPresenter.Continue(), Is.True, "Continue routes to round one.");
+            yield return MountFrames();
+            CompleteGolden(controller);
+            Assert.That(run.CompletedStationIds, Does.Contain(CareerQuestCatalog.RoboticsGarageId),
+                "The real round-one completion advanced the guided run.");
+            yield return ClearCeremonyToGallery();
+
+            // The remaining demo rounds seed directly (reach the >=3 reveal gate
+            // and earn the Badge Sash milestone at 3 unique completions).
+            SeedCompletions(CareerQuestCatalog.MusicStudioId, CareerQuestCatalog.CommunityKitchenId);
+            Assert.That(_app.Session.UniqueCompletedGames, Is.GreaterThanOrEqualTo(3));
+
+            yield return AssertRevealShowsSynthesisAndAccessories(RevealStyle.Simple);
+        }
+
+        [UnityTest]
+        public IEnumerator ThreeMinuteProofRouteReachesRichRevealWithMilestoneAccessories()
+        {
+            yield return CreateAppOnCampus();
+            var controller = PrepareController(quickPacing: true);
+
+            // The impressive proof route is the full ten-station campus run — it
+            // reaches the Completionist reveal style and earns every milestone
+            // (Badge Sash @3, Explorer Cape @5, Star Robe @8, Reveal Flourish @10).
+            Assert.That(_app.StartPartyRun(CareerQuestCatalog.PartyStationIds), Is.True);
+            var run = _app.Session.PartyRun;
+            Assert.That(run.RoundCount, Is.EqualTo(CareerQuestCatalog.PartyStationIds.Length));
+
+            // Round one for real through the cadence, then seed the rest to the
+            // 10-completion Completionist bar (lean: no ten ceremony waits).
+            Assert.That(_app.PartyRunPresenter.Continue(), Is.True);
+            yield return MountFrames();
+            CompleteGolden(controller);
+            var firstStationId = CareerQuestCatalog.PartyStationIds[0];
+            yield return ClearCeremonyToGallery();
+
+            // Seed the remaining nine stations to the 10-completion Completionist
+            // bar (lean: no ten ceremony waits).
+            SeedCompletions(CareerQuestCatalog.PartyStationIds.Where(id => id != firstStationId).ToArray());
+            Assert.That(_app.Session.UniqueCompletedGames, Is.EqualTo(CareerQuestCatalog.PartyStationIds.Length));
+            Assert.That(RevealSynthesis.StyleFor(_app.Session.UniqueCompletedGames), Is.EqualTo(RevealStyle.Completionist));
+
+            yield return AssertRevealShowsSynthesisAndAccessories(RevealStyle.Completionist);
+
+            // The ceremony-only milestones (Star Robe @8, Reveal Flourish @10) are
+            // earned and become visible specifically in the reveal context.
+            var hero = FindHeroAvatar();
+            Assert.That(hero, Is.Not.Null);
+            var layer = hero.AccessoryLayer;
+            Assert.That(layer.IsCeremonyContext, Is.True, "The reveal hero binds in ceremony context.");
+            Assert.That(layer.VisibleAccessoryIds, Does.Contain("accessory.reveal_flourish"),
+                "The 10-completion reveal flourish shows in the reveal ceremony.");
+        }
+
+        /// <summary>
+        /// Routes to the reveal through the presenter handoff and asserts the
+        /// reveal surface carries the full synthesis (superpower, family, top
+        /// traits, top paths) and the ceremony hero shows visible accessories.
+        /// </summary>
+        private IEnumerator AssertRevealShowsSynthesisAndAccessories(RevealStyle expectedStyle)
+        {
+            // Hand off to reveal through the presenter (the run's reveal control).
+            _app.ShowCampus();
+            yield return null;
+            Assert.That(GameObject.Find(PartyRunPresenter.RevealButtonName), Is.Not.Null,
+                "The reveal handoff control is available once the run is reveal-ready.");
+            _app.PartyRunPresenter.RevealHandoff();
+            yield return null;
+            yield return null; // let the reveal stage + hero mount
+            Assert.That(_app.CurrentRoute, Is.EqualTo(ActivityRoute.Reveal));
+
+            // The synthesis snapshot the reveal renders from (KTD9): every required
+            // ceremony beat is present and non-empty.
+            var reveal = _appObject.GetComponent<CareerRevealController>();
+            var synthesis = reveal.Synthesis ?? RevealSynthesis.Resolve(_app.Session);
+            Assert.That(synthesis.IsRevealReady, Is.True);
+            Assert.That(synthesis.Style, Is.EqualTo(expectedStyle), "Reveal style matches the completion bucket.");
+            Assert.That(synthesis.TopTraits, Is.Not.Empty, "Reveal shows top traits.");
+            Assert.That(synthesis.TopPaths, Is.Not.Empty, "Reveal shows top career paths.");
+            Assert.That(synthesis.Superpower, Is.Not.Empty, "Reveal shows a superpower headline.");
+            Assert.That(synthesis.FamilySubhead, Is.Not.Empty, "Reveal shows a career family subhead.");
+            // Hybrid identity: the proof routes complete enough stations that at
+            // least one combo pair is eligible, so a hybrid spotlight is present.
+            Assert.That(synthesis.HasComboSpotlight, Is.True, "Reveal shows a hybrid/combo identity.");
+
+            // Visible accessories on the ceremony hero (the avatar onstage wearing
+            // earned gear — bound in ceremony context by the world).
+            var hero = FindHeroAvatar();
+            Assert.That(hero, Is.Not.Null, "The reveal stage mounts the hero avatar.");
+            var layer = hero.AccessoryLayer;
+            Assert.That(layer, Is.Not.Null, "The reveal hero has an accessory layer.");
+            Assert.That(layer.IsCeremonyContext, Is.True, "The hero binds in ceremony context.");
+            Assert.That(layer.VisibleCount, Is.GreaterThanOrEqualTo(1),
+                "The reveal hero wears visible accessories from the run.");
+        }
+
+        /// <summary>Robust hero lookup (the stage hero may mount inactive for a frame).</summary>
+        private static AvatarRuntimeView FindHeroAvatar()
+        {
+            foreach (var view in Object.FindObjectsByType<AvatarRuntimeView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (view.name == RevealStageLayout.HeroAvatarName)
+                {
+                    return view;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Clears the per-completion ceremony (skip after its delay) so the
+        /// run/return routes are not blocked by the ceremony guard, landing back
+        /// where the smoke does (gallery), then nothing else.
+        /// </summary>
+        private IEnumerator ClearCeremonyToGallery()
+        {
+            yield return new WaitForSecondsRealtime(CeremonyController.SkipDelaySeconds + 0.25f);
+            _app.TrySkipCeremony();
+            yield return null;
+        }
+
+        // ------------------------------------------------------------------
         // Helpers
         // ------------------------------------------------------------------
 

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,9 +14,8 @@ namespace CareerQuest
     /// </summary>
     public class AchievementGalleryController : MonoBehaviour
     {
-        private static readonly Color LockedFace = new(0.88f, 0.9f, 0.93f);
-        private static readonly Color LockedRing = new(0.7f, 0.74f, 0.78f);
-        private static readonly Color LockedInk = new(0.45f, 0.48f, 0.52f);
+        // U11 (Gate B simplify Finding 4): locked-slot colors moved to the shared
+        // QuestStageUi tokens (they were identical here and in PassportController).
 
         public void Render(Transform parent, GameSession session, CareerQuestApp app)
         {
@@ -89,28 +87,19 @@ namespace CareerQuest
 
         /// <summary>
         /// U6 gear row: a compact strip of EARNED accessories (resolver-derived,
-        /// newest-first), each a tinted placeholder token + name until the
-        /// accessory art pass. Empty until the first completion derives gear.
+        /// newest-first), each an identity chip with the real accessory sprite
+        /// (U11 art pass). Empty until the first completion derives gear.
         /// Presentation only (KTD8) — reads the session, never scoring.
         /// </summary>
         private static void MountGearRow(RectTransform book, GameSession session)
         {
-            var earned = AccessoryResolver.ResolveEarned(session);
-            if (earned.Count == 0)
+            // Newest-first, de-duplicated for a clean strip (the gallery surfaces
+            // the most recent gear first). U11 Finding 2: one shared resolver
+            // helper, not a hand-rolled dedup loop duplicated across surfaces.
+            var distinct = AccessoryResolver.DistinctEarned(session, newestFirst: true);
+            if (distinct.Count == 0)
             {
                 return;
-            }
-
-            // Newest-first, de-duplicated for a clean strip (the resolver lists
-            // in earn order; the gallery surfaces the most recent gear first).
-            var distinct = new List<AccessoryDefinition>();
-            var seen = new HashSet<string>();
-            for (var i = earned.Count - 1; i >= 0; i--)
-            {
-                if (seen.Add(earned[i].Id))
-                {
-                    distinct.Add(earned[i]);
-                }
             }
 
             // Right-margin vertical stack (clear of the badge grid and the trait
@@ -126,7 +115,24 @@ namespace CareerQuest
                 var chipColor = AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition)
                     ? definition.PrimaryColor
                     : QuestStageUi.PathGold;
-                UiBuilder.Circle(book, $"GalleryGearChip{i}", chipColor, 392f, 118f + i * step, 40f, 40f);
+                var y = 118f + i * step;
+                UiBuilder.Circle(book, $"GalleryGearChip{i}", Color.Lerp(chipColor, QuestStageUi.Paper, 0.55f), 392f, y, 40f, 40f);
+
+                // U11: the real accessory art sits on the chip (final art landed —
+                // CareerQuestAccessoryArtBuilder), so the gear strip reads as the
+                // actual gear. Final-art-only (DESIGN: no fallback art reaches a
+                // player surface) — the identity chip alone stands in until art.
+                var sprite = AssetCatalog.SpriteFor(accessory.SpriteAssetId);
+                if (sprite != null && AssetCatalog.IsFinalArtSprite(sprite))
+                {
+                    var iconObject = new GameObject($"GalleryGearIcon{i}", typeof(RectTransform), typeof(Image));
+                    iconObject.transform.SetParent(book, false);
+                    var icon = iconObject.GetComponent<Image>();
+                    icon.sprite = sprite;
+                    icon.preserveAspect = true;
+                    icon.raycastTarget = false;
+                    UiBuilder.Place(icon.rectTransform, 392f, y, 32f, 32f);
+                }
             }
         }
 
@@ -182,9 +188,9 @@ namespace CareerQuest
                 else
                 {
                     // Locked slot: dimmed circle waiting for its sticker.
-                    UiBuilder.Circle(group, $"{entry.Id}ChipRing", LockedRing, 0f, 8f, 96f, 96f);
-                    UiBuilder.Circle(group, $"{entry.Id}Chip", LockedFace, 0f, 8f, 82f, 82f);
-                    var hint = UiBuilder.Text(group, $"{entry.Id}ChipHint", "?", 30, TextAnchor.MiddleCenter, LockedInk, TypeRole.Display, TypeWeight.SemiBold);
+                    UiBuilder.Circle(group, $"{entry.Id}ChipRing", QuestStageUi.LockedRing, 0f, 8f, 96f, 96f);
+                    UiBuilder.Circle(group, $"{entry.Id}Chip", QuestStageUi.LockedFace, 0f, 8f, 82f, 82f);
+                    var hint = UiBuilder.Text(group, $"{entry.Id}ChipHint", "?", 30, TextAnchor.MiddleCenter, QuestStageUi.LockedInk, TypeRole.Display, TypeWeight.SemiBold);
                     UiBuilder.Place(hint.rectTransform, 0f, 8f, 44f, 44f);
                 }
 
@@ -194,7 +200,7 @@ namespace CareerQuest
                     earned ? entry.BadgeName : "Locked",
                     12,
                     TextAnchor.MiddleCenter,
-                    earned ? QuestStageUi.Ink : LockedInk);
+                    earned ? QuestStageUi.Ink : QuestStageUi.LockedInk);
                 UiBuilder.Place(label.rectTransform, 0f, -56f, 140f, 28f);
             }
         }

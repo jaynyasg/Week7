@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CareerQuest
 {
@@ -79,10 +80,24 @@ namespace CareerQuest
             var title = UiBuilder.Text(_panel, TitleName, "New gear unlocked!", 22, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
             UiBuilder.Place(title.rectTransform, 0f, 54f, 420f, 30f);
 
-            // Placeholder accessory token: a tinted chip stands in for the art
-            // until the U6/U11 accessory pass lands final sprites.
-            _tokenChip = UiBuilder.Circle(_panel, TokenChipName, accent, -168f, -6f, 72f, 72f);
+            // U11: the accessory art pass landed (CareerQuestAccessoryArtBuilder),
+            // so the spotlight shows the REAL gear sprite on a soft identity chip.
+            _tokenChip = UiBuilder.Circle(_panel, TokenChipName, Color.Lerp(accent, QuestStageUi.Paper, 0.5f), -168f, -6f, 72f, 72f);
             _chipBaseScale = 1f;
+            var gearSprite = AccessoryRewardConfig.TryGetById(rewardEvent.AccessoryRewardId, out var earnedAccessory)
+                ? AssetCatalog.SpriteFor(earnedAccessory.SpriteAssetId)
+                : null;
+            // Final-art-only (DESIGN: no fallback art on a player surface).
+            if (gearSprite != null && AssetCatalog.IsFinalArtSprite(gearSprite))
+            {
+                var iconObject = new GameObject("AccessorySpotlightTokenIcon", typeof(RectTransform), typeof(Image));
+                iconObject.transform.SetParent(_tokenChip, false);
+                var icon = iconObject.GetComponent<Image>();
+                icon.sprite = gearSprite;
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                UiBuilder.Place(icon.rectTransform, 0f, 0f, 56f, 56f);
+            }
 
             ShownAccessoryName = AccessoryNameFor(rewardEvent.AccessoryRewardId);
             var accessoryName = UiBuilder.Text(_panel, AccessoryNameName, ShownAccessoryName, 19, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);

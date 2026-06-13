@@ -106,5 +106,44 @@ namespace CareerQuest
         {
             return ResolveVisible(ResolveEarned(session), ceremonyContext);
         }
+
+        /// <summary>
+        /// The earned accessories de-duplicated by id (U11, Gate B simplify
+        /// Finding 2): the gear surfaces (gallery newest-first strip, passport
+        /// earn-order grid) all need the distinct earned set in a stable order
+        /// without re-walking a hand-rolled dedup loop. <paramref name="newestFirst"/>
+        /// true reverses earn order (the gallery's most-recent-gear-first strip);
+        /// false keeps earn order (the passport grid). Presentation only (KTD8) —
+        /// reads the session read model, never scoring.
+        /// </summary>
+        public static IReadOnlyList<AccessoryDefinition> DistinctEarned(GameSession session, bool newestFirst)
+        {
+            var earned = ResolveEarned(session);
+            var distinct = new List<AccessoryDefinition>(earned.Count);
+            var seen = new HashSet<string>();
+
+            if (newestFirst)
+            {
+                for (var i = earned.Count - 1; i >= 0; i--)
+                {
+                    if (seen.Add(earned[i].Id))
+                    {
+                        distinct.Add(earned[i]);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var accessory in earned)
+                {
+                    if (seen.Add(accessory.Id))
+                    {
+                        distinct.Add(accessory);
+                    }
+                }
+            }
+
+            return distinct;
+        }
     }
 }

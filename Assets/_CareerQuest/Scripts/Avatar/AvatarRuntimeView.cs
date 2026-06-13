@@ -20,7 +20,9 @@ namespace CareerQuest
         private SpriteFrameAnimator _animator;
         private AvatarAccessoryLayer _accessoryLayer;
         private string _spriteAssetId;
-        private Vector3 _baseScale = new(0.75f, 0.75f, 1f);
+        // Default base scale (NPCs and the bare ApplySpriteAsset path); player
+        // avatars override it from their U11-tuned AvatarDefinition.RenderScale.
+        private Vector3 _baseScale = new(AvatarConfig.LegacyRenderScale, AvatarConfig.LegacyRenderScale, 1f);
 
         public string AvatarId => avatarId;
         public AvatarDefinition Definition => AvatarConfig.GetAvatar(avatarId);
@@ -49,6 +51,12 @@ namespace CareerQuest
             }
 
             avatarId = avatar.Id;
+            // U11 polish pass: adopt this avatar's authored rest-pose proportion
+            // before applying the sprite, so the cast reads as cleaner, more
+            // distinct characters and the accessory anchors derive from the
+            // correctly-scaled host sprite.
+            var scale = avatar.RenderScale > 0.01f ? avatar.RenderScale : AvatarConfig.LegacyRenderScale;
+            _baseScale = new Vector3(scale, scale, 1f);
             ApplySpriteAsset(avatar.SpriteAssetId);
         }
 

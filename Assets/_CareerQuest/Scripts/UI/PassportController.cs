@@ -48,9 +48,8 @@ namespace CareerQuest
             PassportPage.Results
         };
 
-        private static readonly Color LockedFace = new(0.88f, 0.9f, 0.93f);
-        private static readonly Color LockedRing = new(0.7f, 0.74f, 0.78f);
-        private static readonly Color LockedInk = new(0.45f, 0.48f, 0.52f);
+        // U11 (Gate B simplify Finding 4): locked-slot colors moved to the shared
+        // QuestStageUi tokens (they were identical here and in the gallery).
 
         private Transform _parent;
         private GameSession _session;
@@ -228,12 +227,12 @@ namespace CareerQuest
             {
                 // Locked slot: dimmed, no badge name, and explicitly NO seed
                 // choice (a kid cannot peek at remixes for an unplayed station).
-                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", LockedRing, 0f, 26f, 76f, 76f);
-                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", LockedFace, 0f, 26f, 62f, 62f);
-                var hint = UiBuilder.Text(group, $"{entry.Id}BadgeLockHint", "?", 28, TextAnchor.MiddleCenter, LockedInk, TypeRole.Display, TypeWeight.SemiBold);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", QuestStageUi.LockedRing, 0f, 26f, 76f, 76f);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", QuestStageUi.LockedFace, 0f, 26f, 62f, 62f);
+                var hint = UiBuilder.Text(group, $"{entry.Id}BadgeLockHint", "?", 28, TextAnchor.MiddleCenter, QuestStageUi.LockedInk, TypeRole.Display, TypeWeight.SemiBold);
                 UiBuilder.Place(hint.rectTransform, 0f, 26f, 40f, 40f);
 
-                var label = UiBuilder.Text(group, $"{entry.Id}BadgeLabel", "Locked", 12, TextAnchor.MiddleCenter, LockedInk);
+                var label = UiBuilder.Text(group, $"{entry.Id}BadgeLabel", "Locked", 12, TextAnchor.MiddleCenter, QuestStageUi.LockedInk);
                 UiBuilder.Place(label.rectTransform, 0f, -18f, 156f, 24f);
             }
         }
@@ -256,15 +255,9 @@ namespace CareerQuest
             var campusVisibleIds = new HashSet<string>(
                 AccessoryResolver.ResolveVisible(earned, ceremonyContext: false).Select(accessory => accessory.Id));
 
-            var distinct = new List<AccessoryDefinition>();
-            var seen = new HashSet<string>();
-            foreach (var accessory in earned)
-            {
-                if (seen.Add(accessory.Id))
-                {
-                    distinct.Add(accessory);
-                }
-            }
+            // Earn-order, de-duplicated (U11 Finding 2: one shared resolver helper
+            // instead of a hand-rolled dedup loop duplicated across surfaces).
+            var distinct = AccessoryResolver.DistinctEarned(_session, newestFirst: false);
 
             var columns = 5;
             var startX = -340f;
@@ -286,12 +279,21 @@ namespace CareerQuest
         {
             var group = MountEntryGroup($"{EntryPrefix}{accessory.Id}", x, y);
 
-            // Placeholder accessory art: a tinted token chip stands in until the
-            // U6/U11 accessory pass lands final sprites (no fallback art).
+            // U11: the accessory art pass landed (CareerQuestAccessoryArtBuilder),
+            // so the gear page shows the REAL accessory sprite on a soft identity
+            // chip — not a placeholder token.
             var chipColor = AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition)
                 ? definition.PrimaryColor
                 : QuestStageUi.PathGold;
-            UiBuilder.Circle(group, $"{accessory.Id}GearChip", chipColor, 0f, 26f, 70f, 70f);
+            UiBuilder.Circle(group, $"{accessory.Id}GearChip", Color.Lerp(chipColor, QuestStageUi.Paper, 0.55f), 0f, 26f, 70f, 70f);
+
+            // Final-art-only (DESIGN: no fallback art on a player surface) — the
+            // identity chip alone stands in until the art pass has run.
+            var sprite = AssetCatalog.SpriteFor(accessory.SpriteAssetId);
+            if (sprite != null && AssetCatalog.IsFinalArtSprite(sprite))
+            {
+                AddIcon(group, $"{accessory.Id}GearIcon", sprite, 0f, 26f, 54f);
+            }
 
             var name = UiBuilder.Text(group, $"{accessory.Id}GearName", accessory.DisplayName, 13, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Body, TypeWeight.SemiBold);
             UiBuilder.Place(name.rectTransform, 0f, -16f, 158f, 24f);
@@ -332,7 +334,7 @@ namespace CareerQuest
                 UiBuilder.Place(row, 0f, y, 760f, 54f);
 
                 var sparked = shownSparks.Contains(combo.Id);
-                UiBuilder.Circle(row, $"PassportComboSpark{i}", sparked ? QuestStageUi.PathGold : LockedRing, -344f, 0f, 30f, 30f);
+                UiBuilder.Circle(row, $"PassportComboSpark{i}", sparked ? QuestStageUi.PathGold : QuestStageUi.LockedRing, -344f, 0f, 30f, 30f);
 
                 var name = UiBuilder.Text(row, $"PassportComboName{i}", combo.DisplayName, 17, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
                 UiBuilder.Place(name.rectTransform, -150f, 10f, 420f, 24f);

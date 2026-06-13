@@ -188,18 +188,48 @@ namespace CareerQuest.Tests
             }
         }
 
+        /// <summary>
+        /// U11 accessory art pass: every accessory reward sprite is now cataloged
+        /// as REQUIRED player-facing final art (the U1/U6 placeholder contract is
+        /// retired). CareerQuestAccessoryArtBuilder.Generate writes the PNG for
+        /// each id, so the SpriteFallbackGate (FullPlayerFacingCatalogResolvesToFinalArt)
+        /// polices them like any other final art. This is the inverse of the
+        /// pre-U11 "intentional placeholder" assertion.
+        /// </summary>
         [Test]
-        public void AccessoryRewardSpritesAreCatalogedAsIntentionalPlaceholders()
+        public void AccessoryRewardSpritesAreCatalogedRequiredPlayerFacingArt()
         {
             foreach (var accessory in AccessoryRewardConfig.All)
             {
                 Assert.That(AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition), Is.True, accessory.Id);
                 Assert.That(definition.Category, Is.EqualTo(AssetCategory.Prop), accessory.Id);
-                // Placeholder contract: accessory art stays outside the
-                // final-art gates until the U6/U11 accessory fit pass.
-                Assert.That(definition.RequiredInFirstPlayable, Is.False, accessory.Id);
-                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.False, accessory.Id);
+                // Final-art contract: the accessory art pass landed, so the gate
+                // requires a real Resources PNG (no runtime fallback) for each.
+                Assert.That(definition.RequiredInFirstPlayable, Is.True, accessory.Id);
+                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.True, accessory.Id);
             }
+        }
+
+        /// <summary>
+        /// Every accessory in the reward table has its own sprite id (the gear
+        /// surfaces + the avatar layer resolve it), and the ids are unique — so
+        /// no two accessories collide on one art file.
+        /// </summary>
+        [Test]
+        public void EveryAccessoryHasADistinctCatalogedSprite()
+        {
+            var seen = new System.Collections.Generic.HashSet<string>();
+            foreach (var accessory in AccessoryRewardConfig.All)
+            {
+                Assert.That(accessory.SpriteAssetId, Is.Not.Empty, accessory.Id);
+                Assert.That(seen.Add(accessory.SpriteAssetId), Is.True, $"Duplicate accessory sprite id: {accessory.SpriteAssetId}");
+                Assert.That(AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out _), Is.True, accessory.SpriteAssetId);
+            }
+
+            // The bar: at least 10 station accessories (one per station) plus the
+            // milestone/ceremony set.
+            Assert.That(System.Linq.Enumerable.Count(AccessoryRewardConfig.StationAccessories), Is.GreaterThanOrEqualTo(10),
+                "At least 10 station accessories exist, one per station.");
         }
 
         [Test]

@@ -79,22 +79,27 @@ namespace CareerQuest
             Prop("prop.city_piece_spaceport", "Spaceport Mast City Piece", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
             Prop("prop.city_piece_newsroom", "Newsroom Kiosk City Piece", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
             Prop("prop.city_piece_green_city", "Green City Park Piece", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f), false),
-            // U1 accessory rewards (AccessoryRewardConfig) — intentional
-            // placeholders until the U6/U11 accessory art pass.
-            Prop("accessory.tool_belt", "Tool Belt Accessory", new Color(0.68f, 0.36f, 0.03f), new Color(0.96f, 0.86f, 0.35f), false),
-            Prop("accessory.lab_goggles", "Lab Goggles Accessory", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f), false),
-            Prop("accessory.chef_hat", "Chef Hat Accessory", new Color(1f, 0.97f, 0.88f), new Color(0.55f, 0.82f, 0.5f), false),
-            Prop("accessory.microphone", "Microphone Accessory", new Color(0.62f, 0.52f, 0.86f), new Color(0.42f, 0.42f, 0.46f), false),
-            Prop("accessory.care_cape", "Care Cape Accessory", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f), false),
-            Prop("accessory.sketchbook", "Sketchbook Accessory", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f), false),
-            Prop("accessory.weather_goggles", "Weather Goggles Accessory", new Color(0.28f, 0.66f, 0.94f), new Color(1f, 0.92f, 0.64f), false),
-            Prop("accessory.mission_patch", "Mission Patch Accessory", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
-            Prop("accessory.press_badge", "Press Badge Accessory", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 1f, 1f), false),
-            Prop("accessory.green_hardhat", "Green Hardhat Accessory", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f), false),
-            Prop("accessory.badge_sash", "Badge Sash Accessory", new Color(0.953f, 0.769f, 0.357f), new Color(0.94f, 0.34f, 0.28f), false),
-            Prop("accessory.explorer_cape", "Explorer Cape Accessory", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f), false),
-            Prop("accessory.star_robe", "Star Robe Accessory", new Color(0.28f, 0.28f, 0.55f), new Color(1f, 0.92f, 0.64f), false),
-            Prop("accessory.reveal_flourish", "Reveal Flourish Accessory", new Color(1f, 0.92f, 0.64f), new Color(0.62f, 0.52f, 0.86f), false),
+            // Accessory rewards (AccessoryRewardConfig). U11 accessory art pass:
+            // CareerQuestAccessoryArtBuilder.Generate writes the final 128px PNG
+            // for every accessory id, so these are now required + player-facing —
+            // the SpriteFallbackGate polices them like any other final art. The
+            // primary/accent colors below are also the generator's draw palette
+            // (it reads each Prop definition at draw time), so gear stays
+            // color-matched to its station identity.
+            Prop("accessory.tool_belt", "Tool Belt Accessory", new Color(0.68f, 0.36f, 0.03f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.lab_goggles", "Lab Goggles Accessory", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.chef_hat", "Chef Hat Accessory", new Color(1f, 0.97f, 0.88f), new Color(0.55f, 0.82f, 0.5f)),
+            Prop("accessory.microphone", "Microphone Accessory", new Color(0.62f, 0.52f, 0.86f), new Color(0.42f, 0.42f, 0.46f)),
+            Prop("accessory.care_cape", "Care Cape Accessory", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.sketchbook", "Sketchbook Accessory", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.weather_goggles", "Weather Goggles Accessory", new Color(0.28f, 0.66f, 0.94f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.mission_patch", "Mission Patch Accessory", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.press_badge", "Press Badge Accessory", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 1f, 1f)),
+            Prop("accessory.green_hardhat", "Green Hardhat Accessory", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.badge_sash", "Badge Sash Accessory", new Color(0.953f, 0.769f, 0.357f), new Color(0.94f, 0.34f, 0.28f)),
+            Prop("accessory.explorer_cape", "Explorer Cape Accessory", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.star_robe", "Star Robe Accessory", new Color(0.28f, 0.28f, 0.55f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.reveal_flourish", "Reveal Flourish Accessory", new Color(1f, 0.92f, 0.64f), new Color(0.62f, 0.52f, 0.86f)),
             Prop("prop.thermometer", "Thermometer", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 1f, 1f)),
             Prop("prop.care_plan", "Care Plan", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.92f, 0.64f)),
             Prop("prop.evidence_card", "Evidence Card", new Color(0.83f, 0.96f, 1f), new Color(0.96f, 0.62f, 0.18f)),

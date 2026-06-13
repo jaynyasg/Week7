@@ -143,11 +143,115 @@ namespace CareerQuest.Tests
             Object.Destroy(avatarObject);
         }
 
+        // ------------------------------------------------------------------
+        // U11 accessory-fit geometric checks (R12 / Character Visual Acceptance
+        // Bar). For 4 representative avatars each wearing 3+ accessories, assert
+        // the geometric invariants that catch obvious floating / clipping /
+        // sorting / flip-mirror mismatch. Pixel-perfect fit is an OWNER
+        // visual-review gate (a unit test cannot pixel-diff) — these invariants
+        // are the automatable floor under that review.
+        // ------------------------------------------------------------------
+
+        [UnityTest]
+        public IEnumerator FourAvatarsWithThreePlusAccessoriesFitWithoutFloatingClippingOrSortMismatch()
+        {
+            // Eight completions earn six distinct-slot station accessories plus the
+            // Badge Sash (3) and Explorer Cape (5) milestones — well over 3 visible
+            // accessories spanning Head/Face/Hand/Torso/Back/Sash. The Explorer
+            // Cape (newest Back) replaces Care Cape in its slot, so every visible
+            // slot still holds exactly one piece.
+            var stations = new[]
+            {
+                CareerQuestCatalog.CommunityKitchenId, // Chef Hat (Head)
+                CareerQuestCatalog.AiLabId,            // Lab Goggles (Face)
+                CareerQuestCatalog.MusicStudioId,      // Microphone (Hand)
+                CareerQuestCatalog.RoboticsGarageId,   // Tool Belt (Torso)
+                CareerQuestCatalog.VetClinicId,        // Care Cape (Back)
+                CareerQuestCatalog.GameStudioId,       // Sketchbook (Hand, replaces mic)
+            };
+
+            foreach (var avatarId in new[] { "sky_builder", "care_captain", "logic_spark", "art_inventor" })
+            {
+                var (avatarObject, view, host) = MakeAvatar($"accessory-fit-{avatarId}", avatarId);
+                var session = new GameSession();
+                foreach (var stationId in stations)
+                {
+                    RecordStation(session, stationId);
+                }
+
+                view.BindAccessories(session, ceremonyContext: false);
+                yield return null;
+                yield return null; // let LateUpdate sync facing/sorting
+
+                var layer = view.AccessoryLayer;
+                Assert.That(layer.VisibleCount, Is.GreaterThanOrEqualTo(3),
+                    $"{avatarId}: at least 3 accessories are visible at once.");
+
+                // No two visible accessories share a slot (clutter rule holds even
+                // with a full body of gear).
+                var slots = layer.VisibleAccessoryIds
+                    .Select(id => AccessoryRewardConfig.TryGetById(id, out var a) ? a.Slot : (AccessorySlot?)null)
+                    .Where(s => s.HasValue).Select(s => s.Value).ToList();
+                Assert.That(slots.Distinct().Count(), Is.EqualTo(slots.Count), $"{avatarId}: one accessory per slot.");
+
+                var hostBounds = host.bounds;
+                foreach (var accessoryId in layer.VisibleAccessoryIds.ToList())
+                {
+                    AccessoryRewardConfig.TryGetById(accessoryId, out var definition);
+                    var renderer = layer.RendererFor(accessoryId);
+                    Assert.That(renderer, Is.Not.Null, $"{avatarId}/{accessoryId}: mounts a live renderer.");
+                    Assert.That(renderer.sprite, Is.Not.Null, $"{avatarId}/{accessoryId}: resolves a sprite, never null.");
+
+                    // INVARIANT 1 — no floating / no swallowing: the accessory's
+                    // world bounds overlap the avatar's bounds (it sits ON the
+                    // body), and it is not absurdly larger than the avatar.
+                    Assert.That(BoundsOverlap(hostBounds, renderer.bounds), Is.True,
+                        $"{avatarId}/{accessoryId}: accessory bounds overlap the avatar (not floating off).");
+                    Assert.That(renderer.bounds.size.y, Is.LessThan(hostBounds.size.y * 1.6f + 0.5f),
+                        $"{avatarId}/{accessoryId}: accessory does not swallow the avatar.");
+
+                    // INVARIANT 2 — sorting: order is exactly host + the
+                    // definition's SortingOffset, on the host's sorting layer.
+                    Assert.That(renderer.sortingLayerID, Is.EqualTo(host.sortingLayerID), $"{avatarId}/{accessoryId}");
+                    Assert.That(renderer.sortingOrder, Is.EqualTo(host.sortingOrder + definition.SortingOffset),
+                        $"{avatarId}/{accessoryId}: sort = host + SortingOffset.");
+
+                    // INVARIANT 3 — flip mirrors the anchor x. Capture forward x,
+                    // face left through the view, and assert the layer mirrors.
+                    var forwardX = renderer.transform.localPosition.x;
+                    view.SetLocomotion(true, -1f);
+                    yield return null;
+                    Assert.That(renderer.flipX, Is.True, $"{avatarId}/{accessoryId}: layer mirrors host facing.");
+                    Assert.That(renderer.transform.localPosition.x, Is.EqualTo(-forwardX).Within(0.0001f),
+                        $"{avatarId}/{accessoryId}: anchor x mirrors on flip.");
+
+                    // Restore facing for the next accessory's capture.
+                    view.SetLocomotion(true, 1f);
+                    yield return null;
+                }
+
+                Object.Destroy(avatarObject);
+                yield return null;
+            }
+        }
+
+        /// <summary>Axis-aligned overlap test in world space (the "is it on the body" check).</summary>
+        private static bool BoundsOverlap(Bounds a, Bounds b)
+        {
+            return a.min.x <= b.max.x && a.max.x >= b.min.x
+                && a.min.y <= b.max.y && a.max.y >= b.min.y;
+        }
+
         private static (GameObject, AvatarRuntimeView, SpriteRenderer) MakeAvatar(string name)
+        {
+            return MakeAvatar(name, "sky_builder");
+        }
+
+        private static (GameObject, AvatarRuntimeView, SpriteRenderer) MakeAvatar(string name, string avatarId)
         {
             var avatarObject = new GameObject(name, typeof(SpriteRenderer), typeof(AvatarRuntimeView));
             var view = avatarObject.GetComponent<AvatarRuntimeView>();
-            view.ApplyAvatar("sky_builder");
+            view.ApplyAvatar(avatarId);
             // Freeze the frame animator so the host sprite (and thus the
             // accessory anchor extents) stays constant across facing flips —
             // the flip-mirror assertion needs a stable host sprite.
