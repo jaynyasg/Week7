@@ -9,9 +9,9 @@ using UnityEngine.TestTools;
 namespace CareerQuest.Tests
 {
     /// <summary>
-    /// U8 all-station smoke: every CURRENTLY-PLAYABLE station routes through the
-    /// generic station-id branch, completes its default seed in quick/golden
-    /// mode, emits exactly one normal MiniGameResult, returns to campus, and
+    /// All-station smoke: every in-plan station routes through the generic
+    /// station-id branch, completes its default seed in quick/golden mode,
+    /// emits exactly one normal MiniGameResult, returns to campus, and
     /// re-enters for a replay seed choice — all through the ONE shared
     /// PartyStationController, never a bespoke per-station path.
     ///
@@ -19,51 +19,36 @@ namespace CareerQuest.Tests
     /// <see cref="PlayableStationIds"/> is the single switch that grows this
     /// smoke as the station pack lands:
     ///
-    ///   - U8 (now):  the six first-wave stations are playable; the four Wave 2
-    ///                stations (<see cref="Wave2StationIds"/>) show a temporary
-    ///                construction-site presentation on the campus and are NOT
-    ///                iterated here yet (U10 builds their gameplay).
-    ///   - U10:       MOVE the four Wave 2 ids from <see cref="Wave2StationIds"/>
-    ///                into <see cref="PlayableStationIds"/> (ideally make
-    ///                PlayableStationIds == CareerQuestCatalog.PartyStationIds).
-    ///                The full-pack loop below then covers all ten.
-    ///   - U11:       the final-gate test
-    ///                <see cref="NoInPlanStationRemainsConstructionOnly"/> flips
-    ///                from documenting the seam to asserting that EVERY in-plan
-    ///                station is playable (no "coming soon" / construction-only),
-    ///                i.e. PlayableStationIds covers CareerQuestCatalog.PartyStationIds.
+    ///   - U8:        the six first-wave stations were playable; the four Wave 2
+    ///                stations showed a temporary construction-site presentation.
+    ///   - U10 (now): Wave 2 gameplay is signed off, so PlayableStationIds is
+    ///                CareerQuestCatalog.PartyStationIds — all ten — and the
+    ///                Wave 2 bookkeeping list (<see cref="Wave2StationIds"/>) is
+    ///                empty. The full-pack loop below covers every in-plan
+    ///                station, and <see cref="NoInPlanStationRemainsConstructionOnly"/>
+    ///                already satisfies its final-gate assertion.
+    ///   - U11:       tightens the final-gate message to "no in-plan station may
+    ///                remain construction-only" and (optionally) deletes the now
+    ///                vestigial Wave2StationIds bookkeeping entirely.
     /// =======================================================================
     /// </summary>
     public class StationPackSmokePlayModeTests
     {
         /// <summary>
-        /// THE PLAYABLE-SET SEAM (U10 flips this). The station-id-routed stations
-        /// that are fully playable today: the first-wave pack. U10 adds the Wave
-        /// 2 ids here; U11 asserts this equals CareerQuestCatalog.PartyStationIds.
+        /// THE PLAYABLE-SET SEAM. Every in-plan station is now playable through
+        /// the shared controller (U10 moved Wave 2 in). Bound directly to
+        /// CareerQuestCatalog.PartyStationIds so this can never silently drift
+        /// from the catalog — the all-station loop iterates the real ten.
         /// </summary>
-        private static readonly string[] PlayableStationIds =
-        {
-            CareerQuestCatalog.RoboticsGarageId,
-            CareerQuestCatalog.AiLabId,
-            CareerQuestCatalog.CommunityKitchenId,
-            CareerQuestCatalog.MusicStudioId,
-            CareerQuestCatalog.VetClinicId,
-            CareerQuestCatalog.GameStudioId
-        };
+        private static readonly string[] PlayableStationIds = CareerQuestCatalog.PartyStationIds;
 
         /// <summary>
-        /// Wave 2 stations — present as campus definitions + construction sites,
-        /// but their gameplay sign-off is U10. The smoke must NOT iterate these
-        /// to completion yet (they would otherwise turn this into a spurious
-        /// pre-U10 failure surface). U10 empties this list into PlayableStationIds.
+        /// Wave 2 construction bookkeeping — now EMPTY: U10 signed off Weather
+        /// Lab, Spaceport, Newsroom, and Green City, so none remain a
+        /// construction-only site. Kept (empty) so the final-gate seam below
+        /// still reads cleanly; U11 may delete it once it tightens that gate.
         /// </summary>
-        private static readonly string[] Wave2StationIds =
-        {
-            CareerQuestCatalog.WeatherLabId,
-            CareerQuestCatalog.SpaceportId,
-            CareerQuestCatalog.NewsroomId,
-            CareerQuestCatalog.GreenCityId
-        };
+        private static readonly string[] Wave2StationIds = new string[0];
 
         [SetUp]
         public void SetUp()
@@ -184,41 +169,41 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// The plan's campus-visibility scenario: Wave 2 stations are visible on
-        /// the campus (a door + a construction-site presentation) but are not yet
-        /// signed off as playable. Routing into one must NOT crash — the shared
-        /// controller renders the station from its definition — but this smoke
-        /// deliberately does not assert their completion (U10 owns that).
+        /// The plan's campus-visibility scenario, now at the U10 bar: EVERY
+        /// in-plan station (first-wave + the four Wave 2 stations U10 signed
+        /// off) shows exactly one campus door and routes into the shared
+        /// controller from its definition without crashing. This replaces the
+        /// pre-U10 "Wave 2 is visible but not yet playable" test — Wave 2 is now
+        /// fully in the playable set, so the construction-only framing is gone.
         /// </summary>
         [UnityTest]
-        public IEnumerator Wave2StationsAreVisibleAndRoutableButNotYetInThePlayableSet()
+        public IEnumerator EveryInPlanStationShowsADoorAndRoutesThroughTheSharedController()
         {
-            // The two sets partition the in-plan stations exactly: nothing is
-            // double-counted, nothing is missing.
-            Assert.That(PlayableStationIds.Intersect(Wave2StationIds), Is.Empty,
-                "A station is either playable now or a Wave 2 construction site, never both.");
+            // U10 invariant: the playable set IS the full in-plan catalog, and
+            // no station is left tracked as a Wave 2 construction site.
+            Assert.That(Wave2StationIds, Is.Empty,
+                "U10 signed off Wave 2: no in-plan station remains a construction site.");
             Assert.That(
-                PlayableStationIds.Concat(Wave2StationIds).OrderBy(id => id),
+                PlayableStationIds.OrderBy(id => id),
                 Is.EquivalentTo(CareerQuestCatalog.PartyStationIds.OrderBy(id => id)),
-                "Playable + Wave 2 must together cover every in-plan station id.");
+                "The playable set must cover every in-plan station id.");
 
-            var appObject = new GameObject("station-pack-smoke-wave2-test");
+            var appObject = new GameObject("station-pack-smoke-doors-test");
             var app = appObject.AddComponent<CareerQuestApp>();
             yield return null;
 
             PrepareController(appObject);
 
-            foreach (var stationId in Wave2StationIds)
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
             {
-                // Each Wave 2 station has a campus entrance (it is visible).
+                // Each station has exactly one campus entrance (it is visible).
                 Assert.That(
                     WorldAnchors.ActiveEntrancesWithStations.Count(e => e.ResolveStationId() == stationId),
                     Is.EqualTo(1),
-                    $"Wave 2 station '{stationId}' must still show a campus door.");
+                    $"Station '{stationId}' must show exactly one campus door.");
 
                 // Routing in renders from the definition without crashing — the
-                // generic branch already handles every in-plan id (U10 only adds
-                // gameplay sign-off, not new routing).
+                // generic branch handles every in-plan id with no bespoke path.
                 Assert.That(app.ShowPartyStation(stationId), Is.True, stationId);
                 yield return MountFrames();
                 Assert.That(app.CurrentStationId, Is.EqualTo(stationId), stationId);
@@ -231,13 +216,11 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// THE FINAL GATE (U11 flips this). At U8/U10 this documents the seam: it
-        /// asserts the playable set partitions cleanly and reports which stations
-        /// are still construction-only. When U10 has moved Wave 2 into the
-        /// playable set, <see cref="Wave2StationIds"/> is empty and this test
-        /// already passes its final-gate assertion — U11 then tightens the
-        /// message to "no in-plan station may remain construction-only" and (if
-        /// desired) deletes the Wave2 bookkeeping entirely.
+        /// THE FINAL GATE. With U10's Wave 2 sign-off, the playable set is the
+        /// full in-plan catalog, so NO station remains construction-only — this
+        /// already asserts the final-build invariant (R1 / AE7). U11 keeps this
+        /// gate; it only needs to retire the now-empty <see cref="Wave2StationIds"/>
+        /// bookkeeping and the construction-era comments around the seam.
         /// </summary>
         [Test]
         public void NoInPlanStationRemainsConstructionOnly()
@@ -246,15 +229,15 @@ namespace CareerQuest.Tests
                 .Where(id => !PlayableStationIds.Contains(id))
                 .ToArray();
 
-            // U8/U10 invariant: anything not yet playable is exactly a known
-            // Wave 2 construction station — never a silently-dropped in-plan id.
-            Assert.That(stillConstruction, Is.EquivalentTo(Wave2StationIds),
-                "Every not-yet-playable in-plan station must be a tracked Wave 2 construction site.");
+            // Final-build invariant (R1 / AE7): every in-plan station is playable
+            // through generic station-id routing; none is construction-only or
+            // "coming soon".
+            Assert.That(stillConstruction, Is.Empty,
+                "Final build: no in-plan station may remain construction-only or 'coming soon'.");
 
-            // U11 FLIP: replace the line above with the final gate below (and set
-            // Wave2StationIds = empty once U10 lands):
-            //   Assert.That(stillConstruction, Is.Empty,
-            //       "Final build: no in-plan station may remain construction-only or 'coming soon'.");
+            // The vestigial Wave 2 list is empty now that U10 landed — the
+            // construction era is over.
+            Assert.That(Wave2StationIds, Is.Empty);
         }
 
         // ------------------------------------------------------------------

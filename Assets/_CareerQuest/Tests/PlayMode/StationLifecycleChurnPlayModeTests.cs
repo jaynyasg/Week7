@@ -95,11 +95,12 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// U5: a creative station (Music Remix — ComposeSet + the meter widget)
-        /// and a care station (Vet Clinic — MatchAndCare) join the replay-churn
-        /// smoke after the Robotics baseline above. Meter widgets, mark zones,
-        /// and confirmation-free care surfaces must tear down like every other
-        /// transient station object.
+        /// U5/U10: a creative station (Music Remix — ComposeSet + one meter
+        /// widget), a care station (Vet Clinic — MatchAndCare), and a Wave 2
+        /// station (Green City Builder — BalanceMeters with TWO meter widgets)
+        /// join the replay-churn smoke after the Robotics baseline above. Meter
+        /// widgets (including Green City's two), mark zones, and care surfaces
+        /// must tear down like every other transient station object.
         /// </summary>
         [UnityTest]
         public IEnumerator CreativeAndCareStationChurnLeavesNoResidue()
@@ -117,10 +118,13 @@ namespace CareerQuest.Tests
 
             // Music: 3 sound layers + 1 reaction toy (the meter is a zone).
             // Vet: 1 clue + 1 helper + 3 care toys.
+            // Green City: 4 city-piece toys + 2 meter zones (the U10 two-meter
+            // widget teardown — both must clear on route change).
             var churnStations = new (string StationId, int PieceCount, int MeterCount)[]
             {
                 (CareerQuestCatalog.MusicStudioId, 4, 1),
-                (CareerQuestCatalog.VetClinicId, 5, 0)
+                (CareerQuestCatalog.VetClinicId, 5, 0),
+                (CareerQuestCatalog.GreenCityId, 4, 2)
             };
 
             for (var cycle = 0; cycle < 2; cycle++)
