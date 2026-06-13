@@ -19,7 +19,8 @@ namespace CareerQuest.Tests
     ///
     ///   - Weather Lab Rescue: SequenceCards "predict + protect" — order the
     ///     forecast clue, then place the shelter tools; out-of-order is gentle.
-    ///   - Spaceport Pilot:    SequenceCards launch/orbit/deliver/land order.
+    ///   - Spaceport Pilot:    TracePath launch/orbit/deliver/land — ordered
+    ///     waypoints traced along the flight path (design-review #3 verb).
     ///   - Newsroom Story Sprint: ComposeSet fact-check (any-order verified
     ///     facts to the story), with source-safe copy.
     ///   - Green City Builder: BalanceMeters with TWO meters — both meter dials
@@ -36,7 +37,7 @@ namespace CareerQuest.Tests
         private static readonly (string StationId, ToyPatternId Pattern)[] Wave2Stations =
         {
             (CareerQuestCatalog.WeatherLabId, ToyPatternId.SequenceCards),
-            (CareerQuestCatalog.SpaceportId, ToyPatternId.SequenceCards),
+            (CareerQuestCatalog.SpaceportId, ToyPatternId.TracePath),
             (CareerQuestCatalog.NewsroomId, ToyPatternId.ComposeSet),
             (CareerQuestCatalog.GreenCityId, ToyPatternId.BalanceMeters)
         };
@@ -176,12 +177,14 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// Spaceport Pilot proves SequenceCards: launch, orbit, deliver, and
-        /// land must arrive in the authored mission order through the real drop
-        /// seam — a step out of turn bounces gently and the next step is named.
+        /// Spaceport Pilot proves TracePath (design-review #3): launch, orbit,
+        /// deliver, and land are traced as ordered waypoints along the flight
+        /// path through the real drop seam — each waypoint has its OWN zone (vs
+        /// SequenceCards' single shared target), a step out of turn bounces
+        /// gently, and the next step is named.
         /// </summary>
         [UnityTest]
-        public IEnumerator SpaceportPilotProvesSequenceCardsNavigation()
+        public IEnumerator SpaceportPilotProvesTracePathNavigation()
         {
             var appObject = new GameObject("wave2-spaceport-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -193,21 +196,21 @@ namespace CareerQuest.Tests
 
             var rules = controller.Pattern.Rules;
 
-            // The mission sequence is launch_checklist -> fuel_bead ->
-            // snack_crate -> orbit_arrow, all onto the one sequence target.
+            // The traced route is launch_checklist -> fuel_bead -> snack_crate ->
+            // orbit_arrow, each onto its own positioned waypoint zone.
             Assert.That(rules.NextExpectedObjectId, Is.EqualTo("launch_checklist"));
 
-            // Right target, wrong time -> gentle bounce (out-of-order maps to
+            // Right waypoint, wrong time -> gentle bounce (out-of-order maps to
             // the same RejectedWrongSlot outcome through the drop seam).
-            Assert.That(controller.TrySubmitDrop("orbit_arrow", ToyPatternRules.SequenceTargetId),
+            Assert.That(controller.TrySubmitDrop("orbit_arrow", rules.ExpectedTargetFor("orbit_arrow")),
                 Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
             Assert.That(controller.IsToyAccepted("orbit_arrow"), Is.False);
 
-            // Step the mission in order — each step accepts as it comes up.
+            // Trace the route in order — each waypoint accepts as it comes up.
             foreach (var stepId in new[] { "launch_checklist", "fuel_bead", "snack_crate", "orbit_arrow" })
             {
                 Assert.That(rules.NextExpectedObjectId, Is.EqualTo(stepId), $"next step is {stepId}");
-                Assert.That(controller.TrySubmitDrop(stepId, ToyPatternRules.SequenceTargetId),
+                Assert.That(controller.TrySubmitDrop(stepId, rules.ExpectedTargetFor(stepId)),
                     Is.EqualTo(DropSubmitResult.Accepted), stepId);
             }
 

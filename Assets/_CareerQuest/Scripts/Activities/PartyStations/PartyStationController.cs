@@ -766,6 +766,18 @@ namespace CareerQuest
                 CurrentMeterValue,
                 (meterId, value) => TrySubmitDrop(meterId, ToyPatternRules.MeterTargetPrefix + meterId, value));
 
+            // Design-review #3: TracePath lays a tappable route over the SAME
+            // drop seam (waypoints not dragged) so the player traces a path
+            // instead of dragging tokens to pads.
+            if (rules.Pattern == ToyPatternId.TracePath)
+            {
+                PartyStationRenderer.MountTraceRoute(
+                    _kit,
+                    rules,
+                    _accent,
+                    waypointId => TrySubmitDrop(waypointId, rules.ExpectedTargetFor(waypointId), 0));
+            }
+
             // Pre-existing shared progress (joining a partner mid-attempt)
             // renders on mount without celebration spam.
             SyncFromNetwork(celebrateNew: false);
@@ -1154,6 +1166,8 @@ namespace CareerQuest
                     return "mixed in";
                 case ToyPatternId.BalanceMeters:
                     return "built";
+                case ToyPatternId.TracePath:
+                    return "traced";
                 default:
                     return "placed";
             }

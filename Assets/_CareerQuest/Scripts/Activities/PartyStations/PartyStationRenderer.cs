@@ -27,6 +27,8 @@ namespace CareerQuest
         public const string ZoneLabelName = "StationZoneLabel";
         public const string TokenLabelName = "ToyTokenLabel";
         public const string TaskRingName = "ToyTaskRing";
+        public const string TraceRouteName = "StationTraceRoute";
+        public const string TraceStepLabelName = "StationTraceStep";
 
         /// <summary>Optional poke-toys render at this alpha so the actionable set stands out.</summary>
         public const float OptionalToyAlpha = 0.45f;
@@ -225,6 +227,98 @@ namespace CareerQuest
         }
 
         /// <summary>
+        /// Design-review #3 TracePath route: lays the ordered waypoint zones
+        /// along an ascending flight path with a connecting route line and step
+        /// numbers, hides the (unused) tray pieces, and makes each waypoint a
+        /// tap target over the SAME drop seam. The player taps the route stops
+        /// in order — the rules reject out-of-order taps and bounce gently — so
+        /// it reads as tracing a path, a distinct verb from dragging tokens to
+        /// pads. Pointer-first with non-color cues (numbers + the drawn line),
+        /// no harsh fail (R19). Widgets ride the kit's zone objects, so teardown
+        /// stays kit-owned.
+        /// </summary>
+        public static void MountTraceRoute(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitWaypoint)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitWaypoint == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // TracePath taps the route; the tray toys are not dragged. Hide
+            // every tray piece (waypoints AND reaction pokes) so only the route
+            // stops are interactable.
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            var positions = new Vector3[count];
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var zone = kit.ZoneFor(ToyPatternRules.WaypointTargetPrefix + objectId);
+                if (zone == null)
+                {
+                    continue;
+                }
+
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.4f, 3.4f, t), 0.35f + Mathf.Sin(t * Mathf.PI) * 0.85f, 0f);
+                zone.transform.localPosition = position;
+                positions[i] = position;
+
+                // Step number above the stop (non-color order cue, R19).
+                AddWorldLabel(zone.transform, $"{TraceStepLabelName}{i}", (i + 1).ToString(), new Vector3(0f, 0.52f, 0f), 2.4f, ToyInteractionKit.ZoneSortingOrder + 43);
+
+                var localId = objectId;
+                var waypoint = zone.gameObject.AddComponent<StationWaypoint>();
+                waypoint.Configure(localId, accent, () => submitWaypoint(localId));
+            }
+
+            // Route line: thin accent segments between consecutive stops, drawn
+            // under the zones so the stops sit on the path.
+            var routeRoot = new GameObject(TraceRouteName).transform;
+            routeRoot.SetParent(kit.Root, false);
+            for (var i = 0; i < count - 1; i++)
+            {
+                var a = positions[i];
+                var b = positions[i + 1];
+                var delta = b - a;
+                var length = delta.magnitude;
+                if (length < 0.001f)
+                {
+                    continue;
+                }
+
+                var segment = new GameObject($"{TraceRouteName}Seg{i}", typeof(SpriteRenderer));
+                segment.transform.SetParent(routeRoot, false);
+                segment.transform.localPosition = (a + b) * 0.5f;
+                segment.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+                segment.transform.localScale = new Vector3(length, 0.08f, 1f);
+                var segmentRenderer = segment.GetComponent<SpriteRenderer>();
+                segmentRenderer.sprite = CampusWorldSprites.Square;
+                var lineColor = accent;
+                lineColor.a = 0.5f;
+                segmentRenderer.color = lineColor;
+                segmentRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 3;
+            }
+        }
+
+        /// <summary>
         /// Kid-readable label for a rule target, derived from the seed objects
         /// (slot/mark/meter targets name their toy; shared targets name the
         /// pattern verb). Never an internal target id string.
@@ -249,6 +343,11 @@ namespace CareerQuest
             if (targetId.StartsWith(ToyPatternRules.MeterTargetPrefix, System.StringComparison.Ordinal))
             {
                 return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.MeterTargetPrefix.Length));
+            }
+
+            if (targetId.StartsWith(ToyPatternRules.WaypointTargetPrefix, System.StringComparison.Ordinal))
+            {
+                return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.WaypointTargetPrefix.Length));
             }
 
             if (targetId.StartsWith(ToyPatternRules.BinTargetPrefix, System.StringComparison.Ordinal))
@@ -537,6 +636,70 @@ namespace CareerQuest
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
             return renderer;
+        }
+    }
+
+    /// <summary>
+    /// Design-review #3 TracePath stop: one tappable waypoint on the route.
+    /// Tapping submits this waypoint through the station's drop seam; the rules
+    /// accept it only when it is the next stop (out-of-order taps bounce gently,
+    /// never a fail). The pointer handler is a thin wrapper over <see cref="Tap"/>,
+    /// the seam the tests drive (house idiom, mirrors StationMeterWidget).
+    /// </summary>
+    public class StationWaypoint : MonoBehaviour, IPointerClickHandler
+    {
+        public const string ReachedMarkName = "TraceStopReached";
+
+        private string _objectId;
+        private Color _accent;
+        private Func<DropSubmitResult> _submit;
+        private bool _reached;
+
+        public string ObjectId => _objectId;
+        public bool Reached => _reached;
+
+        public void Configure(string objectId, Color accent, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _submit = submit;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE waypoint seam (pointer + tests share it). True when the stop was accepted.</summary>
+        public bool Tap()
+        {
+            if (_submit == null || _reached)
+            {
+                return false;
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                return false; // out-of-order tap: the rules bounced it, gently
+            }
+
+            _reached = true;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            MarkReached();
+            return true;
+        }
+
+        private void MarkReached()
+        {
+            var pieceRenderer = GetComponent<SpriteRenderer>();
+            var mark = new GameObject(ReachedMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(0.42f, 0.42f, 1f);
+            var renderer = mark.GetComponent<SpriteRenderer>();
+            renderer.sprite = CampusWorldSprites.Circle;
+            renderer.color = _accent;
+            renderer.sortingOrder = (pieceRenderer != null ? pieceRenderer.sortingOrder : ToyInteractionKit.ZoneSortingOrder) + 5;
         }
     }
 }

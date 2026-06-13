@@ -59,6 +59,7 @@ namespace CareerQuest
         public const string BinTargetPrefix = "bin.";
         public const string MarkTargetPrefix = "mark.";
         public const string MeterTargetPrefix = "meter.";
+        public const string WaypointTargetPrefix = "waypoint.";
 
         private readonly List<PartyStationObjectDefinition> _objects = new();
         private readonly Dictionary<string, PartyStationObjectDefinition> _objectsById = new();
@@ -376,7 +377,10 @@ namespace CareerQuest
             switch (Pattern)
             {
                 case ToyPatternId.SequenceCards:
-                    // Strict authored order: only the next unaccepted chain toy lands.
+                case ToyPatternId.TracePath:
+                    // Strict authored order: only the next unaccepted chain toy
+                    // lands. TracePath traces the same ordered chain — the tracer
+                    // can only reach the next waypoint, never skip ahead.
                     foreach (var objectId in _draggableOrder)
                     {
                         if (!_accepted.Contains(objectId))
@@ -492,6 +496,11 @@ namespace CareerQuest
                     return TrioTrayTargetId;
                 case ToyPatternId.SequenceCards:
                     return SequenceTargetId;
+                case ToyPatternId.TracePath:
+                    // Each waypoint is its own positioned zone along the route
+                    // (vs SequenceCards' single shared target) so the path reads
+                    // spatially and the tracer submits each as it passes through.
+                    return WaypointTargetPrefix + definition.ObjectId;
                 case ToyPatternId.ComposeSet:
                     return ComposeTargetId;
                 case ToyPatternId.MatchAndCare:

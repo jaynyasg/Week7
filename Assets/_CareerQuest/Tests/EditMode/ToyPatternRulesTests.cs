@@ -123,21 +123,32 @@ namespace CareerQuest.Tests
         }
 
         [Test]
-        public void SequenceCardsEnforcesAuthoredOrder()
+        public void TracePathTracesWaypointsInOrder()
         {
+            // Spaceport is the TracePath proof (design-review #3): the chain is
+            // traced in strict order, but each waypoint has its OWN positioned
+            // zone (waypoint.{id}) rather than SequenceCards' single shared target.
             var rules = RulesFor(CareerQuestCatalog.SpaceportId);
 
             Assert.That(rules.NextExpectedObjectId, Is.EqualTo("launch_checklist"));
+            Assert.That(rules.ExpectedTargetFor("fuel_bead"),
+                Is.EqualTo(ToyPatternRules.WaypointTargetPrefix + "fuel_bead"));
 
-            // Right target, wrong time -> out of order, never harsh.
-            var early = rules.Submit(new ToyAction("fuel_bead", ToyPatternRules.SequenceTargetId));
+            // Right waypoint, wrong time -> out of order, never harsh.
+            var early = rules.Submit(new ToyAction("fuel_bead", rules.ExpectedTargetFor("fuel_bead")));
             Assert.That(early.RejectReason, Is.EqualTo(ToyRejectReason.OutOfOrder));
 
-            Assert.That(rules.Submit(new ToyAction("launch_checklist", ToyPatternRules.SequenceTargetId)).IsAccepted, Is.True);
-            Assert.That(rules.NextExpectedObjectId, Is.EqualTo("fuel_bead"));
-            Assert.That(rules.Submit(new ToyAction("fuel_bead", ToyPatternRules.SequenceTargetId)).IsAccepted, Is.True);
-            Assert.That(rules.Submit(new ToyAction("snack_crate", ToyPatternRules.SequenceTargetId)).IsAccepted, Is.True);
-            Assert.That(rules.Submit(new ToyAction("orbit_arrow", ToyPatternRules.SequenceTargetId)).StationCompleted, Is.True);
+            // Wrong target (a waypoint can't land on another waypoint's zone).
+            var wrongZone = rules.Submit(new ToyAction("launch_checklist", rules.ExpectedTargetFor("fuel_bead")));
+            Assert.That(wrongZone.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
+
+            foreach (var stepId in new[] { "launch_checklist", "fuel_bead", "snack_crate" })
+            {
+                Assert.That(rules.NextExpectedObjectId, Is.EqualTo(stepId));
+                Assert.That(rules.Submit(new ToyAction(stepId, rules.ExpectedTargetFor(stepId))).IsAccepted, Is.True);
+            }
+
+            Assert.That(rules.Submit(new ToyAction("orbit_arrow", rules.ExpectedTargetFor("orbit_arrow"))).StationCompleted, Is.True);
         }
 
         [Test]

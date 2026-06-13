@@ -16,7 +16,16 @@ namespace CareerQuest
         SequenceCards,
         ComposeSet,
         MatchAndCare,
-        BalanceMeters
+        BalanceMeters,
+
+        /// <summary>
+        /// Design-review #3 (distinct verbs): the player drags ONE tracer
+        /// continuously through ordered waypoint zones laid along a route, in
+        /// order — not N separate drops. Completion order is identical to
+        /// SequenceCards (strict authored order); only the input verb and the
+        /// route layout differ, so it routes the same host-validated action seam.
+        /// </summary>
+        TracePath
     }
 
     /// <summary>

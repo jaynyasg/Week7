@@ -551,11 +551,11 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "Spaceport Pilot",
-                new[] { "sequence", "navigate" },
-                ToyPatternId.SequenceCards,
+                new[] { "trace", "navigate" },
+                ToyPatternId.TracePath,
                 "Commander Orbit",
                 "focused mission guide",
-                "Sequence launch, orbit, delivery, and landing to fly the snack probe.",
+                "Trace the flight path: launch, orbit, deliver, then land the snack probe.",
                 new[]
                 {
                     Obj(id, "launch_checklist", "Launch Checklist", PartyStationObjectRole.Clue, "fuel_bead", "react.glow", "Focus"),
@@ -564,7 +564,7 @@ namespace CareerQuest
                     Obj(id, "orbit_arrow", "Orbit Arrow", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Spatial Thinking"),
                     Obj(id, "landing_pad", "Landing Pad", PartyStationObjectRole.Reaction, "orbit_arrow", "react.cheer")
                 },
-                "Sequence launch, orbit, delivery, and landing in the correct order.",
+                "Trace launch, orbit, delivery, and landing in the correct order along the flight path.",
                 new[]
                 {
                     new TraitDelta("Focus", 5),
