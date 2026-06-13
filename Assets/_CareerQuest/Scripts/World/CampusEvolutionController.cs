@@ -54,8 +54,53 @@ namespace CareerQuest
             new(CareerQuestCatalog.AiLabId, "prop.city_piece_lab", new Vector2(-3.85f, 1.05f)),
             new(CareerQuestCatalog.MusicStudioId, "prop.city_piece_art_tower", new Vector2(2.35f, 1.18f)),
             new(CareerQuestCatalog.RoboticsGarageId, "prop.city_piece_garage", new Vector2(3.9f, 1.05f)),
-            new(CareerQuestCatalog.CommunityKitchenId, "prop.city_piece_kitchen", new Vector2(5.0f, 1.12f))
+            new(CareerQuestCatalog.CommunityKitchenId, "prop.city_piece_kitchen", new Vector2(5.0f, 1.12f)),
+            // U1 Party Pack stations: pieces appear only once a best result
+            // exists for the station id, so these slots are dormant until the
+            // stations become playable (U4/U5/U10).
+            new(CareerQuestCatalog.VetClinicId, "prop.city_piece_vet_clinic", new Vector2(-5.0f, 1.1f)),
+            new(CareerQuestCatalog.GameStudioId, "prop.city_piece_game_studio", new Vector2(6.1f, 1.18f)),
+            new(CareerQuestCatalog.WeatherLabId, "prop.city_piece_weather_lab", new Vector2(-6.15f, 1.05f)),
+            new(CareerQuestCatalog.SpaceportId, "prop.city_piece_spaceport", new Vector2(7.2f, 1.2f)),
+            new(CareerQuestCatalog.NewsroomId, "prop.city_piece_newsroom", new Vector2(-7.3f, 1.12f)),
+            new(CareerQuestCatalog.GreenCityId, "prop.city_piece_green_city", new Vector2(8.35f, 1.08f))
         };
+
+        /// <summary>Activity ids with a skyline evolution slot (U1 validation seam).</summary>
+        public static IReadOnlyList<string> EvolutionActivityIds
+        {
+            get
+            {
+                var ids = new string[Layout.Length];
+                for (var index = 0; index < Layout.Length; index++)
+                {
+                    ids[index] = Layout[index].ActivityId;
+                }
+
+                return ids;
+            }
+        }
+
+        /// <summary>Resolves the skyline prop asset id for an activity/station id.</summary>
+        public static bool TryGetEvolutionPropAssetId(string activityId, out string propAssetId)
+        {
+            propAssetId = null;
+            if (string.IsNullOrEmpty(activityId))
+            {
+                return false;
+            }
+
+            foreach (var slot in Layout)
+            {
+                if (slot.ActivityId == activityId)
+                {
+                    propAssetId = slot.PropAssetId;
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         private static readonly Vector2 PieceWorldSize = new(0.52f, 0.56f);
 

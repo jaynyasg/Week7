@@ -26,6 +26,15 @@ namespace CareerQuest
     {
         public bool Unlocked;
         public int EarnedCount;
+
+        /// <summary>
+        /// U7 completion-count style (KTD9). The SAME director presents every
+        /// bucket — this only scales the unlock-burst flourish (bigger at
+        /// BigExplorer/Completionist); it never forks the beat timeline or adds
+        /// a bespoke per-outcome director.
+        /// </summary>
+        public RevealStyle Style = RevealStyle.Simple;
+
         public IReadOnlyList<CatalogEntry> EarnedEntries = Array.Empty<CatalogEntry>();
         public Transform WorldRoot;
         public CameraDirector Camera;
@@ -329,6 +338,22 @@ namespace CareerQuest
         private CameraShot FinalShot =>
             _context != null && _context.Unlocked ? _context.StageShot : _context?.SettleShot ?? RevealStageLayout.SettleShot;
 
+        /// <summary>Unlock-burst density per completion-count style (KTD9 flourish, not a new timeline).</summary>
+        private static float StyleFlourishScale(RevealStyle style)
+        {
+            switch (style)
+            {
+                case RevealStyle.Completionist:
+                    return 1.6f;
+                case RevealStyle.BigExplorer:
+                    return 1.3f;
+                case RevealStyle.Rich:
+                    return 1.15f;
+                default:
+                    return 1f;
+            }
+        }
+
         private void OpenLatch()
         {
             LatchOpened = true;
@@ -428,9 +453,12 @@ namespace CareerQuest
             CurrentBeat = RevealCinematicBeat.UnlockBurst;
             _beatElapsed = 0f;
 
+            // Style flourish (KTD9): richer completion buckets get a denser
+            // burst. Same timeline, same beat — only the particle count scales.
+            var flourish = StyleFlourishScale(_context.Style);
             var center = new Vector3(RevealStageLayout.StageCenter.x, RevealStageLayout.StageCenter.y, 0f);
-            ParticlePoof.Burst(center, BurstGold, 26);
-            ParticlePoof.Burst(center + new Vector3(0f, 0.35f, 0f), BurstTeal, 16);
+            ParticlePoof.Burst(center, BurstGold, Mathf.RoundToInt(26 * flourish));
+            ParticlePoof.Burst(center + new Vector3(0f, 0.35f, 0f), BurstTeal, Mathf.RoundToInt(16 * flourish));
             AudioCueCatalog.TryPlay(AudioCueIds.RevealUnlock); // U8 unlock burst
             TriggerHeroCelebrate();
         }

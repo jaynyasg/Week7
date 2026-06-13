@@ -7,6 +7,13 @@ namespace CareerQuest
         public ActivityRoute CurrentRoute { get; private set; } = ActivityRoute.Entry;
         public AppMode AvatarSelectionTarget { get; private set; } = AppMode.Play;
 
+        /// <summary>
+        /// U2 (KTD3): the station id carried alongside the generic
+        /// <see cref="ActivityRoute.PartyStation"/> branch. Null on every other
+        /// route — any non-station route change clears it.
+        /// </summary>
+        public string CurrentStationId { get; private set; }
+
         public ActivityRoute ShowEntry(GameSession session)
         {
             AvatarSelectionTarget = AppMode.Play;
@@ -79,6 +86,22 @@ namespace CareerQuest
             return SetRoute(session, route);
         }
 
+        /// <summary>
+        /// U2 generic station branch: routes any Party Pack station by station
+        /// id without one ActivityRoute value per station (R7/KTD3).
+        /// </summary>
+        public ActivityRoute ShowPartyStation(GameSession session, string stationId)
+        {
+            if (!CareerQuestCatalog.IsPartyStationId(stationId))
+            {
+                throw new ArgumentException($"'{stationId}' is not a Party Pack station id.", nameof(stationId));
+            }
+
+            var route = SetRoute(session, ActivityRoute.PartyStation);
+            CurrentStationId = stationId;
+            return route;
+        }
+
         public ActivityRoute BeginCeremony(GameSession session)
         {
             session.SetSessionPhase(SessionPhase.Ceremony);
@@ -107,6 +130,9 @@ namespace CareerQuest
 
         private ActivityRoute SetRoute(GameSession session, ActivityRoute route)
         {
+            // Station identity never outlives the generic station route;
+            // ShowPartyStation re-assigns it right after this clears it.
+            CurrentStationId = null;
             CurrentRoute = route;
             session.SetRoute(route);
             return route;

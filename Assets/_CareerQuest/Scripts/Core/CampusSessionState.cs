@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -52,6 +53,36 @@ namespace CareerQuest
         public event Action RevealStartAnnounced;
 
         private GameSession _boundHostSession;
+        private StationProgressNetworkState _stationProgress;
+
+        /// <summary>
+        /// U3 seam: the Party Pack station-progress shared state. It rides this
+        /// always-spawned NetworkObject as a second behaviour (EmoteRelay
+        /// precedent), so the generic station layer needs no new scene object.
+        /// </summary>
+        public StationProgressNetworkState StationProgress
+        {
+            get
+            {
+                if (_stationProgress == null)
+                {
+                    _stationProgress = GetComponent<StationProgressNetworkState>();
+                }
+
+                return _stationProgress;
+            }
+        }
+
+        private void Awake()
+        {
+            // U3: attach the station-progress state at scene-load Awake on EVERY
+            // peer, before any network spawn, so the NetworkBehaviour order on
+            // this object stays deterministic across host and clients.
+            if (GetComponent<StationProgressNetworkState>() == null)
+            {
+                gameObject.AddComponent<StationProgressNetworkState>();
+            }
+        }
 
         public override void OnNetworkSpawn()
         {
@@ -66,6 +97,15 @@ namespace CareerQuest
             _playerCount.OnValueChanged += HandleValueChanged;
             _uniqueCompletedGames.OnValueChanged += HandleValueChanged;
             _revealStartCount.OnValueChanged += HandleRevealStartChanged;
+
+            // U6: the compact completed-activity facts ride StationProgress.
+            // Bubble its changes so clients re-derive accessories/combos/passport
+            // when a reward fact replicates, not only when the count changes.
+            var progress = StationProgress;
+            if (progress != null)
+            {
+                progress.Changed += HandleStationProgressChanged;
+            }
         }
 
         public override void OnNetworkDespawn()
@@ -76,6 +116,11 @@ namespace CareerQuest
             _playerCount.OnValueChanged -= HandleValueChanged;
             _uniqueCompletedGames.OnValueChanged -= HandleValueChanged;
             _revealStartCount.OnValueChanged -= HandleRevealStartChanged;
+
+            if (_stationProgress != null)
+            {
+                _stationProgress.Changed -= HandleStationProgressChanged;
+            }
 
             if (Instance == this)
             {
@@ -118,7 +163,43 @@ namespace CareerQuest
                 return;
             }
 
-            session.ApplyNetworkSnapshot(CurrentPhase, CurrentRoute, PlayerCount, UniqueCompletedGames);
+            session.ApplyNetworkSnapshot(
+                CurrentPhase,
+                CurrentRoute,
+                PlayerCount,
+                UniqueCompletedGames,
+                ReadCompletedActivitySnapshots());
+        }
+
+        /// <summary>
+        /// U6 2P read model: the compact completed-activity facts the host already
+        /// replicates through <see cref="StationProgressNetworkState"/> (station +
+        /// best tier, in first-completion order — each station is appended once on
+        /// first completion, then upgraded in place). Clients derive the SAME
+        /// newest-per-slot accessories, combo eligibility, and passport/gallery
+        /// entries the host does from this order. Never names or free text (R17).
+        /// </summary>
+        private IReadOnlyList<CompletedActivitySnapshot> ReadCompletedActivitySnapshots()
+        {
+            var progress = StationProgress;
+            if (progress == null || progress.RewardFactCount == 0)
+            {
+                return Array.Empty<CompletedActivitySnapshot>();
+            }
+
+            var snapshots = new List<CompletedActivitySnapshot>(progress.RewardFactCount);
+            for (var index = 0; index < progress.RewardFactCount; index++)
+            {
+                var stationId = progress.RewardFactStationIdAt(index);
+                if (string.IsNullOrWhiteSpace(stationId) || !progress.TryGetRewardFact(stationId, out var tier))
+                {
+                    continue;
+                }
+
+                snapshots.Add(new CompletedActivitySnapshot(stationId, tier));
+            }
+
+            return snapshots;
         }
 
         /// <summary>
@@ -169,6 +250,13 @@ namespace CareerQuest
 
         private void HandleValueChanged(int previous, int current)
         {
+            Changed?.Invoke();
+        }
+
+        private void HandleStationProgressChanged()
+        {
+            // A replicated reward fact (completed-activity snapshot) changed —
+            // surface it as a session change so client read models re-derive.
             Changed?.Invoke();
         }
 

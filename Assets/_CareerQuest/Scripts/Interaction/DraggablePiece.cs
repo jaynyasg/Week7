@@ -5,9 +5,10 @@ namespace CareerQuest
 {
     /// <summary>
     /// Room-side decisions for a drag shell. Implemented by room controllers
-    /// (Design Build in U6; Health Hero / Logic Court replicate in U10) so the
-    /// pointer shell stays generic and ALL game logic flows through the room's
-    /// programmatic seams.
+    /// (Design Build in U6; Health Hero / Logic Court replicate in U10) and by
+    /// the Party Pack station surface over <see cref="ToyInteractionKit"/> (U3),
+    /// so the pointer shell stays generic and ALL game logic flows through the
+    /// host's programmatic seams.
     /// </summary>
     public interface IDragDropHost
     {

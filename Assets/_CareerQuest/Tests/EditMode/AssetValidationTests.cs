@@ -164,5 +164,90 @@ namespace CareerQuest.Tests
                 Assert.That(playerFacingIds, Does.Contain(requiredId), requiredId);
             }
         }
+
+        /// <summary>
+        /// U1: every Party Pack station identity art key (badge, campus
+        /// building, evolution piece) resolves to a cataloged definition. New
+        /// station art ships as intentional placeholders (not required, not
+        /// player-facing) so the final-art fallback gate ignores them until
+        /// the U5/U8/U11 art passes flip the flags.
+        /// </summary>
+        [Test]
+        public void PartyStationIdentityArtKeysAreCataloged()
+        {
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(station.BadgeArtKey, out var badge), Is.True, station.BadgeArtKey);
+                Assert.That(badge.Category, Is.EqualTo(AssetCategory.Badge), station.BadgeArtKey);
+
+                Assert.That(AssetCatalog.TryGetDefinition(station.CampusArtKey, out var campus), Is.True, station.CampusArtKey);
+                Assert.That(campus.Category, Is.EqualTo(AssetCategory.Campus), station.CampusArtKey);
+
+                Assert.That(AssetCatalog.TryGetDefinition(station.EvolutionPropAssetId, out var piece), Is.True, station.EvolutionPropAssetId);
+                Assert.That(piece.Category, Is.EqualTo(AssetCategory.Prop), station.EvolutionPropAssetId);
+            }
+        }
+
+        /// <summary>
+        /// U11 accessory art pass: every accessory reward sprite is now cataloged
+        /// as REQUIRED player-facing final art (the U1/U6 placeholder contract is
+        /// retired). CareerQuestAccessoryArtBuilder.Generate writes the PNG for
+        /// each id, so the SpriteFallbackGate (FullPlayerFacingCatalogResolvesToFinalArt)
+        /// polices them like any other final art. This is the inverse of the
+        /// pre-U11 "intentional placeholder" assertion.
+        /// </summary>
+        [Test]
+        public void AccessoryRewardSpritesAreCatalogedRequiredPlayerFacingArt()
+        {
+            foreach (var accessory in AccessoryRewardConfig.All)
+            {
+                Assert.That(AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition), Is.True, accessory.Id);
+                Assert.That(definition.Category, Is.EqualTo(AssetCategory.Prop), accessory.Id);
+                // Final-art contract: the accessory art pass landed, so the gate
+                // requires a real Resources PNG (no runtime fallback) for each.
+                Assert.That(definition.RequiredInFirstPlayable, Is.True, accessory.Id);
+                Assert.That(definition.RequiresFinalArtForPlayerFacingAcceptance, Is.True, accessory.Id);
+            }
+        }
+
+        /// <summary>
+        /// Every accessory in the reward table has its own sprite id (the gear
+        /// surfaces + the avatar layer resolve it), and the ids are unique — so
+        /// no two accessories collide on one art file.
+        /// </summary>
+        [Test]
+        public void EveryAccessoryHasADistinctCatalogedSprite()
+        {
+            var seen = new System.Collections.Generic.HashSet<string>();
+            foreach (var accessory in AccessoryRewardConfig.All)
+            {
+                Assert.That(accessory.SpriteAssetId, Is.Not.Empty, accessory.Id);
+                Assert.That(seen.Add(accessory.SpriteAssetId), Is.True, $"Duplicate accessory sprite id: {accessory.SpriteAssetId}");
+                Assert.That(AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out _), Is.True, accessory.SpriteAssetId);
+            }
+
+            // The bar: at least 10 station accessories (one per station) plus the
+            // milestone/ceremony set.
+            Assert.That(System.Linq.Enumerable.Count(AccessoryRewardConfig.StationAccessories), Is.GreaterThanOrEqualTo(10),
+                "At least 10 station accessories exist, one per station.");
+        }
+
+        [Test]
+        public void PartyStationObjectSpriteKeysAreCatalogedOrIntentionalPlaceholders()
+        {
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                foreach (var seed in station.Seeds)
+                {
+                    foreach (var item in station.ResolveObjects(seed))
+                    {
+                        var resolvable = AssetCatalog.TryGetDefinition(item.SpriteKey, out _)
+                            || item.SpriteKey.StartsWith(PartyStationValidator.PlaceholderSpritePrefix);
+
+                        Assert.That(resolvable, Is.True, $"{seed.SeedId}.{item.ObjectId}: {item.SpriteKey}");
+                    }
+                }
+            }
+        }
     }
 }

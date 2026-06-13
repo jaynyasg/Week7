@@ -16,6 +16,13 @@ namespace CareerQuest
         internal static readonly Color Spotlight = new(1f, 0.922f, 0.639f, 0.35f);
         internal static readonly Color WorkshopTeal = new(0.055f, 0.42f, 0.435f);
 
+        // U11 (Gate B simplify Finding 4): the locked-slot palette was duplicated
+        // verbatim in AchievementGalleryController + PassportController — promoted
+        // here as the one shared token set for every dimmed/locked book slot.
+        internal static readonly Color LockedFace = new(0.88f, 0.9f, 0.93f);
+        internal static readonly Color LockedRing = new(0.7f, 0.74f, 0.78f);
+        internal static readonly Color LockedInk = new(0.45f, 0.48f, 0.52f);
+
         internal static void MountStageBackdrop(RectTransform parent, bool unlocked)
         {
             var curtainLeft = UiBuilder.Panel(parent, "StageCurtainLeft", new Color(0.45f, 0.12f, 0.18f, 0.92f));

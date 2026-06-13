@@ -95,9 +95,15 @@ namespace CareerQuest
             BeginRoom(() => CampusRoomScenes.ShowGallery(_builder, session), AudioCueIds.AmbientGallery);
         }
 
-        public void ShowOptionalRoom(GameSession session, CatalogEntry entry)
+        /// <summary>
+        /// U4 station rooms: the themed station interior plus the
+        /// definition-driven station set (same room-scene pattern; the play
+        /// surface itself mounts through PartyStationController). U5 retired
+        /// the separate optional-room route — every Party Pack id lands here.
+        /// </summary>
+        public void ShowPartyStation(GameSession session, CatalogEntry entry)
         {
-            BeginRoom(() => CampusRoomScenes.ShowOptionalRoom(_builder, session, entry), AudioCueIds.AmbientOptional);
+            BeginRoom(() => CampusRoomScenes.ShowPartyStation(_builder, session, entry), AudioCueIds.AmbientOptional);
         }
 
         public void ShowReveal(GameSession session)

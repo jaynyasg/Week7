@@ -47,6 +47,7 @@ namespace CareerQuest
 
         private CareerQuestApp _app;
         private AudioDirector _audio;
+        private FacilitatorControlsController _facilitatorControls;
         private GameObject _overlay;
         private Slider _sfxSlider;
         private Slider _musicSlider;
@@ -68,6 +69,16 @@ namespace CareerQuest
         {
             _app = app;
             _audio = audio;
+        }
+
+        /// <summary>
+        /// U9: the facilitator controls live INSIDE this pause card (design doc:
+        /// "visible only in existing pause/debug/demo surfaces"). The app binds
+        /// the controller here; Open mounts its row onto the card.
+        /// </summary>
+        public void BindFacilitatorControls(FacilitatorControlsController controls)
+        {
+            _facilitatorControls = controls;
         }
 
         /// <summary>Live-object read: a route change that cleared the canvas root self-heals to closed.</summary>
@@ -129,10 +140,16 @@ namespace CareerQuest
             var exit = UiBuilder.Button(card, ExitToTitleButtonName, "Exit to Title", ExitToTitle);
             UiBuilder.Place(exit.GetComponent<RectTransform>(), 0f, -206f, 240f, 56f);
             QuestStageUi.StyleSecondaryButton(exit);
+
+            // U9: the facilitator control row mounts under the overlay beneath the
+            // card (local-session classroom/demo controls; never child data).
+            _facilitatorControls?.Mount(overlayRect);
         }
 
         public void Close()
         {
+            _facilitatorControls?.Unmount();
+
             if (_overlay != null)
             {
                 Destroy(_overlay);

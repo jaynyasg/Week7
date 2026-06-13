@@ -38,6 +38,15 @@ namespace CareerQuest
             Campus("campus.green_energy_center", "Green Energy Center", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f)),
             Campus("campus.robotics_garage", "Robotics Garage", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
             Campus("campus.community_kitchen", "Community Kitchen", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
+            // U1 Party Pack station buildings — intentional placeholders
+            // (required: false) until the U5/U8 station art pass flips them
+            // into the player-facing fallback gate.
+            Campus("campus.vet_clinic", "Vet Clinic", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f), false),
+            Campus("campus.game_studio", "Game Studio", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f), false),
+            Campus("campus.weather_lab", "Weather Lab", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f), false),
+            Campus("campus.spaceport", "Spaceport", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
+            Campus("campus.newsroom", "Newsroom", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
+            Campus("campus.green_city", "Green City Workshop", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f), false),
 
             Room("room.design_build", "Future City Room", new Color(0.94f, 0.34f, 0.28f), new Color(0.9f, 0.72f, 0.42f)),
             Room("room.health_hero", "Health Hero Room", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
@@ -62,6 +71,35 @@ namespace CareerQuest
             // no skyline piece (CareerQuestOptionalArtBuilder writes final art).
             Prop("prop.city_piece_garage", "Garage City Piece", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_kitchen", "Kitchen City Piece", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
+            // U1 Party Pack evolution pieces — intentional placeholders until
+            // the U8 campus evolution art pass.
+            Prop("prop.city_piece_vet_clinic", "Vet Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f), false),
+            Prop("prop.city_piece_game_studio", "Game Studio Pixel Tower Piece", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f), false),
+            Prop("prop.city_piece_weather_lab", "Weather Tower City Piece", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f), false),
+            Prop("prop.city_piece_spaceport", "Spaceport Mast City Piece", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
+            Prop("prop.city_piece_newsroom", "Newsroom Kiosk City Piece", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
+            Prop("prop.city_piece_green_city", "Green City Park Piece", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f), false),
+            // Accessory rewards (AccessoryRewardConfig). U11 accessory art pass:
+            // CareerQuestAccessoryArtBuilder.Generate writes the final 128px PNG
+            // for every accessory id, so these are now required + player-facing —
+            // the SpriteFallbackGate polices them like any other final art. The
+            // primary/accent colors below are also the generator's draw palette
+            // (it reads each Prop definition at draw time), so gear stays
+            // color-matched to its station identity.
+            Prop("accessory.tool_belt", "Tool Belt Accessory", new Color(0.68f, 0.36f, 0.03f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.lab_goggles", "Lab Goggles Accessory", new Color(0.29f, 0.616f, 0.922f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.chef_hat", "Chef Hat Accessory", new Color(1f, 0.97f, 0.88f), new Color(0.55f, 0.82f, 0.5f)),
+            Prop("accessory.microphone", "Microphone Accessory", new Color(0.62f, 0.52f, 0.86f), new Color(0.42f, 0.42f, 0.46f)),
+            Prop("accessory.care_cape", "Care Cape Accessory", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.sketchbook", "Sketchbook Accessory", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.weather_goggles", "Weather Goggles Accessory", new Color(0.28f, 0.66f, 0.94f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.mission_patch", "Mission Patch Accessory", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.press_badge", "Press Badge Accessory", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 1f, 1f)),
+            Prop("accessory.green_hardhat", "Green Hardhat Accessory", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("accessory.badge_sash", "Badge Sash Accessory", new Color(0.953f, 0.769f, 0.357f), new Color(0.94f, 0.34f, 0.28f)),
+            Prop("accessory.explorer_cape", "Explorer Cape Accessory", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
+            Prop("accessory.star_robe", "Star Robe Accessory", new Color(0.28f, 0.28f, 0.55f), new Color(1f, 0.92f, 0.64f)),
+            Prop("accessory.reveal_flourish", "Reveal Flourish Accessory", new Color(1f, 0.92f, 0.64f), new Color(0.62f, 0.52f, 0.86f)),
             Prop("prop.thermometer", "Thermometer", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 1f, 1f)),
             Prop("prop.care_plan", "Care Plan", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.92f, 0.64f)),
             Prop("prop.evidence_card", "Evidence Card", new Color(0.83f, 0.96f, 1f), new Color(0.96f, 0.62f, 0.18f)),
@@ -84,6 +122,14 @@ namespace CareerQuest
             Badge("badge.music_studio", "Music Studio Badge", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
             Badge("badge.robotics_garage", "Robotics Garage Badge", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
             Badge("badge.community_kitchen", "Community Kitchen Badge", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
+            // U1 Party Pack station badges — intentional placeholders until
+            // the U5/U10 station art pass flips them into the badge art gate.
+            Badge("badge.vet_clinic", "Vet Clinic Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f), false),
+            Badge("badge.game_studio", "Game Studio Badge", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f), false),
+            Badge("badge.weather_lab", "Weather Lab Badge", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f), false),
+            Badge("badge.spaceport", "Spaceport Badge", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
+            Badge("badge.newsroom", "Newsroom Badge", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
+            Badge("badge.green_city", "Green City Badge", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f), false),
 
             Ui("ui.exit", "Exit Game Icon", new Color(0.09f, 0.31f, 0.42f), new Color(1f, 1f, 1f)),
             Ui("ui.gallery", "Gallery Icon", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),
@@ -285,14 +331,14 @@ namespace CareerQuest
             return new AssetDefinition(id, displayName, AssetCategory.Room, primary, accent, new Vector2Int(384, 216));
         }
 
-        private static AssetDefinition Prop(string id, string displayName, Color primary, Color accent)
+        private static AssetDefinition Prop(string id, string displayName, Color primary, Color accent, bool required = true)
         {
-            return new AssetDefinition(id, displayName, AssetCategory.Prop, primary, accent, new Vector2Int(128, 128));
+            return new AssetDefinition(id, displayName, AssetCategory.Prop, primary, accent, new Vector2Int(128, 128), required, required);
         }
 
-        private static AssetDefinition Badge(string id, string displayName, Color primary, Color accent)
+        private static AssetDefinition Badge(string id, string displayName, Color primary, Color accent, bool required = true)
         {
-            return new AssetDefinition(id, displayName, AssetCategory.Badge, primary, accent, new Vector2Int(128, 128));
+            return new AssetDefinition(id, displayName, AssetCategory.Badge, primary, accent, new Vector2Int(128, 128), required, required);
         }
 
         private static AssetDefinition Ui(string id, string displayName, Color primary, Color accent)

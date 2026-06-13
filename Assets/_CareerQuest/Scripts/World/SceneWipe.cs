@@ -14,6 +14,13 @@ namespace CareerQuest
     ///   frame as a non-blocking visual, and is parented under the world root so
     ///   any ClearWorld removes it.
     /// Deterministic-friendly: Tick(deltaSeconds) seam with AutoTick.
+    ///
+    /// U9 (R19) reduced motion: the cover still mounts (the transition still
+    /// reads — the room is briefly veiled, completion clarity preserved), but
+    /// <see cref="BeginOpen"/> collapses the lift to a single tick so the
+    /// swooshing curtain animation is suppressed in quiet-classroom mode. The
+    /// gate is the static ClassroomAccessSettings.ReducedMotionActive (this
+    /// object is built by a static factory with no session reference).
     /// </summary>
     public class SceneWipe : MonoBehaviour
     {
@@ -67,7 +74,11 @@ namespace CareerQuest
         public void BeginOpen(float durationSeconds)
         {
             gameObject.name = OpenName;
-            _duration = Mathf.Max(0.01f, durationSeconds);
+            // U9 reduced motion: collapse the lift to one tick — the cover frame
+            // already happened (transition reads), the swoosh is what we drop.
+            _duration = ClassroomAccessSettings.ReducedMotionActive
+                ? 0.01f
+                : Mathf.Max(0.01f, durationSeconds);
             _elapsed = 0f;
             _opening = true;
         }

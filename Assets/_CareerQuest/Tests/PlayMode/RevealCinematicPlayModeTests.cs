@@ -84,6 +84,59 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
+        public IEnumerator UnlockedRevealRendersSynthesisCopyAndKeepsAccessoriesInCeremonyContext()
+        {
+            // U7: the unlocked card is driven by RevealSynthesis (KTD9) — the
+            // headline leads with the superpower, with a family subhead and the
+            // top-5 paths. The stage hero avatar flips into ceremony context so
+            // earned + ceremony-only accessories stay visible through the reveal.
+            yield return CreateAppOnRevealRoute(3);
+
+            Assert.That(_reveal.Synthesis, Is.Not.Null, "Render computes a synthesis snapshot.");
+            Assert.That(_reveal.Synthesis.Style, Is.EqualTo(RevealStyle.Simple), "3 unique completions = Simple style.");
+
+            // Ceremony-context accessory flip on the stage hero (U6 seam).
+            var hero = FindHeroAvatar();
+            Assert.That(hero, Is.Not.Null, "Reveal stage hero avatar exists.");
+            Assert.That(hero.AccessoryLayer, Is.Not.Null, "Hero avatar binds an accessory layer for the ceremony.");
+            Assert.That(hero.AccessoryLayer.IsCeremonyContext, Is.True, "Hero avatar is in ceremony context during reveal.");
+
+            var elapsed = 0f;
+            while (!_director.IsResolved && elapsed < RevealCinematicDirector.MaxSeconds)
+            {
+                TickBoth(0.25f);
+                elapsed += 0.25f;
+            }
+
+            Assert.That(_director.IsResolved, Is.True);
+
+            var lead = GameObject.Find("RevealLead");
+            Assert.That(lead, Is.Not.Null, "Synthesis headline mounts.");
+            Assert.That(
+                lead.GetComponent<TextMeshProUGUI>().text,
+                Is.EqualTo(_reveal.Synthesis.Superpower),
+                "Headline leads with the synthesized superpower.");
+            Assert.That(GameObject.Find("RevealSubhead"), Is.Not.Null, "Family subhead mounts.");
+            Assert.That(GameObject.Find("RevealPaths"), Is.Not.Null, "Top-5 paths mount.");
+
+            _app.ShowCampus();
+            yield return null;
+        }
+
+        private AvatarRuntimeView FindHeroAvatar()
+        {
+            foreach (var view in Object.FindObjectsByType<AvatarRuntimeView>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (view.name == RevealStageLayout.HeroAvatarName)
+                {
+                    return view;
+                }
+            }
+
+            return null;
+        }
+
+        [UnityTest]
         public IEnumerator TwoBadgesShowsLockedStageWithProgressAndNoSkip()
         {
             yield return CreateAppOnRevealRoute(2);

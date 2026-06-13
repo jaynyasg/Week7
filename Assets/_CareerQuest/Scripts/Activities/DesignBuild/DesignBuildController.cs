@@ -6,15 +6,8 @@ using UnityEngine;
 
 namespace CareerQuest
 {
-    public enum DropSubmitResult
-    {
-        Accepted,
-        Pending,
-        RejectedWrongSlot,
-        RejectedOccupied,
-        RejectedLocked,
-        RejectedUnknownPiece
-    }
+    // U3: DropSubmitResult moved to Scripts/Interaction/ToySubmissionResult.cs —
+    // the shared interaction layer owns the drop seam types now.
 
     /// <summary>
     /// Design Build Studio — the flagship drag-and-drop room (U6).
@@ -354,19 +347,7 @@ namespace CareerQuest
                 return;
             }
 
-            var result = TrySubmitDrop(piece.PieceId, zone.ZoneId);
-            switch (result)
-            {
-                case DropSubmitResult.Accepted:
-                    // Visuals were applied by the accept path (local or network).
-                    break;
-                case DropSubmitResult.Pending:
-                    piece.IsAwaitingResult = true;
-                    break;
-                default:
-                    piece.SnapToHome();
-                    break;
-            }
+            ToyInteractionKit.ApplyDropOutcome(piece, TrySubmitDrop(piece.PieceId, zone.ZoneId));
         }
 
         public bool WouldAcceptDrop(string pieceId, string zoneId)
@@ -445,11 +426,11 @@ namespace CareerQuest
             for (var i = 0; i < pieces.Count; i++)
             {
                 var pieceId = pieces[i].Id;
-                var slotPosition = AnchorPosition(
+                var slotPosition = ToyInteractionKit.AnchorPosition(
                     worldRoot,
                     DesignBuildStudioLayout.SlotAnchorPrefix + pieceId,
                     DesignBuildStudioLayout.SlotPosition(i));
-                var trayPosition = AnchorPosition(
+                var trayPosition = ToyInteractionKit.AnchorPosition(
                     worldRoot,
                     DesignBuildStudioLayout.TrayAnchorPrefix + i,
                     DesignBuildStudioLayout.TrayPosition(i));
@@ -469,7 +450,7 @@ namespace CareerQuest
                 var renderer = pieceObject.GetComponent<SpriteRenderer>();
                 renderer.sprite = AssetCatalog.SpriteFor($"prop.city_piece_{pieceId}");
                 renderer.sortingOrder = 330; // characters/props band
-                ApplyWorldSize(pieceObject.transform, renderer.sprite, DesignBuildStudioLayout.PieceWorldSize);
+                ToyInteractionKit.ApplyWorldSize(pieceObject.transform, renderer.sprite, DesignBuildStudioLayout.PieceWorldSize);
 
                 pieceObject.AddComponent<BoxCollider2D>();
                 pieceObject.AddComponent<DragFeel>();
@@ -482,32 +463,6 @@ namespace CareerQuest
             SyncVisualsFromAuthority(celebrateNew: false);
             ApplyPartnerHeldPiece(PartnerHeldPieceIdFromState()); // P17: pre-existing hold renders on mount
             UpdateProgress();
-        }
-
-        private static Vector3 AnchorPosition(Transform worldRoot, string anchorName, Vector2 fallback)
-        {
-            foreach (var child in worldRoot.GetComponentsInChildren<Transform>(true))
-            {
-                if (child.name == anchorName)
-                {
-                    return child.position;
-                }
-            }
-
-            return new Vector3(fallback.x, fallback.y, 0f);
-        }
-
-        private static void ApplyWorldSize(Transform target, Sprite sprite, Vector2 worldSize)
-        {
-            if (sprite == null)
-            {
-                return;
-            }
-
-            var bounds = sprite.bounds.size;
-            var width = Mathf.Approximately(bounds.x, 0f) ? 1f : bounds.x;
-            var height = Mathf.Approximately(bounds.y, 0f) ? 1f : bounds.y;
-            target.localScale = new Vector3(worldSize.x / width, worldSize.y / height, 1f);
         }
 
         private void HandleNetworkChanged()
@@ -659,19 +614,7 @@ namespace CareerQuest
         /// </summary>
         public void ApplyPartnerHeldPiece(string pieceId)
         {
-            if (_partnerHeldPieceId != null
-                && !string.Equals(_partnerHeldPieceId, pieceId, StringComparison.Ordinal)
-                && _pieces.TryGetValue(_partnerHeldPieceId, out var previous)
-                && previous != null)
-            {
-                PartnerHoldIndicator.Clear(previous.gameObject);
-            }
-
-            _partnerHeldPieceId = pieceId;
-            if (pieceId != null && _pieces.TryGetValue(pieceId, out var piece) && piece != null)
-            {
-                PartnerHoldIndicator.Show(piece.gameObject);
-            }
+            _partnerHeldPieceId = ToyInteractionKit.ApplyPartnerHold(_pieces, _partnerHeldPieceId, pieceId);
         }
 
         private string PartnerHeldPieceIdFromState()

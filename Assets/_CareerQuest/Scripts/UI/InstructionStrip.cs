@@ -17,7 +17,7 @@ namespace CareerQuest
             return mode == AppMode.Play || mode == AppMode.SoloFallback;
         }
 
-        public static string ResolveMessage(GameSession session)
+        public static string ResolveMessage(GameSession session, string stationId = null)
         {
             if (session == null)
             {
@@ -47,23 +47,33 @@ namespace CareerQuest
                     return "Prep the ingredients, then serve the meal to finish the kitchen quest.";
                 case ActivityRoute.Gallery:
                     return "Look at your badges. Tap a room when you are ready for another quest.";
+                case ActivityRoute.PartyStation:
+                    // U2 generic station branch: one copy seam keyed by station
+                    // id — never one switch case per station (KTD3).
+                    if (CareerQuestCatalog.IsPartyStationId(stationId) && CareerQuestCatalog.TryGetById(stationId, out var stationEntry))
+                    {
+                        return $"Play in the {stationEntry.BuildingName} to finish your quest.";
+                    }
+
+                    return "Follow the quest steps to earn your badge.";
                 case ActivityRoute.Campus:
                 default:
                     if (session.CurrentPhase == SessionPhase.Hub)
                     {
-                        return "Walk to a career door and press Enter to start a quest.";
+                        // U2 walk-into-door entry: no key press is required.
+                        return "Walk into a career door to start a quest. It opens on its own!";
                     }
 
                     return "Follow the quest steps to earn your badge.";
             }
         }
 
-        public static TextMeshProUGUI Build(Transform parent, GameSession session)
+        public static TextMeshProUGUI Build(Transform parent, GameSession session, string stationId = null)
         {
             var panel = UiBuilder.InstructionStripPanel(parent, PanelName, Paper, TealAccent);
             UiBuilder.Place(panel, 0f, -305f, 1120f, 64f);
 
-            var label = UiBuilder.Text(panel, LabelName, ResolveMessage(session), 20, TextAnchor.MiddleCenter, Ink, TypeRole.Body, TypeWeight.Medium);
+            var label = UiBuilder.Text(panel, LabelName, ResolveMessage(session, stationId), 20, TextAnchor.MiddleCenter, Ink, TypeRole.Body, TypeWeight.Medium);
             UiBuilder.Place(label.rectTransform, 0f, 0f, 1040f, 48f);
 
             // Long kid-facing strings must wrap or shrink instead of overflowing the strip.
@@ -75,14 +85,14 @@ namespace CareerQuest
             return label;
         }
 
-        public static void Refresh(TextMeshProUGUI label, GameSession session)
+        public static void Refresh(TextMeshProUGUI label, GameSession session, string stationId = null)
         {
             if (label == null)
             {
                 return;
             }
 
-            label.text = ResolveMessage(session);
+            label.text = ResolveMessage(session, stationId);
         }
     }
 }

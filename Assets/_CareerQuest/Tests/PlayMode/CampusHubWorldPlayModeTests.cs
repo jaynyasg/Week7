@@ -42,7 +42,22 @@ namespace CareerQuest.Tests
 
             var anchors = hub.GetComponent<WorldAnchors>();
             Assert.That(anchors, Is.Not.Null, "The prefab root must export WorldAnchors.");
-            Assert.That(anchors.Entrances.Count, Is.EqualTo(7));
+
+            // U8 re-authored the prefab to the full readable 10-station district
+            // map: the three Quest Yard core doors, the four converted
+            // legacy-route stations, and the six station-id doors (13 total).
+            Assert.That(anchors.Entrances.Count, Is.EqualTo(13),
+                "The campus shows all 10 in-plan stations plus the 3 core rooms.");
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                Assert.That(anchors.Entrances.Count(entrance => entrance.ResolveStationId() == stationId), Is.EqualTo(1),
+                    $"The authored prefab must export exactly one entrance for station '{stationId}'.");
+            }
+
+            Assert.That(WorldAnchors.ValidateEntrances(anchors.Entrances), Is.Empty,
+                "The authored prefab entrance set must validate clean (no overlap, readable district labels).");
+            Assert.That(WorldAnchors.ValidateDistrictGrouping(anchors.Entrances), Is.Empty,
+                "The authored prefab doors must read as four district clusters, not one crowded row.");
 
             var ambient = hub.GetComponentsInChildren<AmbientMotion>();
             Assert.That(ambient.Length, Is.GreaterThanOrEqualTo(3), "Living campus (P9): clouds, flag, butterflies.");
@@ -93,6 +108,41 @@ namespace CareerQuest.Tests
                 var clamped = PlayerAvatarNetwork.ClampCampus(new Vector3(entrance.Position.x, entrance.Position.y, 0f));
                 Assert.That((Vector2)clamped, Is.EqualTo(entrance.Position),
                     $"The server clamp must not move entrance '{entrance.Id}'.");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator StationEntrancesStayInsideWalkClampsAndNeverOverlap()
+        {
+            yield return null;
+
+            // U2: the playable entrance set is the anchored entrances plus the
+            // station-id doors. It must validate clean (non-overlapping entry
+            // circles, readable labels and district labels, resolvable station
+            // ids) and every door must be reachable under both walk clamps.
+            var entrances = WorldAnchors.ActiveEntrancesWithStations;
+            var errors = WorldAnchors.ValidateEntrances(entrances);
+            Assert.That(errors, Is.Empty,
+                $"Hub entrance layout must validate clean. Errors: {string.Join(" | ", errors)}");
+
+            var localBounds = WorldAnchors.ActiveWalkBounds;
+            var serverBounds = WorldAnchors.AssetWalkBounds;
+            foreach (var entrance in entrances.Where(entrance => entrance.IsStationEntrance))
+            {
+                Assert.That(localBounds.Contains(entrance.Position), Is.True,
+                    $"Station entrance '{entrance.Id}' at {entrance.Position} must lie inside the local walk clamp {localBounds}.");
+                Assert.That(serverBounds.Contains(entrance.Position), Is.True,
+                    $"Station entrance '{entrance.Id}' at {entrance.Position} must lie inside the server walk clamp {serverBounds}.");
+
+                var clamped = PlayerAvatarNetwork.ClampCampus(new Vector3(entrance.Position.x, entrance.Position.y, 0f));
+                Assert.That((Vector2)clamped, Is.EqualTo(entrance.Position),
+                    $"The server clamp must not move station entrance '{entrance.Id}'.");
+            }
+
+            foreach (var stationId in CareerQuestCatalog.PartyStationIds)
+            {
+                Assert.That(entrances.Count(entrance => entrance.ResolveStationId() == stationId), Is.EqualTo(1),
+                    $"Station '{stationId}' must resolve exactly one campus entrance.");
             }
         }
 

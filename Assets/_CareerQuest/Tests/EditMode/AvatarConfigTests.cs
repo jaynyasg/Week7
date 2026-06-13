@@ -42,5 +42,41 @@ namespace CareerQuest.Tests
                 Assert.That(avatar.PersonalityLabel.Length, Is.LessThanOrEqualTo(80), avatar.Id);
             }
         }
+
+        /// <summary>
+        /// U11 base-avatar polish pass (R1 / Character Visual Acceptance Bar):
+        /// the cast carries a visibly cleaner proportion vs. the pre-U11 set.
+        /// Pixel quality is owner-judged, so this is a STRUCTURAL assertion — the
+        /// config produces a per-avatar RenderScale strictly above the single
+        /// legacy 0.75 every avatar used before, within a sane gameplay range.
+        /// </summary>
+        [Test]
+        public void EveryAvatarShowsAPolishPassProportionAboveTheLegacyBaseline()
+        {
+            foreach (var avatar in AvatarConfig.Avatars)
+            {
+                Assert.That(avatar.RenderScale, Is.GreaterThan(AvatarConfig.LegacyRenderScale), avatar.Id);
+                // Stays a believable on-campus character size (never a giant).
+                Assert.That(avatar.RenderScale, Is.InRange(AvatarConfig.LegacyRenderScale, 1.1f), avatar.Id);
+            }
+        }
+
+        /// <summary>
+        /// The polish pass authors PER-AVATAR proportions (more distinct
+        /// characters), not one shared bump — so the set has at least two
+        /// different RenderScale values.
+        /// </summary>
+        [Test]
+        public void PolishPassProportionsVaryAcrossTheCast()
+        {
+            var distinct = new System.Collections.Generic.HashSet<float>();
+            foreach (var avatar in AvatarConfig.Avatars)
+            {
+                distinct.Add(avatar.RenderScale);
+            }
+
+            Assert.That(distinct.Count, Is.GreaterThanOrEqualTo(2),
+                "The polish pass tunes proportions per avatar, not one shared value.");
+        }
     }
 }

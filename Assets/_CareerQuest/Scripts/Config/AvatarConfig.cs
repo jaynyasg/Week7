@@ -14,6 +14,18 @@ namespace CareerQuest
         public string PersonalityLabel { get; }
         public string NpcAssetId { get; }
 
+        /// <summary>
+        /// U11 character polish pass: the rest-pose render height in avatar-local
+        /// units (the AvatarRuntimeView base scale). The pre-U11 set used one
+        /// hardcoded 0.75 for every avatar; the polish pass authors a slightly
+        /// taller, per-avatar proportion so the cast reads as cleaner, more
+        /// distinct game characters at gameplay scale (and the accessory anchors,
+        /// which derive from the host sprite extents, sit correctly on top).
+        /// Final pixel quality is owner-judged; this is the structural knob the
+        /// AvatarConfigTests polish-pass assertion checks.
+        /// </summary>
+        public float RenderScale { get; }
+
         public AvatarDefinition(
             string id,
             string displayName,
@@ -23,7 +35,8 @@ namespace CareerQuest
             string spriteAssetId,
             string paletteId,
             string personalityLabel,
-            string npcAssetId)
+            string npcAssetId,
+            float renderScale)
         {
             Id = id;
             DisplayName = displayName;
@@ -34,12 +47,21 @@ namespace CareerQuest
             PaletteId = paletteId;
             PersonalityLabel = personalityLabel;
             NpcAssetId = npcAssetId;
+            RenderScale = renderScale;
         }
     }
 
     public static class AvatarConfig
     {
         public const string DefaultAvatarId = "sky_builder";
+
+        /// <summary>
+        /// The pre-U11 single hardcoded base scale every avatar used. The U11
+        /// polish pass authors a taller, per-avatar <see cref="AvatarDefinition.RenderScale"/>
+        /// strictly above this, so the upgrade is a structural, testable fact
+        /// (AvatarConfigTests) rather than only an owner-judged pixel change.
+        /// </summary>
+        public const float LegacyRenderScale = 0.75f;
 
         public static readonly AvatarDefinition[] Avatars =
         {
@@ -52,7 +74,8 @@ namespace CareerQuest
                 "avatar.sky_builder",
                 "sky-blue",
                 "Plans big builds and spots patterns in places.",
-                "npc.builder_partner"),
+                "npc.builder_partner",
+                0.86f),
             new(
                 "care_captain",
                 "Care Captain",
@@ -62,7 +85,8 @@ namespace CareerQuest
                 "avatar.care_captain",
                 "care-teal",
                 "Notices how people feel and chooses kind tools.",
-                "npc.patient"),
+                "npc.patient",
+                0.83f),
             new(
                 "logic_spark",
                 "Logic Spark",
@@ -72,7 +96,8 @@ namespace CareerQuest
                 "avatar.logic_spark",
                 "logic-gold",
                 "Finds clues, checks facts, and explains ideas clearly.",
-                "npc.judge"),
+                "npc.judge",
+                0.84f),
             new(
                 "art_inventor",
                 "Art Inventor",
@@ -82,7 +107,8 @@ namespace CareerQuest
                 "avatar.art_inventor",
                 "inventor-lilac",
                 "Mixes imagination with experiments to make new things.",
-                "npc.campus_guide")
+                "npc.campus_guide",
+                0.82f)
         };
 
         public static AvatarDefinition DefaultAvatar => GetAvatar(DefaultAvatarId);

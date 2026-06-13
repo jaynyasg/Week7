@@ -16,26 +16,70 @@ namespace CareerQuest
         /// </summary>
         public const float FootstepIntervalSeconds = 0.34f;
 
+        /// <summary>
+        /// U2 walk-into-door entry: the avatar must stay inside an entrance
+        /// circle this long before the door opens — a one-frame edge brush
+        /// never fires. Tunable; the locked design specifies roughly
+        /// 0.15-0.25s so entry feels effortless without firing on a brush.
+        /// </summary>
+        public const float AutoEntryDwellSeconds = 0.2f;
+
+        /// <summary>
+        /// U2 return-to-campus grace: applied every time the hub avatar is
+        /// (re)configured, so coming back from a room cannot instantly re-enter
+        /// a door the player happens to spawn near.
+        /// </summary>
+        public const float ReturnToCampusGraceSeconds = 0.5f;
+
         [SerializeField] private float moveSpeed = 3.2f;
         [SerializeField] private Vector2 minBounds = new(-5.25f, -2.45f);
         [SerializeField] private Vector2 maxBounds = new(5.25f, 0.55f);
 
         private IReadOnlyList<BuildingEntrance> _entrances = Array.Empty<BuildingEntrance>();
-        private Action<ActivityRoute> _onDestination;
+        private Action<BuildingEntrance> _onDestination;
         private AvatarRuntimeView _avatarView;
         private float _footstepCountdown;
+        private BuildingEntrance _pendingEntrance;
+        private float _dwellElapsed;
+        private float _graceRemaining;
+        private bool _entryLatched;
+
+        /// <summary>Real-time auto-entry clock toggle. Tests set false and drive TickAutoEntry directly.</summary>
+        public bool AutoEntryAutoTick { get; set; } = true;
+
+        /// <summary>The entrance the avatar is standing in (highlighted; opens after dwell).</summary>
+        public BuildingEntrance PendingEntrance => _pendingEntrance;
+
+        /// <summary>Seconds spent inside the pending entrance so far.</summary>
+        public float DwellElapsedSeconds => _dwellElapsed;
+
+        /// <summary>
+        /// U2 route cooldown: once any entry fires, every further entry on this
+        /// avatar is ignored until the hub remounts (a fresh avatar + the
+        /// return grace) — double-entry while the new route mounts is impossible.
+        /// </summary>
+        public bool IsEntryLatched => _entryLatched;
 
         private void Awake()
         {
             _avatarView = GetComponent<AvatarRuntimeView>();
         }
 
-        public void Configure(GameSession session, IReadOnlyList<BuildingEntrance> entrances, Action<ActivityRoute> onDestination)
+        public void Configure(GameSession session, IReadOnlyList<BuildingEntrance> entrances, Action<BuildingEntrance> onDestination)
         {
             _avatarView ??= GetComponent<AvatarRuntimeView>();
             _avatarView.ApplyAvatar(session?.SelectedAvatar ?? AvatarConfig.DefaultAvatar);
+
+            // U6: the local hub avatar wears its earned accessories in campus
+            // play (campus context = not ceremony). Derived from the session
+            // read model; follows this avatar's transform/flip for free.
+            _avatarView.BindAccessories(session, ceremonyContext: false);
+
             _entrances = entrances ?? Array.Empty<BuildingEntrance>();
             _onDestination = onDestination;
+            _entryLatched = false;
+            _dwellElapsed = 0f;
+            _graceRemaining = ReturnToCampusGraceSeconds;
 
             // Walk clamp from the single anchor truth (WorldAnchors); the
             // serialized defaults stay only as an editor-visible mirror.
@@ -60,6 +104,13 @@ namespace CareerQuest
                 _footstepCountdown = 0f; // next move starts on a fresh step
             }
 
+            if (AutoEntryAutoTick)
+            {
+                TickAutoEntry(Time.deltaTime);
+            }
+
+            // Legacy keys stay as a convenience — auto-entry means they are
+            // never required (campus copy no longer mentions them).
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.E))
             {
                 TryEnterNearest();
@@ -84,6 +135,51 @@ namespace CareerQuest
             transform.position = new Vector3(next.x, next.y, 0f);
         }
 
+        /// <summary>
+        /// U2 walk-into-door clock. Highlights the entrance the avatar stands
+        /// in immediately (so kids see which station will open), accrues dwell
+        /// only after the return grace, resets the dwell on exit, and fires the
+        /// entry exactly once per hub mount (latch).
+        /// </summary>
+        public void TickAutoEntry(float deltaSeconds)
+        {
+            if (_entryLatched || deltaSeconds <= 0f)
+            {
+                return;
+            }
+
+            // Highlight tracks the standing-in entrance even during grace.
+            var inside = EntranceContaining(transform.position);
+            if (inside != _pendingEntrance)
+            {
+                SetPendingEntrance(inside);
+            }
+
+            // Grace consumes its share of the tick first — a tick never counts
+            // toward grace AND dwell at the same time.
+            if (_graceRemaining > 0f)
+            {
+                var consumed = Mathf.Min(_graceRemaining, deltaSeconds);
+                _graceRemaining -= consumed;
+                deltaSeconds -= consumed;
+            }
+
+            if (_pendingEntrance == null || deltaSeconds <= 0f)
+            {
+                return;
+            }
+
+            _dwellElapsed += deltaSeconds;
+            if (_dwellElapsed < AutoEntryDwellSeconds)
+            {
+                return;
+            }
+
+            var entrance = _pendingEntrance;
+            SetPendingEntrance(null);
+            EnterEntrance(entrance);
+        }
+
         public bool TryEnterNearest()
         {
             var entrance = NearestEntrance(transform.position);
@@ -92,8 +188,7 @@ namespace CareerQuest
                 return false;
             }
 
-            EnterRoute(entrance.Route);
-            return true;
+            return EnterEntrance(entrance);
         }
 
         public bool TryEnterAt(Vector2 worldPosition)
@@ -104,15 +199,54 @@ namespace CareerQuest
                 return false;
             }
 
-            EnterRoute(entrance.Route);
+            return EnterEntrance(entrance);
+        }
+
+        /// <summary>
+        /// U8/U2: every door entry (dwell, click, or convenience key) shares
+        /// the door cue and the entry latch (route cooldown while mounting).
+        /// </summary>
+        private bool EnterEntrance(BuildingEntrance entrance)
+        {
+            if (_entryLatched || entrance == null)
+            {
+                return false;
+            }
+
+            _entryLatched = true;
+            SetPendingEntrance(null);
+            AudioCueCatalog.TryPlay(AudioCueIds.DoorEnter);
+            _onDestination?.Invoke(entrance);
             return true;
         }
 
-        /// <summary>U8: every door entry (key or click) shares the door cue.</summary>
-        private void EnterRoute(ActivityRoute route)
+        /// <summary>Swaps the highlighted entrance and resets the dwell clock.</summary>
+        private void SetPendingEntrance(BuildingEntrance entrance)
         {
-            AudioCueCatalog.TryPlay(AudioCueIds.DoorEnter);
-            _onDestination?.Invoke(route);
+            if (_pendingEntrance == entrance)
+            {
+                return;
+            }
+
+            SetEntranceHighlight(_pendingEntrance, false);
+            _pendingEntrance = entrance;
+            _dwellElapsed = 0f;
+            SetEntranceHighlight(_pendingEntrance, true);
+        }
+
+        /// <summary>Nearby highlight: the entrance's DoorSign pulses while the avatar stands inside.</summary>
+        private static void SetEntranceHighlight(BuildingEntrance entrance, bool active)
+        {
+            if (entrance == null)
+            {
+                return;
+            }
+
+            var sign = entrance.GetComponent<DoorSign>();
+            if (sign != null)
+            {
+                sign.SetPulsing(active);
+            }
         }
 
         /// <summary>P11 cadence — only ticks while the walk state is active.</summary>
@@ -128,11 +262,25 @@ namespace CareerQuest
             AudioCueCatalog.TryPlay(AudioCueIds.Footstep);
         }
 
+        private BuildingEntrance EntranceContaining(Vector2 worldPosition)
+        {
+            // Entrance circles are non-overlap validated (WorldAnchors), so the
+            // first containing entrance is the only containing entrance.
+            return _entrances.FirstOrDefault(entrance => entrance != null && entrance.Contains(worldPosition));
+        }
+
         private BuildingEntrance NearestEntrance(Vector2 worldPosition)
         {
             return _entrances
                 .OrderBy(entrance => Vector2.Distance(entrance.transform.position, worldPosition))
                 .FirstOrDefault();
+        }
+
+        private void OnDestroy()
+        {
+            // Hub teardown mid-dwell: release the door highlight cleanly.
+            SetEntranceHighlight(_pendingEntrance, false);
+            _pendingEntrance = null;
         }
 
         /// <summary>
