@@ -124,6 +124,47 @@ tweak so halos still mark task toys on final art).
 
 ---
 
+## LOCKED DECISIONS (2026-06-13, user)
+
+Three net-new verbs, on top of the existing place/sort/trio/care/compose and
+the tune dial:
+
+- **Trace** — drag a finger along a path/route through ordered waypoints;
+  completes when the whole path is traced in order. (Distinct from place: one
+  continuous gesture, not N drops.)
+- **Shoot** — pull-back-and-release to launch a toy toward a target; completes
+  on landing in the goal. (Distinct: aim + power, not placement.)
+- **Calculate = deduce** — tap to **eliminate** candidate answers that break a
+  clue until one remains; the survivor is the answer. CRITICAL: implement as
+  tap-to-cross-out, NOT drag-to-bin, so it does not collapse into the existing
+  sort/match verb.
+
+### Station → verb map (proposed; trace/shoot homes are low-regret)
+
+| Station | Verb |
+|---|---|
+| Spaceport | **Trace** (flight path: launch→orbit→deliver→land) |
+| Weather Lab | **Trace** (evac/shelter route) |
+| Robotics | **Shoot** (launch the rebuilt bot to the rescue spot) |
+| Newsroom | **Calculate/deduce** (cross out false facts → true headline) |
+| AI Lab | **Calculate/deduce** (eliminate wrong sort rules) |
+| Green City | Tune (existing dial) |
+| Kitchen / Vet / Music / Design Build / Health Hero / Logic Court | existing place/trio/care/compose/sort |
+
+This keeps every district mixed (no two adjacent stations share a verb).
+
+### Build order
+
+1. **Trace proof on Spaceport** — first verb end-to-end (kit rule + input +
+   renderer + EditMode tests + wire Spaceport + all-10 smoke green), the
+   Robotics-style proof gate before multiplying.
+2. Shoot proof on Robotics.
+3. Deduce proof on Newsroom.
+4. Roll each proven verb to its second station (Weather, AI Lab).
+
+Part B (toy art) stays gated behind verbs (Gate 2). Wave scope (first-six vs
+all-ten) confirmed per verb as it lands.
+
 ## Sequencing
 
 - **Gate 1 (A):** verbs first — a "place ×10" campus with pretty toys still
