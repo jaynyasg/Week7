@@ -109,7 +109,7 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 | `game-studio.png` | Game Studio Compose (party station) | Guide *Captain Loop* ("playful design lead"), intro "Pick a goal, an obstacle, and a rule that fit, then run the playtest.", **Sketchbook** reward, Mix Spot (compose), tray (Hero Token, Obstacle Tile, Rule Card, Power-Up Sketch, Playtest Button). |
 | `weather.png` | Weather Lab Rescue (party station) | Guide *Radar Rae* ("alert safety planner"), intro "Order the forecast clues, then set up shelter before the parade starts.", **Weather Goggles** reward, Next Step (sequence), tray (Forecast Tiles, Umbrella Sign, Route Cones, Calm Radio, Shelter Flag), safe weather/emergency copy. |
 | `spaceport.png` | Spaceport Pilot (party station) | Guide *Commander Orbit* ("focused mission guide"), intro "Sequence launch, orbit, delivery, and landing to fly the snack probe.", **Mission Patch** reward, Next Step (SequenceCards), tray (Launch Checklist, Fuel Bead, Snack Crate, Orbit Arrow, Landing Pad). |
-| `newsroom.png` | Newsroom Story Sprint (party station) | Guide *Scoop Rivera* ("fact-checking reporter"), intro "Match the checked facts to who, what, and where, then stamp the headline.", **Press Badge** reward, Mix Spot (compose/match), tray (Who Card, What Photo, Where Map, Quote Recorder, Fact-Check Stamp), source-safe copy. |
+| `newsroom.png` | Newsroom Story Sprint (party station) | Guide *Scoop Rivera* ("fact-checking reporter"), intro "Scoop Rivera gasps: the mural maker had paint on their hands — who is it?", **Press Badge** reward, **DeduceAnswer** clue banner + candidate cards to cross out (Robot Rumor, Alien Rumor, Wind Rumor + the surviving Art Club Fact, Headline Stamp), source-safe copy. *(Verb swapped ComposeSet→DeduceAnswer in `ee06202`; PNG re-capture pending — see plan build-order note.)* |
 | `green-city.png` | Green City Builder (party station) | Guide *Grid Green* ("practical systems planner"), intro "Place four city pieces while keeping both meters happy and green.", **Green Hardhat** reward, **BalanceMeters** — Budget Meter + Happy Meter tap-dials with needles + Build Spot, four-piece tray (Solar Tile, Garden Block, Bike Path, Water Wheel). |
 | `design-build.png` | Design Build (core room) | "Future City Workshop" — drag each city piece onto its matching lot, 0/5 placed, five pastel slot pads, city-piece tray, builder NPC. |
 | `health.png` | Health Hero (core room) | "Health Hero Clinic" — bring symptom clipboard to the patient first, 0/3 care steps, patient on exam bed, clipboard/thermometer/care-plan tools. |
@@ -121,12 +121,12 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 All 10 party stations now have a dedicated `-cq-visual-state` case and a captured
 screenshot, each showing full station identity (guide + intro + reward preview +
 toy pattern + task tray + NPC reaction). The toy patterns are represented across
-the set: SortToBin (ai-lab), ComposeSet/meter (music, game-studio, newsroom),
+the set: SortToBin (ai-lab), ComposeSet/meter (music, game-studio),
 PickMatchingTrio (kitchen), MatchAndCare (vet), SequenceCards (weather),
 BalanceMeters (green-city), plus the design-review #3 distinct verbs —
-TracePath (spaceport, `85017ab`) and ShootTarget (robotics, `f7ed6ff`).
-DragToSlot is no longer used by a shipped station (Robotics moved to ShootTarget)
-but remains a supported pattern.
+TracePath (spaceport, `85017ab`), ShootTarget (robotics, `f7ed6ff`), and
+DeduceAnswer (newsroom, `ee06202`). DragToSlot is no longer used by a shipped
+station (Robotics moved to ShootTarget) but remains a supported pattern.
 
 ### Accessory fit
 

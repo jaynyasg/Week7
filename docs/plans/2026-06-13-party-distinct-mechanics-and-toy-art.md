@@ -181,13 +181,31 @@ This keeps every district mixed (no two adjacent stations share a verb).
    FEEL FOLLOW-UP: the level-2 hint pulses the next toy on its hidden kit piece
    (invisible for hide-all-pieces verbs like trace/shoot) — could pulse the
    launcher instead.
-3. **Deduce proof on Newsroom** — NEXT. Tap-to-ELIMINATE candidates that
-   break a clue until one remains (NOT drag-to-bin). New completion logic
-   (distinct from the existing sort/match).
-4. Roll each proven verb to its second station (trace→Weather, deduce→AI Lab).
+3. **Deduce proof on Newsroom** — ✅ DONE (commit `ee06202`). Newsroom is
+   DeduceAnswer: candidate cards tapped to CROSS OUT the rumors that break the
+   clue until the checked fact survives (NOT drag-to-bin). EditMode 239/239,
+   PlayMode 230/230. Implemented as `ToyPatternId.DeduceAnswer` — the false
+   candidates are the CoreTask eliminate-chain (each `cross.{id}`), the one true
+   answer is a Clue kept OUT of the chain so tapping it bounces (WrongTarget,
+   "keep it!"); completion is the existing accepted==required machinery with
+   required = the false set. `PartyStationRenderer.MountDeduceBoard` +
+   `StationCandidate` tap component (answer-agnostic: X on accept, shake on
+   reject; survivor = whatever stays uncrossed). Both Newsroom seeds reframed as
+   fact-check deductions (paint-on-hands → Art Club; source clue → checked
+   scoop). SCREENSHOT FOLLOW-UP: newsroom.png re-capture pending (same cold-
+   import blocker as robotics.png); the deduce proof test is the binding evidence.
+4. **Roll each proven verb to its second station** — NEXT. trace→Weather Lab
+   (evac/shelter route), deduce→AI Lab (eliminate wrong sort rules). (Shoot has
+   no planned second station.) Each is a smaller change: swap the station's
+   pattern + reframe its seeds + re-baseline that station's tests; the kit/rules
+   work is already done.
 
 Then Part B (toy art). Per-verb proof discipline: each lands as its own atomic
 commit, EditMode+PlayMode green (combined run), plus a station screenshot.
+
+**All three locked verbs are now built and proven** (trace `85017ab`, shoot
+`f7ed6ff`, deduce `ee06202`). Gate 1 (distinct verbs) is met for one station
+each; remaining Part A work is the second-station rollout (item 4).
 
 ### New-session pickup notes
 
