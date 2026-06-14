@@ -21,8 +21,9 @@ namespace CareerQuest.Tests
     ///     forecast clue, then place the shelter tools; out-of-order is gentle.
     ///   - Spaceport Pilot:    TracePath launch/orbit/deliver/land — ordered
     ///     waypoints traced along the flight path (design-review #3 verb).
-    ///   - Newsroom Story Sprint: ComposeSet fact-check (any-order verified
-    ///     facts to the story), with source-safe copy.
+    ///   - Newsroom Story Sprint: DeduceAnswer fact-check — tap to cross out the
+    ///     false rumors (any order) until the checked fact survives; tapping the
+    ///     answer bounces (design-review #3 verb). Source-safe copy.
     ///   - Green City Builder: BalanceMeters with TWO meters — both meter dials
     ///     must tap pointer-first into the green band; one out = not complete,
     ///     and there is no harsh fail (dials stay re-adjustable).
@@ -38,7 +39,7 @@ namespace CareerQuest.Tests
         {
             (CareerQuestCatalog.WeatherLabId, ToyPatternId.SequenceCards),
             (CareerQuestCatalog.SpaceportId, ToyPatternId.TracePath),
-            (CareerQuestCatalog.NewsroomId, ToyPatternId.ComposeSet),
+            (CareerQuestCatalog.NewsroomId, ToyPatternId.DeduceAnswer),
             (CareerQuestCatalog.GreenCityId, ToyPatternId.BalanceMeters)
         };
 
@@ -222,13 +223,14 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// Newsroom Story Sprint proves fact-check compose/match: verified facts
-        /// (who/what/where + the quote clue) compose onto the story in any order,
-        /// the fact-check stamp is a reaction poke, and the source-safe copy
-        /// frames it as checking facts, never anything pressuring or unsafe.
+        /// Newsroom Story Sprint proves DeduceAnswer (design-review #3): the false
+        /// rumors are crossed out by tapping their cross target (any order); the
+        /// checked fact is the Clue answer with no cross zone, so tapping it
+        /// bounces gently ("that one's true, keep it!"). Crossing out every rumor
+        /// completes the story through the real drop seam, with source-safe copy.
         /// </summary>
         [UnityTest]
-        public IEnumerator NewsroomStorySprintProvesFactCheckCompose()
+        public IEnumerator NewsroomStorySprintProvesDeduceElimination()
         {
             var appObject = new GameObject("wave2-newsroom-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -241,25 +243,34 @@ namespace CareerQuest.Tests
             var definition = PartyStationDefinitions.GetById(CareerQuestCatalog.NewsroomId);
             var rules = controller.Pattern.Rules;
 
-            // ComposeSet: every verified fact lands on the one compose target.
-            foreach (var factId in new[] { "who_card", "what_photo", "where_map", "quote_recorder" })
+            // Each rumor crosses out onto its OWN cross zone; the checked fact
+            // (the Clue answer) has none — it is not in the eliminate-chain.
+            foreach (var rumorId in new[] { "robot_rumor", "alien_rumor", "wind_rumor" })
             {
-                Assert.That(rules.ExpectedTargetFor(factId), Is.EqualTo(ToyPatternRules.ComposeTargetId), factId);
+                Assert.That(rules.ExpectedTargetFor(rumorId),
+                    Is.EqualTo(ToyPatternRules.CrossTargetPrefix + rumorId), rumorId);
             }
+            Assert.That(rules.ExpectedTargetFor("art_club_fact"), Is.Null);
 
-            // Facts compose in ANY order (a fact-check sprint, not a fixed line).
-            Assert.That(controller.TrySubmitDrop("where_map", ToyPatternRules.ComposeTargetId),
+            // Crossing out the true answer bounces gently (wrong target), never
+            // advances progress — the player keeps the checked fact.
+            Assert.That(controller.TrySubmitDrop("art_club_fact", ToyPatternRules.CrossTargetPrefix + "art_club_fact"),
+                Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
+            Assert.That(controller.IsToyAccepted("art_club_fact"), Is.False);
+
+            // Cross out rumors in ANY order — a deduction, not a fixed line.
+            Assert.That(controller.TrySubmitDrop("wind_rumor", rules.ExpectedTargetFor("wind_rumor")),
                 Is.EqualTo(DropSubmitResult.Accepted));
-            Assert.That(controller.TrySubmitDrop("who_card", ToyPatternRules.ComposeTargetId),
+            Assert.That(controller.TrySubmitDrop("robot_rumor", rules.ExpectedTargetFor("robot_rumor")),
                 Is.EqualTo(DropSubmitResult.Accepted));
 
-            // The fact-check stamp is a reaction toy: it pokes, never progresses.
-            Assert.That(controller.TrySubmitDrop("fact_check_stamp", ToyPatternRules.ComposeTargetId),
+            // The headline stamp is a reaction toy: it pokes, never progresses.
+            Assert.That(controller.TrySubmitDrop("headline_stamp", ToyPatternRules.CrossTargetPrefix + "headline_stamp"),
                 Is.EqualTo(DropSubmitResult.Accepted));
-            Assert.That(controller.IsToyAccepted("fact_check_stamp"), Is.False,
-                "The fact-check stamp reacts but is not part of the verified-fact chain.");
+            Assert.That(controller.IsToyAccepted("headline_stamp"), Is.False,
+                "The headline stamp reacts but is not part of the eliminate-chain.");
 
-            // Finish the remaining verified facts -> one safe headline result.
+            // Cross out the last rumor -> one safe headline result.
             Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
             var result = app.Session.GetBestResult(CareerQuestCatalog.NewsroomId);
             Assert.That(result, Is.Not.Null);

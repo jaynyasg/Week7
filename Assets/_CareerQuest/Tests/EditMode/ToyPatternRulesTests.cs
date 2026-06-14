@@ -103,6 +103,39 @@ namespace CareerQuest.Tests
         }
 
         [Test]
+        public void DeduceAnswerCrossesOutFalseCandidatesAndProtectsTheAnswer()
+        {
+            // Newsroom is the DeduceAnswer proof (design-review #3): the rumors
+            // (CoreTask) are the eliminate-chain crossed out by tapping; the one
+            // checked fact (Clue) is OUT of the chain — tapping it bounces.
+            var rules = RulesFor(CareerQuestCatalog.NewsroomId);
+
+            // Only the false rumors are required; the answer is not in the chain.
+            Assert.That(rules.DraggableObjectIds,
+                Is.EquivalentTo(new[] { "robot_rumor", "alien_rumor", "wind_rumor" }));
+            Assert.That(rules.ExpectedTargetFor("robot_rumor"),
+                Is.EqualTo(ToyPatternRules.CrossTargetPrefix + "robot_rumor"));
+            Assert.That(rules.ExpectedTargetFor("art_club_fact"), Is.Null,
+                "The checked fact (Clue answer) has no cross zone — it survives.");
+
+            // Crossing out the true answer bounces gently (wrong target).
+            var protectAnswer = rules.Submit(new ToyAction("art_club_fact", ToyPatternRules.CrossTargetPrefix + "art_club_fact"));
+            Assert.That(protectAnswer.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
+            Assert.That(rules.IsAccepted("art_club_fact"), Is.False);
+
+            // Cross out the rumors in any order — completes on the last one.
+            Assert.That(rules.Submit(new ToyAction("wind_rumor", rules.ExpectedTargetFor("wind_rumor"))).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("robot_rumor", rules.ExpectedTargetFor("robot_rumor"))).IsAccepted, Is.True);
+            Assert.That(rules.Complete, Is.False, "One rumor still stands.");
+            Assert.That(rules.Submit(new ToyAction("alien_rumor", rules.ExpectedTargetFor("alien_rumor"))).StationCompleted, Is.True);
+
+            // The headline stamp is a reaction poke — acknowledges, never advances.
+            var fresh = RulesFor(CareerQuestCatalog.NewsroomId);
+            Assert.That(fresh.Submit(new ToyAction("headline_stamp", ToyPatternRules.CrossTargetPrefix + "headline_stamp")).Kind,
+                Is.EqualTo(ToySubmissionKind.ReactionOnly));
+        }
+
+        [Test]
         public void OccupiedToyRejectsAndCompletionLocksFurtherSubmissions()
         {
             var rules = RulesFor(CareerQuestCatalog.RoboticsGarageId);

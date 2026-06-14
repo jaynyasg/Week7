@@ -56,6 +56,7 @@ namespace CareerQuest
         public const string CareTargetId = "target.care";
         public const string BuildTargetId = "target.build";
         public const string GoalTargetId = "target.goal";
+        public const string CrossTargetPrefix = "cross.";
         public const string SlotTargetPrefix = "slot.";
         public const string BinTargetPrefix = "bin.";
         public const string MarkTargetPrefix = "mark.";
@@ -429,7 +430,14 @@ namespace CareerQuest
             // the draggable order — they are adjusted, not placed.
             var cluesFirst = Pattern == ToyPatternId.PickMatchingTrio || Pattern == ToyPatternId.MatchAndCare;
 
-            if (cluesFirst)
+            if (Pattern == ToyPatternId.DeduceAnswer)
+            {
+                // Deduction by elimination: only the FALSE candidates (CoreTask)
+                // are the eliminate-chain. The one true answer is a Clue, kept
+                // OUT of the chain so it never needs crossing — it survives.
+                AppendChainObjects(PartyStationObjectRole.CoreTask);
+            }
+            else if (cluesFirst)
             {
                 AppendChainObjects(PartyStationObjectRole.Clue);
                 AppendChainObjects(PartyStationObjectRole.CoreTask);
@@ -510,6 +518,11 @@ namespace CareerQuest
                     // (ordered) and from per-toy slots — the variety is the launch
                     // verb, validated onto a single goal zone.
                     return GoalTargetId;
+                case ToyPatternId.DeduceAnswer:
+                    // Only the false candidates reach here (the answer Clue is out
+                    // of the eliminate-chain). Each crosses out onto its own zone;
+                    // tapping the answer hits no cross zone -> WrongTarget bounce.
+                    return CrossTargetPrefix + definition.ObjectId;
                 case ToyPatternId.MatchAndCare:
                     return definition.Role == PartyStationObjectRole.Clue
                         && !string.IsNullOrEmpty(definition.TargetId)

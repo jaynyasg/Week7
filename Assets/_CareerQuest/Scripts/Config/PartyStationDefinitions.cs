@@ -622,20 +622,24 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "Newsroom Story Sprint",
-                new[] { "investigate", "compose" },
-                ToyPatternId.ComposeSet,
+                new[] { "investigate", "deduce" },
+                ToyPatternId.DeduceAnswer,
                 "Scoop Rivera",
                 "fact-checking reporter",
-                "Match the checked facts to who, what, and where, then stamp the headline.",
+                "Read the clue, then cross out the rumors that can't be true.",
                 new[]
                 {
-                    Obj(id, "who_card", "Who Card", PartyStationObjectRole.CoreTask, "", "react.pop", "Communication"),
-                    Obj(id, "what_photo", "What Photo", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
-                    Obj(id, "where_map", "Where Map", PartyStationObjectRole.CoreTask, "", "react.bounce", "Spatial Thinking"),
-                    Obj(id, "quote_recorder", "Quote Recorder", PartyStationObjectRole.Clue, "who_card", "react.glow", "Communication"),
-                    Obj(id, "fact_check_stamp", "Fact-Check Stamp", PartyStationObjectRole.Reaction, "what_photo", "react.cheer")
+                    // DeduceAnswer: the rumors are the false candidates (CoreTask)
+                    // crossed out by elimination; the checked fact is the Clue
+                    // answer that survives. Clue: the mural maker had paint on
+                    // their hands -> only the art club fits.
+                    Obj(id, "robot_rumor", "Robot Rumor", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                    Obj(id, "alien_rumor", "Alien Rumor", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
+                    Obj(id, "wind_rumor", "Wind Rumor", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                    Obj(id, "art_club_fact", "Art Club Fact", PartyStationObjectRole.Clue, "", "react.glow", "Communication"),
+                    Obj(id, "headline_stamp", "Headline Stamp", PartyStationObjectRole.Reaction, "art_club_fact", "react.cheer")
                 },
-                "Match verified facts to who, what, and where, then stamp a safe headline.",
+                "Cross out the rumors that break the clue until the checked fact survives.",
                 new[]
                 {
                     new TraitDelta("Communication", 5),
@@ -655,35 +659,37 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Match verified facts to who, what, and where, then stamp a safe headline.",
-                        "Scoop Rivera gasps: a mystery mural appeared overnight — who made it?",
-                        "Only stamp facts you can check twice.",
-                        "The quote recorder replays the clue about who was there.",
-                        "Headline stamped! The mural story is clear and true.",
+                        "Cross out the rumors that break the clue until the checked fact survives.",
+                        "Scoop Rivera gasps: the mural maker had paint on their hands — who is it?",
+                        "Cross out a rumor that can't be true.",
+                        "Robots and wind can't hold a paintbrush — rule those out.",
+                        "Headline stamped! The art club made the mural — checked and true.",
                         "Print the story to earn the Press Badge!",
-                        "You verified the mural mystery and wrote a clear headline. You practiced Communication + Reasoning. New gear: Press Badge.",
-                        "The mural maker waves proudly from the front page."),
+                        "You crossed out the rumors and kept the checked fact for a clear headline. You practiced Communication + Reasoning. New gear: Press Badge.",
+                        "The art club waves proudly from the front page."),
                     new PartyStationSeedDefinition(
                         $"{id}.invention_scoop",
                         "Playground Invention Scoop",
                         false,
-                        "Arrange the checked timeline and publish only with the source badge.",
+                        "Read the source clue, then cross out the scoops that aren't checked.",
                         new[]
                         {
-                            Obj(id, "witness_quote", "Witness Quote", PartyStationObjectRole.Clue, "timeline_cards", "react.glow", "Communication"),
-                            Obj(id, "sketch_photo", "Sketch Photo", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Creativity"),
-                            Obj(id, "timeline_cards", "Timeline Cards", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
-                            Obj(id, "source_badge", "Source Badge", PartyStationObjectRole.CoreTask, "", "react.pop", "Communication"),
-                            Obj(id, "publish_button", "Publish Button", PartyStationObjectRole.Reaction, "source_badge", "react.cheer")
+                            // Cross out the unsourced scoops; the checked scoop
+                            // (the Clue answer) is the only one with a real source.
+                            Obj(id, "anon_tip", "Anon Tip", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                            Obj(id, "blurry_photo", "Blurry Photo", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
+                            Obj(id, "old_date_clip", "Old Date Clip", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                            Obj(id, "checked_scoop", "Checked Scoop", PartyStationObjectRole.Clue, "", "react.glow", "Communication"),
+                            Obj(id, "publish_button", "Publish Button", PartyStationObjectRole.Reaction, "checked_scoop", "react.cheer")
                         },
-                        "Arrange the verified timeline and publish only when the source badge is on.",
-                        "Scoop Rivera grins: someone invented a bouncy seesaw — get the scoop!",
-                        "Put the timeline cards in the order things happened.",
-                        "No source badge, no story — clip it on before publishing.",
-                        "Scoop published! Every fact has a source and a smile.",
+                        "Cross out the scoops with no source until the checked scoop survives.",
+                        "Scoop Rivera grins: a bouncy seesaw scoop! Only one has a real source.",
+                        "Cross out a scoop that has no source.",
+                        "No source, no story — rule those scoops out.",
+                        "Published! The checked scoop had a real source all along.",
                         "Publish the scoop to earn the Press Badge!",
-                        "You organized the invention scoop and checked the source before publishing. You practiced Communication + Creativity. New gear: Press Badge.",
-                        "The inventor pins your story to the playground board.")
+                        "You crossed out the unsourced scoops and published the checked one. You practiced Communication + Creativity. New gear: Press Badge.",
+                        "The inventor pins your checked story to the playground board.")
                 });
         }
 

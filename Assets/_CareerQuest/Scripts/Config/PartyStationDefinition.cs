@@ -36,7 +36,19 @@ namespace CareerQuest
         /// component, while the rules just validate the toy onto the shared goal
         /// target — so it routes the same host-validated action seam.
         /// </summary>
-        ShootTarget
+        ShootTarget,
+
+        /// <summary>
+        /// Design-review #3 (distinct verbs): the player taps to CROSS OUT the
+        /// candidate answers that break a clue until one survives — deduction by
+        /// elimination, NOT drag-to-bin. The false candidates are the CoreTask
+        /// eliminate-chain (each crosses out onto its own "cross.{id}"); the one
+        /// true answer is a Clue, excluded from the chain, so tapping it bounces
+        /// gently ("that one's true, keep it!"). Completion is the same accepted-
+        /// equals-required machinery (required = the false set), routed through
+        /// the same host-validated action seam.
+        /// </summary>
+        DeduceAnswer
     }
 
     /// <summary>

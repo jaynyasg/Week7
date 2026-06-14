@@ -138,7 +138,8 @@ namespace CareerQuest.Tests
                 ToyPatternId.MatchAndCare,
                 ToyPatternId.BalanceMeters,
                 ToyPatternId.TracePath,
-                ToyPatternId.ShootTarget
+                ToyPatternId.ShootTarget,
+                ToyPatternId.DeduceAnswer
             };
 
             foreach (var station in PartyStationDefinitions.All)

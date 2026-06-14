@@ -32,6 +32,9 @@ namespace CareerQuest
         public const string LaunchPadName = "StationLaunchPad";
         public const string LaunchGoalName = "StationLaunchGoal";
         public const string LaunchToyName = "StationLaunchToy";
+        public const string DeduceBoardName = "StationDeduceBoard";
+        public const string DeduceCardName = "StationDeduceCard";
+        public const string DeduceClueName = "StationDeduceClue";
 
         /// <summary>Optional poke-toys render at this alpha so the actionable set stands out.</summary>
         public const float OptionalToyAlpha = 0.45f;
@@ -428,6 +431,95 @@ namespace CareerQuest
         }
 
         /// <summary>
+        /// Design-review #3 DeduceAnswer board: lays every candidate (the false
+        /// CoreTask cards AND the one true Clue answer) in a row, hides the kit's
+        /// tray pieces, and makes each card a tap-to-cross-out target over the
+        /// SAME drop seam. Tapping a false candidate crosses it out (the rules
+        /// accept it); tapping the true answer bounces gently (the rules reject it
+        /// — it has no cross zone), so the player deduces by elimination until one
+        /// card survives. The board is answer-agnostic: it draws an X on accept
+        /// and shakes on reject, and the survivor is whatever stays uncrossed.
+        /// Pointer-first, non-color cues (the X mark + a clue banner), no harsh
+        /// fail (R19). Cards ride their own objects under the kit root, so kit
+        /// teardown still owns them.
+        /// </summary>
+        public static void MountDeduceBoard(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitCandidate)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitCandidate == null)
+            {
+                return;
+            }
+
+            // The candidates are every chain object: the false CoreTask cards
+            // (the eliminate-chain) plus the one true Clue answer (the survivor).
+            var candidates = new List<string>();
+            foreach (var definition in rules.Objects)
+            {
+                if (definition != null
+                    && (definition.Role == PartyStationObjectRole.CoreTask
+                        || definition.Role == PartyStationObjectRole.Clue))
+                {
+                    candidates.Add(definition.ObjectId);
+                }
+            }
+
+            var count = candidates.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // DeduceAnswer taps the cards; the tray pieces are not dragged. Hide
+            // every kit piece so only the candidate cards are interactable.
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            var boardRoot = new GameObject(DeduceBoardName).transform;
+            boardRoot.SetParent(kit.Root, false);
+
+            // Clue banner (non-color cue: text rule the player deduces against).
+            AddWorldLabel(boardRoot, DeduceClueName, "Cross out the ones that don't fit!", new Vector3(0f, 2.3f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+
+            var cardSize = new Vector2(1.7f, 2.1f);
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = candidates[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.4f, 3.4f, t), 0.2f, 0f);
+
+                // Card root stays unit-scaled (so labels/X marks aren't stretched);
+                // the paper face is a sized child and the collider matches it.
+                var card = new GameObject($"{DeduceCardName}{i}", typeof(BoxCollider2D));
+                card.transform.SetParent(boardRoot, false);
+                card.transform.localPosition = position;
+                card.GetComponent<BoxCollider2D>().size = cardSize;
+
+                var face = new GameObject("Face", typeof(SpriteRenderer));
+                face.transform.SetParent(card.transform, false);
+                face.transform.localScale = new Vector3(cardSize.x, cardSize.y, 1f);
+                var faceRenderer = face.GetComponent<SpriteRenderer>();
+                faceRenderer.sprite = CampusWorldSprites.Square;
+                faceRenderer.color = PaperColor;
+                faceRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder;
+
+                AddWorldLabel(card.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, 0f, 0f), 1.5f, ToyInteractionKit.ZoneSortingOrder + 2);
+
+                var localId = objectId;
+                var candidate = card.AddComponent<StationCandidate>();
+                candidate.Configure(localId, accent, cardSize, () => submitCandidate(localId));
+            }
+        }
+
+        /// <summary>
         /// Kid-readable label for a rule target, derived from the seed objects
         /// (slot/mark/meter targets name their toy; shared targets name the
         /// pattern verb). Never an internal target id string.
@@ -457,6 +549,11 @@ namespace CareerQuest
             if (targetId.StartsWith(ToyPatternRules.WaypointTargetPrefix, System.StringComparison.Ordinal))
             {
                 return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.WaypointTargetPrefix.Length));
+            }
+
+            if (targetId.StartsWith(ToyPatternRules.CrossTargetPrefix, System.StringComparison.Ordinal))
+            {
+                return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.CrossTargetPrefix.Length));
             }
 
             if (targetId.StartsWith(ToyPatternRules.BinTargetPrefix, System.StringComparison.Ordinal))
@@ -1023,6 +1120,95 @@ namespace CareerQuest
             glow.a = 0.5f;
             renderer.color = glow;
             renderer.sortingOrder = (pieceRenderer != null ? pieceRenderer.sortingOrder : ToyInteractionKit.PieceSortingOrder) - 1;
+        }
+    }
+
+    /// <summary>
+    /// Design-review #3 DeduceAnswer card: one tappable candidate on the board.
+    /// Tapping submits this candidate's cross target through the station's drop
+    /// seam; the rules accept a FALSE candidate (it crosses out) and reject the
+    /// true answer (no cross zone -> gentle bounce, "that one's true, keep it!").
+    /// The pointer handler is a thin wrapper over <see cref="Tap"/>, the seam the
+    /// tests drive (house idiom, mirrors StationWaypoint.Tap()). The card is
+    /// answer-agnostic — it draws an X on accept and shakes on reject; whichever
+    /// card stays uncrossed is the deduced answer.
+    /// </summary>
+    public class StationCandidate : MonoBehaviour, IPointerClickHandler
+    {
+        public const string CrossMarkName = "DeduceCrossMark";
+
+        private string _objectId;
+        private Color _accent;
+        private Vector2 _cardSize;
+        private Func<DropSubmitResult> _submit;
+        private bool _crossed;
+
+        public string ObjectId => _objectId;
+        public bool Crossed => _crossed;
+
+        public void Configure(string objectId, Color accent, Vector2 cardSize, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _cardSize = cardSize;
+            _submit = submit;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE candidate seam (pointer + tests share it). True when the card was crossed out.</summary>
+        public bool Tap()
+        {
+            if (_submit == null || _crossed)
+            {
+                return false;
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                // The true answer (or a locked board): bounce gently, keep it.
+                AudioCueCatalog.TryPlay(AudioCueIds.DropReject);
+                return false;
+            }
+
+            _crossed = true;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            MarkCrossed();
+            return true;
+        }
+
+        private void MarkCrossed()
+        {
+            // Two crossed bars over the card (shape cue, not color-only) + a dim.
+            var faceRenderer = GetComponentInChildren<SpriteRenderer>();
+            if (faceRenderer != null)
+            {
+                var dim = faceRenderer.color;
+                dim.a *= 0.5f;
+                faceRenderer.color = dim;
+            }
+
+            var sortingOrder = (faceRenderer != null ? faceRenderer.sortingOrder : ToyInteractionKit.ZoneSortingOrder) + 6;
+            var diagonal = Mathf.Sqrt(_cardSize.x * _cardSize.x + _cardSize.y * _cardSize.y);
+            var angle = Mathf.Atan2(_cardSize.y, _cardSize.x) * Mathf.Rad2Deg;
+            AddCrossBar(diagonal, angle, sortingOrder);
+            AddCrossBar(diagonal, -angle, sortingOrder);
+        }
+
+        private void AddCrossBar(float length, float angle, int sortingOrder)
+        {
+            var bar = new GameObject(CrossMarkName, typeof(SpriteRenderer));
+            bar.transform.SetParent(transform, false);
+            bar.transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+            bar.transform.localScale = new Vector3(length, 0.16f, 1f);
+            var renderer = bar.GetComponent<SpriteRenderer>();
+            renderer.sprite = CampusWorldSprites.Square;
+            renderer.color = _accent;
+            renderer.sortingOrder = sortingOrder;
         }
     }
 }

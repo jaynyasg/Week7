@@ -790,6 +790,20 @@ namespace CareerQuest
                     shotId => TrySubmitDrop(shotId, rules.ExpectedTargetFor(shotId), 0));
             }
 
+            // Design-review #3: DeduceAnswer lays the candidate cards over the
+            // SAME drop seam (tap to cross out, not drag) so the player rules out
+            // false answers until the true one survives. Every card submits its
+            // cross target; the rules accept a false candidate and bounce the
+            // answer (no cross zone for it).
+            if (rules.Pattern == ToyPatternId.DeduceAnswer)
+            {
+                PartyStationRenderer.MountDeduceBoard(
+                    _kit,
+                    rules,
+                    _accent,
+                    candidateId => TrySubmitDrop(candidateId, ToyPatternRules.CrossTargetPrefix + candidateId, 0));
+            }
+
             // Pre-existing shared progress (joining a partner mid-attempt)
             // renders on mount without celebration spam.
             SyncFromNetwork(celebrateNew: false);
@@ -1182,6 +1196,8 @@ namespace CareerQuest
                     return "traced";
                 case ToyPatternId.ShootTarget:
                     return "launched";
+                case ToyPatternId.DeduceAnswer:
+                    return "ruled out";
                 default:
                     return "placed";
             }
