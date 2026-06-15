@@ -75,29 +75,40 @@ No procedural fallback art is visible in any capture; the extended
 zero-fallback gate over the full player-facing catalog runs in the test
 suite.
 
+## Videos (`videos/`, 1280x720 MP4)
+
+| File | What it proves |
+|---|---|
+| `architecture-single-player-loop.mp4` | 29-second walkthrough of the documented Unity architecture and single-player loop: avatar, campus, core room play, gallery progression, and reveal. |
+| `multiplayer-progression-proof.mp4` | 23.5-second proof-pack video for two-player networking plus progression, including fresh host/client smoke evidence and the shared-room/passport/reveal path. |
+
 ## Verification status
 
-- EditMode tests: 73/73 green. PlayMode tests: 155/155 green.
+- Final proof ladder: EditMode tests 237/237 green; PlayMode tests 229/229
+  green (`docs/qa/2026-06-13-party-campus-pack-proof.md`).
 - Packaged Windows build green from the same ladder run.
+- Early submission re-check (2026-06-14 local): packaged two-process
+  host/client smoke completed in 34.66 seconds, host exit 0, client exit 0,
+  host 3/3 and client 6/6 scenarios green, with no `CQ_2P_WAIT_TIMEOUT` lines.
 - Gates inside those suites: extended zero-fallback over the full
   player-facing catalog, audio cue coverage (29 cue IDs), zero legacy
   uGUI `Text` scan (all type is TextMeshPro Fredoka/Lexend).
 
 ## Limitations
 
-- **Manual two-player matrix pending:** the host-authority behavior
+- **Human two-player feel pass still useful:** the host-authority behavior
   (accept/reject, shared placement rendering, attempt reset, reveal latch,
-  emotes, partner held-piece glow) is covered by automated host-authority
-  and latch tests, but the human two-client pass on one computer has not yet
-  been executed. The ready-to-run checklist is in
-  `docs/qa/2026-06-12-wow-pass-final.md`.
+  emotes, partner held-piece glow) is now covered by the automated
+  two-process matrix and the fresh early-submission smoke. A live human pass
+  remains worthwhile for subjective feel, not for requirements coverage.
 - **Audio by-ear pass pending:** all 29 cue IDs resolve to real clips chosen
   by name/semantics; a listening pass may swap individual mappings. The game
   is fully understandable with audio off.
 - **Optional rooms are simpler by design:** at-bar art, but button-step
   quests rather than drag-and-drop (scope decision, not a gap).
-- **Known cosmetic:** the optional-room bottom action buttons (e.g.
-  Robotics "Build Robot") render pale against the instruction strip band.
+- **Video capture style:** the two MP4s are proof-pack videos assembled from
+  packaged-build captures and fresh smoke-log evidence, not raw camera footage
+  of a live screen-recording session.
 - The splash screen keeps Unity Personal branding (license requirement).
 
 ## Privacy
