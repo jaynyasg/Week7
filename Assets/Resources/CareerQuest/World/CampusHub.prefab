@@ -182,57 +182,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1 &973231411480442781
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5105934689969690504}
-  - component: {fileID: 5772029898625494237}
-  m_Layer: 0
-  m_Name: LogicCourtSign
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5105934689969690504
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 973231411480442781}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.3, y: 1.6099999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7371037475013194201}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5772029898625494237
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 973231411480442781}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa5be2b7c23371d4a82c8482861fd0c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CareerQuest.Runtime::CareerQuest.DoorSign
-  label: Logic Court
-  accentColor: {r: 0.949, g: 0.639, b: 0.231, a: 1}
-  yOffset: 0
-  sortingOrder: 260
-  fontSize: 1.9
-  plateWidth: 2.1
-  showPlate: 0
 --- !u!1 &1324149766106433022
 GameObject:
   m_ObjectHideFlags: 0
@@ -879,57 +828,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1 &2837004287504515520
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5135811849724552660}
-  - component: {fileID: 8615611933814139867}
-  m_Layer: 0
-  m_Name: HealthHeroClinicSign
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5135811849724552660
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2837004287504515520}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.96, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7371037475013194201}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8615611933814139867
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2837004287504515520}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa5be2b7c23371d4a82c8482861fd0c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CareerQuest.Runtime::CareerQuest.DoorSign
-  label: Health Hero
-  accentColor: {r: 0.345, g: 0.784, b: 0.58, a: 1}
-  yOffset: 0
-  sortingOrder: 260
-  fontSize: 1.9
-  plateWidth: 2.1
-  showPlate: 0
 --- !u!1 &2908497154658315034
 GameObject:
   m_ObjectHideFlags: 0
@@ -2735,57 +2633,6 @@ MonoBehaviour:
   frequency: 1.3
   phase: 0.5
   driftRange: 13
---- !u!1 &6339486277597109197
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6924837829760484486}
-  - component: {fileID: 2195616938203019273}
-  m_Layer: 0
-  m_Name: DesignBuildStudioSign
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6924837829760484486
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6339486277597109197}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.3, y: 1.6099999, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7371037475013194201}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2195616938203019273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6339486277597109197}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa5be2b7c23371d4a82c8482861fd0c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CareerQuest.Runtime::CareerQuest.DoorSign
-  label: Design Build
-  accentColor: {r: 0.969, g: 0.424, b: 0.369, a: 1}
-  yOffset: 0
-  sortingOrder: 260
-  fontSize: 1.9
-  plateWidth: 2.1
-  showPlate: 0
 --- !u!1 &6453989100269258105
 GameObject:
   m_ObjectHideFlags: 0
@@ -4904,11 +4751,8 @@ Transform:
   - {fileID: 4443022431655992367}
   - {fileID: 5606140430727180702}
   - {fileID: 8532425378887109776}
-  - {fileID: 6924837829760484486}
   - {fileID: 7214867263309237425}
-  - {fileID: 5135811849724552660}
   - {fileID: 4372477470821292074}
-  - {fileID: 5105934689969690504}
   - {fileID: 5781497733746178064}
   - {fileID: 4821837594912834494}
   - {fileID: 2558652771943011046}
