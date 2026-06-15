@@ -77,3 +77,7 @@ That updates both remotes. `main` tracks `origin/main`. Use `git push github mai
 ## Workflow Preferences
 
 When running `ce-work` for this project, use subagents for implementation work every time a callable subagent mechanism is available. Search for the relevant subagent/spawn-agent tool at the start of the `ce-work` run, then choose serial or parallel subagents using the skill's safety rules. If no subagent tool is available in the current harness, say that explicitly before continuing in the main thread.
+
+## Documented Solutions
+
+`docs/solutions/` — documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when implementing or debugging in documented areas.
