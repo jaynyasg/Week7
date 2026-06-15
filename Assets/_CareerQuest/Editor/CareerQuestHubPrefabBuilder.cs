@@ -643,13 +643,15 @@ namespace CareerQuest.Editor
 
         private static void AddMainBuilding(Transform parent, string name, string assetId, string label, Color accent, Vector2 position)
         {
-            var building = AddSprite(parent, name, Campus(assetId), position, new Vector2(2.45f, 2.14f), 240);
-
-            // Sign band TMP label (Fredoka via TypeStyles; builds itself on Start).
-            var sign = new GameObject($"{name}Sign");
-            sign.transform.SetParent(building.transform.parent, false);
-            sign.transform.localPosition = new Vector3(position.x, position.y + 0.31f, 0f);
-            sign.AddComponent<DoorSign>().SetData(label, accent, 0f, 260, 1.9f, 2.1f, plate: false);
+            // Design-review (2026-06-15): the three core buildings used to bake a
+            // building-name sign here AND get a runtime door label at the entry
+            // circle (PlayableHubController), so each core name rendered twice and
+            // crowded the Quest Yard. Small buildings only carry the runtime door
+            // label; drop the baked sign so all 13 doors read with one name each.
+            // (label/accent kept in the signature for call-site symmetry.)
+            _ = label;
+            _ = accent;
+            AddSprite(parent, name, Campus(assetId), position, new Vector2(2.45f, 2.14f), 240);
         }
 
         private static void AddSmallBuilding(Transform parent, string name, string assetId, Vector2 position)
