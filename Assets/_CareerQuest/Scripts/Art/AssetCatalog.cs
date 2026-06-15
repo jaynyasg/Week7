@@ -9,7 +9,7 @@ namespace CareerQuest
     {
         public const int MaxFallbackTextureSize = 512;
 
-        private static readonly AssetDefinition[] _definitions =
+        private static readonly AssetDefinition[] _coreDefinitions =
         {
             Avatar("avatar.sky_builder", "Sky Builder", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
             Avatar("avatar.sky_builder.walk", "Sky Builder Walk", new Color(0.12f, 0.43f, 0.86f), new Color(0.83f, 0.96f, 1f)),
@@ -138,6 +138,16 @@ namespace CareerQuest
             Ui("ui.confirm", "Confirm Icon", new Color(0.13f, 0.55f, 0.58f), new Color(1f, 1f, 1f)),
             Ui("ui.back", "Back Icon", new Color(0.08f, 0.26f, 0.55f), new Color(1f, 1f, 1f))
         };
+
+        // Part B (#4) party-station toy art: one Prop per seed object across all
+        // stations, derived from PartyStationDefinitions so the catalog can never
+        // drift from the seeds. Keys match the Obj() helper (prop.party.{station}.
+        // {object}). required:false so a missing PNG degrades to the handmade
+        // token instead of failing the global fallback gate; PartyToyArtTests
+        // polices that each one resolves to final art. CareerQuestPartyToyArtBuilder
+        // writes the PNGs in the owner-affirmed Kenney-soft style.
+        private static readonly AssetDefinition[] _definitions =
+            _coreDefinitions.Concat(BuildPartyToyDefinitions()).ToArray();
 
         private static readonly Dictionary<string, AssetDefinition> _definitionsById = _definitions.ToDictionary(definition => definition.Id);
         private static readonly Dictionary<string, SpriteResolution> _resolutionCache = new();
@@ -334,6 +344,63 @@ namespace CareerQuest
         private static AssetDefinition Prop(string id, string displayName, Color primary, Color accent, bool required = true)
         {
             return new AssetDefinition(id, displayName, AssetCategory.Prop, primary, accent, new Vector2Int(128, 128), required, required);
+        }
+
+        /// <summary>The sprite-key prefix for party-station toy art (matches the Obj() helper).</summary>
+        public const string PartyToyKeyPrefix = "prop.party.";
+
+        /// <summary>
+        /// Every distinct party-station toy: (sprite key, display name, station id),
+        /// enumerated from <see cref="PartyStationDefinitions"/> across all seeds and
+        /// de-duplicated. The single source of truth shared by the catalog defs
+        /// (below), CareerQuestPartyToyArtBuilder, and PartyToyArtTests so none of
+        /// them can drift from the seed data.
+        /// </summary>
+        public static IEnumerable<(string Key, string DisplayName, string StationId)> PartyToyEntries()
+        {
+            var seen = new HashSet<string>();
+            foreach (var station in PartyStationDefinitions.All)
+            {
+                foreach (var seed in station.Seeds)
+                {
+                    foreach (var toy in station.ResolveObjects(seed))
+                    {
+                        var key = $"{PartyToyKeyPrefix}{station.Id}.{toy.ObjectId}";
+                        if (seen.Add(key))
+                        {
+                            yield return (key, toy.DisplayName, station.Id);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>Station identity color for a toy token (DESIGN.md activity palette, token-readable).</summary>
+        public static Color PartyToyColor(string stationId)
+        {
+            return stationId switch
+            {
+                CareerQuestCatalog.RoboticsGarageId => new Color(0.13f, 0.55f, 0.58f),   // workshop teal
+                CareerQuestCatalog.AiLabId => new Color(0.29f, 0.62f, 0.92f),            // science blue
+                CareerQuestCatalog.CommunityKitchenId => new Color(0.43f, 0.74f, 0.42f), // leaf green
+                CareerQuestCatalog.MusicStudioId => new Color(0.62f, 0.52f, 0.86f),      // music lilac
+                CareerQuestCatalog.VetClinicId => new Color(0.36f, 0.78f, 0.6f),         // care mint
+                CareerQuestCatalog.GameStudioId => new Color(0.94f, 0.34f, 0.28f),       // play coral
+                CareerQuestCatalog.WeatherLabId => new Color(0.28f, 0.66f, 0.94f),       // sky blue
+                CareerQuestCatalog.SpaceportId => new Color(0.32f, 0.5f, 0.85f),         // orbit blue
+                CareerQuestCatalog.NewsroomId => new Color(0.96f, 0.62f, 0.18f),         // news orange
+                CareerQuestCatalog.GreenCityId => new Color(0.25f, 0.64f, 0.3f),         // city green
+                _ => new Color(0.953f, 0.769f, 0.357f)                                   // quest gold fallback
+            };
+        }
+
+        private static IEnumerable<AssetDefinition> BuildPartyToyDefinitions()
+        {
+            var paper = new Color(1f, 0.969f, 0.878f);
+            foreach (var (key, displayName, stationId) in PartyToyEntries())
+            {
+                yield return Prop(key, displayName, PartyToyColor(stationId), paper, required: false);
+            }
         }
 
         private static AssetDefinition Badge(string id, string displayName, Color primary, Color accent, bool required = true)

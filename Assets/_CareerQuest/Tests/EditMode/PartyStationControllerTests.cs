@@ -249,8 +249,12 @@ namespace CareerQuest.Tests
         // ------------------------------------------------------------------
 
         [Test]
-        public void PlaceholderToyKeysRenderAsTokensNeverFallbackArt()
+        public void PartyToyKeysRenderFinalArtNotFallback()
         {
+            // Part B (#4): prop.party.* keys now resolve to final Resources art
+            // (CareerQuestPartyToyArtBuilder), not the runtime token fallback —
+            // so toys read as distinct objects, never the missing-checker or a
+            // generated ".fallback" sprite. (PartyToyArtTests polices the full set.)
             foreach (var objectDefinition in Robotics.ResolveObjects(Robotics.DefaultSeed))
             {
                 var sprite = PartyStationRenderer.ResolveToySprite(objectDefinition.SpriteKey);
@@ -259,8 +263,8 @@ namespace CareerQuest.Tests
                     $"'{objectDefinition.ObjectId}' must not render generated fallback art.");
                 Assert.That(sprite.name, Does.Not.StartWith("missing."),
                     $"'{objectDefinition.ObjectId}' must not render the missing-definition checker.");
-                Assert.That(PartyStationRenderer.IsPlaceholderToySprite(objectDefinition.SpriteKey), Is.True,
-                    "prop.party.* keys stay intentional placeholders until the station art pass.");
+                Assert.That(PartyStationRenderer.IsPlaceholderToySprite(objectDefinition.SpriteKey), Is.False,
+                    "prop.party.* keys ship final toy art after the Part B art pass.");
             }
         }
 

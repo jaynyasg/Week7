@@ -149,7 +149,7 @@ namespace CareerQuest
             {
                 var definition = objects[index];
                 var piece = kit.PieceFor(definition.ObjectId);
-                if (piece == null || !IsPlaceholderToySprite(definition.SpriteKey))
+                if (piece == null)
                 {
                     continue;
                 }
@@ -162,18 +162,33 @@ namespace CareerQuest
                 // think the game won't end. Mark the task toys with an accent
                 // halo and fade the optional pokes so the actionable set reads
                 // at a glance. Presentation only — no rules/scoring change.
+                //
+                // Part B (#4): the halo/fade/label key off ROLE, not placeholder
+                // status, so they still read on final toy art. Only the tinting
+                // is placeholder-specific — a real sprite keeps its own colors
+                // (just dimmed when it is an optional poke).
                 var isTaskToy = definition.IsChainRole;
+                var isPlaceholder = IsPlaceholderToySprite(definition.SpriteKey);
 
                 var renderer = piece.GetComponent<SpriteRenderer>();
                 if (renderer != null)
                 {
-                    var color = TokenColorFor(accent, index);
-                    if (!isTaskToy)
+                    if (isPlaceholder)
                     {
-                        color.a *= OptionalToyAlpha;
-                    }
+                        var color = TokenColorFor(accent, index);
+                        if (!isTaskToy)
+                        {
+                            color.a *= OptionalToyAlpha;
+                        }
 
-                    renderer.color = color;
+                        renderer.color = color;
+                    }
+                    else if (!isTaskToy)
+                    {
+                        var dimmed = renderer.color;
+                        dimmed.a *= OptionalToyAlpha;
+                        renderer.color = dimmed;
+                    }
                 }
 
                 if (isTaskToy)
