@@ -49,10 +49,15 @@ namespace CareerQuest
                     return "Look at your badges. Tap a room when you are ready for another quest.";
                 case ActivityRoute.PartyStation:
                     // U2 generic station branch: one copy seam keyed by station
-                    // id — never one switch case per station (KTD3).
+                    // id — never one switch case per station (KTD3). Design-review
+                    // (2026-06-15): name the station's actual verb so each station
+                    // teaches a distinct action (trace / launch / cross out) instead
+                    // of a generic "play here" — stays station-aware and short.
                     if (CareerQuestCatalog.IsPartyStationId(stationId) && CareerQuestCatalog.TryGetById(stationId, out var stationEntry))
                     {
-                        return $"Play in the {stationEntry.BuildingName} to finish your quest.";
+                        return PartyStationDefinitions.TryGetById(stationId, out var stationDef)
+                            ? $"{VerbCue(stationDef.Pattern)} in the {stationEntry.BuildingName}!"
+                            : $"Play in the {stationEntry.BuildingName} to finish your quest.";
                     }
 
                     return "Follow the quest steps to earn your badge.";
@@ -66,6 +71,30 @@ namespace CareerQuest
 
                     return "Follow the quest steps to earn your badge.";
             }
+        }
+
+        /// <summary>
+        /// Design-review (2026-06-15): a short, kid-facing cue for each station's
+        /// verb so the instruction strip teaches the distinct action rather than a
+        /// generic "play here". Combined with " in the {building}!" it stays well
+        /// under PartyStationValidator.MaxGuideLineLength (80) and copy-safe.
+        /// </summary>
+        private static string VerbCue(ToyPatternId pattern)
+        {
+            return pattern switch
+            {
+                ToyPatternId.TracePath => "Trace the route",
+                ToyPatternId.ShootTarget => "Pull back and launch",
+                ToyPatternId.DeduceAnswer => "Cross out the wrong ones",
+                ToyPatternId.BalanceMeters => "Tune both meters",
+                ToyPatternId.PickMatchingTrio => "Match the trio",
+                ToyPatternId.ComposeSet => "Build your set",
+                ToyPatternId.MatchAndCare => "Match the care clues",
+                ToyPatternId.SortToBin => "Sort each piece",
+                ToyPatternId.SequenceCards => "Put the steps in order",
+                ToyPatternId.DragToSlot => "Drag each piece into place",
+                _ => "Play"
+            };
         }
 
         public static TextMeshProUGUI Build(Transform parent, GameSession session, string stationId = null)
