@@ -97,7 +97,17 @@ namespace CareerQuest.Editor
             new("campus.music_studio", MusicLilac, AccentKind.Medallion, 320, 288),
             new("campus.green_energy_center", SuccessGreen, AccentKind.Medallion, 320, 288),
             new("campus.robotics_garage", WorkshopTeal, AccentKind.GarageDoor, 320, 288),
-            new("campus.community_kitchen", KitchenLeaf, AccentKind.Awning, 320, 288)
+            new("campus.community_kitchen", KitchenLeaf, AccentKind.Awning, 320, 288),
+            // Design-review (2026-06-15): the six station-id stations are fully
+            // playable, so they get REAL campus buildings instead of "Soon"
+            // construction-site markers. Art keys match the AssetCatalog campus
+            // entries and each station's CampusArtKey.
+            new("campus.spaceport", ScienceBlue, AccentKind.Dome, 320, 288),
+            new("campus.weather_lab", WorkshopTeal, AccentKind.Pillars, 320, 288),
+            new("campus.newsroom", Amber, AccentKind.Awning, 320, 288),
+            new("campus.vet_clinic", Mint, AccentKind.Awning, 320, 288),
+            new("campus.game_studio", MusicLilac, AccentKind.Medallion, 320, 288),
+            new("campus.green_city", SuccessGreen, AccentKind.Medallion, 320, 288)
         };
 
         // ------------------------------------------------------------------
@@ -587,19 +597,19 @@ namespace CareerQuest.Editor
             AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(3.9f, 0.15f));
             AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-1.8f, -1.75f));
 
-            // U8: the six station-id stations show a temporary construction-site
-            // marker until the U11 final-art pass writes their campus.{id} PNGs
-            // (campus visibility rule: development builds may flag unbuilt-art
-            // stations as construction sites; the final build replaces them).
-            // The site marker is a generated placeholder sprite so the prefab
-            // never fails on missing station building art, and the readable
-            // station label still mounts at runtime via the door sign.
-            AddStationSite(world, "SpaceportSite", ScienceBlue, new Vector2(-3.9f, 0.1f));
-            AddStationSite(world, "GameStudioSite", MusicLilac, new Vector2(5.2f, -0.5f));
-            AddStationSite(world, "NewsroomSite", Amber, new Vector2(5f, 0.8f));
-            AddStationSite(world, "VetClinicSite", Mint, new Vector2(-0.6f, -2.1f));
-            AddStationSite(world, "WeatherLabSite", ScienceBlue, new Vector2(0.6f, -2.1f));
-            AddStationSite(world, "GreenCitySite", SuccessGreen, new Vector2(1.8f, -1.8f));
+            // Design-review (2026-06-15): these six stations are fully playable
+            // (each routes the generic PartyStation branch and runs a real verb),
+            // so they now show REAL campus buildings instead of "Soon" construction
+            // sites. The misleading scaffold made the new-verb stations (Spaceport
+            // = trace, Weather Lab = trace, Newsroom = deduce) look unbuilt, so kids
+            // never entered them. Building art keys match the Buildings specs above;
+            // the readable station label still mounts at runtime via the door sign.
+            AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-3.9f, 0.1f));
+            AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(5.2f, -0.5f));
+            AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(5f, 0.8f));
+            AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-0.6f, -2.1f));
+            AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(0.6f, -2.1f));
+            AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(1.8f, -1.8f));
 
             // Living-campus beats (P9): waving flag and butterflies.
             AddSprite(world, "FlagPole", Hub("hub_flag_pole.png"), new Vector2(1.05f, -0.05f), new Vector2(0.08f, 1.35f), 246);
