@@ -64,7 +64,6 @@ namespace CareerQuest
         public void ShowCampus(GameSession session)
         {
             BeginHub("Campus");
-            _builder.AddHeroCharacters(session, session != null && (session.PlayerCount > 1 || session.Mode == AppMode.Showcase));
         }
 
         public void ShowProof(GameSession session)

@@ -15,6 +15,7 @@ namespace CareerQuest
 
         public void Configure(CameraDirector director, Transform target)
         {
+            _director?.EndFollow(_target);
             _director = director;
             _target = target;
 
@@ -26,14 +27,15 @@ namespace CareerQuest
             _director.BeginFollow(_target, CameraFollowSettings.HubDefault);
         }
 
+        public void ClearFollow()
+        {
+            _director?.EndFollow(_target);
+            _target = null;
+        }
+
         private void OnDisable()
         {
-            if (_director == null)
-            {
-                return;
-            }
-
-            _director.EndFollow(_target);
+            ClearFollow();
         }
     }
 }

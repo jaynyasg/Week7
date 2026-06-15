@@ -38,6 +38,9 @@ namespace CareerQuest
         private PlayableHubController _hub;
         private SceneFlowRouter _router;
         private TextMeshProUGUI _connectionStatusText;
+        private ConnectionMode _pendingConnectionMode = ConnectionMode.None;
+        private int _pendingConnectionPlayerSlot;
+        private Func<bool> _pendingConnectionStartNetwork;
         private bool _ceremonyActive;
         private CeremonyController _ceremonyController;
         private Coroutine _ceremonyCoroutine;
@@ -597,14 +600,16 @@ namespace CareerQuest
             var soloHint = UiBuilder.Text(panel, "PlaySoloHint", "Recommended", 16, TextAnchor.MiddleCenter, new Color(0.06f, 0.22f, 0.2f));
             UiBuilder.Place(soloHint.rectTransform, -282f, 50f, 244f, 30f);
 
-            var host = UiBuilder.Button(panel, "HostLocalGameButton", "Host Game", () => StartCoroutine(ConnectAsHost()));
+            var host = UiBuilder.Button(panel, "HostLocalGameButton", "Host Game", () =>
+                ShowAvatarSelectionForConnection(ConnectionMode.HostP1, 1, () => _networkBootstrap.StartHostP1()));
             UiBuilder.Place(host.GetComponent<RectTransform>(), 0f, 104f, 244f, 68f);
             StyleConnectionButton(host, new Color(0.09f, 0.31f, 0.42f), 24);
 
             var hostHint = UiBuilder.Text(panel, "HostLocalHint", "Start a local session", 15, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
             UiBuilder.Place(hostHint.rectTransform, 0f, 50f, 244f, 30f);
 
-            var joinLocal = UiBuilder.Button(panel, "JoinThisComputerButton", "Join This PC", () => StartCoroutine(ConnectAsLocalClient()));
+            var joinLocal = UiBuilder.Button(panel, "JoinThisComputerButton", "Join This PC", () =>
+                ShowAvatarSelectionForConnection(ConnectionMode.JoinLocalhostP2, 2, () => _networkBootstrap.JoinLocalhostP2()));
             UiBuilder.Place(joinLocal.GetComponent<RectTransform>(), 282f, 104f, 244f, 68f);
             StyleConnectionButton(joinLocal, new Color(0.09f, 0.31f, 0.42f), 24);
 
@@ -619,14 +624,18 @@ namespace CareerQuest
             var input = UiBuilder.Input(panel, "LanAddressInput", "127.0.0.1");
             UiBuilder.Place(input.GetComponent<RectTransform>(), -94f, -100f, 330f, 48f);
 
-            var joinLan = UiBuilder.Button(panel, "JoinIpButton", "Join IP", () => StartCoroutine(ConnectAsLanClient(input.text)));
+            var joinLan = UiBuilder.Button(panel, "JoinIpButton", "Join IP", () =>
+            {
+                var address = input.text;
+                ShowAvatarSelectionForConnection(ConnectionMode.JoinLanByIp, 2, () => _networkBootstrap.JoinLanByIp(address));
+            });
             UiBuilder.Place(joinLan.GetComponent<RectTransform>(), 220f, -100f, 176f, 48f);
             StyleConnectionButton(joinLan, new Color(0.09f, 0.31f, 0.42f), 20);
 
             var advancedHint = UiBuilder.Text(panel, "ConnectionAdvancedHint", "Use IP join only when another device is hosting on the same network.", 15, TextAnchor.MiddleCenter, new Color(0.18f, 0.26f, 0.3f));
             UiBuilder.Place(advancedHint.rectTransform, 0f, -148f, 760f, 34f);
 
-            var controls = UiBuilder.Text(panel, "ConnectionControls", "Campus controls: WASD or arrows to move. Walk into a door to enter.", 16, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
+            var controls = UiBuilder.Text(panel, "ConnectionControls", "Controls: solo uses WASD. Same-PC multiplayer uses P1 WASD/F and P2 IJKL/Enter.", 16, TextAnchor.MiddleCenter, new Color(0.1f, 0.18f, 0.22f));
             UiBuilder.Place(controls.rectTransform, 0f, -212f, 760f, 36f);
 
             AttachDebug();
@@ -642,6 +651,57 @@ namespace CareerQuest
 
             _connectionStatusText.text = message;
             _connectionStatusText.gameObject.SetActive(!string.IsNullOrWhiteSpace(message));
+        }
+
+        private void ShowAvatarSelectionForConnection(ConnectionMode mode, int playerSlot, Func<bool> startNetwork)
+        {
+            _pendingConnectionMode = mode;
+            _pendingConnectionPlayerSlot = playerSlot;
+            _pendingConnectionStartNetwork = startNetwork;
+
+            _hub.Hide();
+            _router.ShowAvatarSelection(_session, AppMode.Play);
+            _world.ShowEntry(_session);
+            ResetRoot();
+
+            var confirmLabel = mode == ConnectionMode.HostP1 ? "Host Game" : "Join Game";
+            _avatarSelection.Render(
+                _root,
+                this,
+                confirmLabel,
+                ConfirmConnectionAvatar,
+                CancelConnectionAvatarSelection);
+            AttachDebug();
+        }
+
+        private void ConfirmConnectionAvatar(string avatarId)
+        {
+            var mode = _pendingConnectionMode;
+            var playerSlot = _pendingConnectionPlayerSlot;
+            var startNetwork = _pendingConnectionStartNetwork;
+            ClearPendingConnectionAvatarSelection();
+
+            _session.SelectAvatar(avatarId);
+            if (!mode.IsNetworked() || startNetwork == null)
+            {
+                ShowConnectionError("Choose Host Game or Join again to start multiplayer.");
+                return;
+            }
+
+            StartCoroutine(ConnectAndShowCampus(mode, playerSlot, startNetwork));
+        }
+
+        private void CancelConnectionAvatarSelection()
+        {
+            ClearPendingConnectionAvatarSelection();
+            ShowConnection();
+        }
+
+        private void ClearPendingConnectionAvatarSelection()
+        {
+            _pendingConnectionMode = ConnectionMode.None;
+            _pendingConnectionPlayerSlot = 0;
+            _pendingConnectionStartNetwork = null;
         }
 
         private IEnumerator ConnectAsHost()
@@ -691,7 +751,51 @@ namespace CareerQuest
             }
 
             BindCampusSessionState();
+            if (mode.IsNetworked())
+            {
+                yield return ConfigureLocalNetworkAvatar(mode);
+            }
+
             ShowCampus();
+        }
+
+        private IEnumerator ConfigureLocalNetworkAvatar(ConnectionMode mode)
+        {
+            var deadline = Time.realtimeSinceStartup + 3f;
+            PlayerAvatarNetwork avatar = null;
+
+            while (Time.realtimeSinceStartup < deadline)
+            {
+                avatar = FindLocalNetworkAvatar();
+                if (avatar != null)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
+            if (avatar == null)
+            {
+                Debug.LogWarning("CareerQuest multiplayer connected, but no owned PlayerAvatarNetwork was found to configure.");
+                yield break;
+            }
+
+            avatar.ConfigureLocalPlayer(_session.SelectedAvatar.Id, mode.ToPlayerControlScheme());
+        }
+
+        private static PlayerAvatarNetwork FindLocalNetworkAvatar()
+        {
+            var avatars = FindObjectsByType<PlayerAvatarNetwork>(FindObjectsInactive.Exclude);
+            foreach (var avatar in avatars)
+            {
+                if (avatar != null && avatar.IsSpawned && avatar.IsOwner)
+                {
+                    return avatar;
+                }
+            }
+
+            return null;
         }
 
         private void BindCampusSessionState()

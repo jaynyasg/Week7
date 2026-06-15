@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -13,6 +14,16 @@ namespace CareerQuest
         private static readonly Color ButtonTeal = new(0.09f, 0.31f, 0.42f);
 
         public void Render(Transform parent, CareerQuestApp app)
+        {
+            Render(parent, app, "Enter Campus", avatarId => app.ChooseAvatar(avatarId), app.ShowEntry);
+        }
+
+        public void Render(
+            Transform parent,
+            CareerQuestApp app,
+            string confirmLabel,
+            Action<string> onConfirm,
+            Action onBack)
         {
             var panel = UiBuilder.FullPanel(parent, "AvatarSelectionPanel", new Color(0.62f, 0.88f, 1f));
             panel.GetComponent<Image>().color = new Color(0.69f, 0.9f, 1f, 1f);
@@ -79,11 +90,11 @@ namespace CareerQuest
 
             RefreshCardStates(cardViews, selectedAvatar);
 
-            var confirm = UiBuilder.Button(panel, "AvatarConfirmButton", "Enter Campus", () => app.ChooseAvatar(selectedAvatar.Id));
+            var confirm = UiBuilder.Button(panel, "AvatarConfirmButton", confirmLabel, () => onConfirm?.Invoke(selectedAvatar.Id));
             UiBuilder.Place(confirm.GetComponent<RectTransform>(), 364f, -310f, 220f, 48f);
             StyleButton(confirm, new Color(0.05f, 0.49f, 0.43f), 20);
 
-            var back = UiBuilder.Button(panel, "AvatarBackButton", "Back", app.ShowEntry);
+            var back = UiBuilder.Button(panel, "AvatarBackButton", "Back", onBack ?? app.ShowEntry);
             UiBuilder.Place(back.GetComponent<RectTransform>(), 126f, -310f, 190f, 48f);
             StyleButton(back, ButtonTeal, 20);
         }

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace CareerQuest.Tests
 {
@@ -49,8 +50,39 @@ namespace CareerQuest.Tests
             AssertButtonText("HostLocalGameButton", "Host Game");
             AssertButtonText("JoinThisComputerButton", "Join This PC");
             AssertButtonText("JoinIpButton", "Join IP");
+            AssertText("ConnectionControls", "Controls: solo uses WASD. Same-PC multiplayer uses P1 WASD/F and P2 IJKL/Enter.");
             Assert.That(GameObject.Find("HostP1Button"), Is.Null);
             Assert.That(GameObject.Find("SoloFallbackButton"), Is.Null);
+
+            Object.Destroy(gameObject);
+        }
+
+        [UnityTest]
+        public IEnumerator MultiplayerButtonsChooseAvatarBeforeConnecting()
+        {
+            var gameObject = new GameObject("connection-avatar-test");
+            var app = gameObject.AddComponent<CareerQuestApp>();
+            yield return null;
+
+            app.ShowConnection();
+            yield return null;
+
+            GameObject.Find("HostLocalGameButton").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.AvatarSelection));
+            Assert.That(GameObject.Find("AvatarSelectionPanel"), Is.Not.Null);
+            AssertButtonText("AvatarConfirmButton", "Host Game");
+
+            GameObject.Find("AvatarBackButton").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+
+            Assert.That(GameObject.Find("ConnectionPanel"), Is.Not.Null);
+            GameObject.Find("JoinThisComputerButton").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+
+            Assert.That(app.Session.CurrentRoute, Is.EqualTo(ActivityRoute.AvatarSelection));
+            AssertButtonText("AvatarConfirmButton", "Join Game");
 
             Object.Destroy(gameObject);
         }

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -22,6 +24,12 @@ namespace CareerQuest
         private AvatarRuntimeView _avatarView;
         private SpriteRenderer _spriteRenderer;
         private AvatarNameTag _nameTag;
+        private IReadOnlyList<BuildingEntrance> _campusEntrances = Array.Empty<BuildingEntrance>();
+        private Action<BuildingEntrance> _onCampusDestination;
+        private BuildingEntrance _pendingEntrance;
+        private float _dwellElapsed;
+        private float _graceRemaining;
+        private bool _entryLatched;
         // Remote avatars derive walk/idle from observed position deltas with a
         // deadzone + hysteresis (the network lerp produces residual motion that
         // would flicker the walk state — U5 plan callout).
@@ -57,6 +65,7 @@ namespace CareerQuest
         public override void OnNetworkDespawn()
         {
             _networkAvatarIndex.OnValueChanged -= HandleAvatarChanged;
+            ClearCampusEntrances();
         }
 
         private void Update()
@@ -76,6 +85,11 @@ namespace CareerQuest
 
                 // Local player animates from its own input — no network round-trip.
                 _avatarView?.SetLocomotion(move.sqrMagnitude > 0f, move.x);
+                TickCampusDoorEntry(Time.deltaTime);
+                if (inputRouter != null && inputRouter.ReadConfirmDown())
+                {
+                    TryEnterNearestCampusEntrance();
+                }
             }
 
             if (!IsServer)
@@ -111,6 +125,35 @@ namespace CareerQuest
             }
 
             ApplyAvatar(avatarId);
+        }
+
+        public void ConfigureLocalPlayer(string selectedAvatarId, PlayerControlScheme controlScheme)
+        {
+            inputRouter = inputRouter != null ? inputRouter : GetComponent<PlayerInputRouter>();
+            if (inputRouter != null)
+            {
+                inputRouter.ControlScheme = controlScheme;
+            }
+
+            SetAvatar(selectedAvatarId);
+        }
+
+        public void ConfigureCampusEntrances(IReadOnlyList<BuildingEntrance> entrances, Action<BuildingEntrance> onDestination)
+        {
+            ClearCampusEntrances();
+            _campusEntrances = entrances ?? Array.Empty<BuildingEntrance>();
+            _onCampusDestination = onDestination;
+            _graceRemaining = PlayerAvatarController.ReturnToCampusGraceSeconds;
+        }
+
+        public void ClearCampusEntrances()
+        {
+            SetPendingEntrance(null);
+            _campusEntrances = Array.Empty<BuildingEntrance>();
+            _onCampusDestination = null;
+            _dwellElapsed = 0f;
+            _graceRemaining = 0f;
+            _entryLatched = false;
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
@@ -193,6 +236,124 @@ namespace CareerQuest
             }
 
             _nameTag.Configure(AvatarNameTag.IdentityTextFor(OwnerClientId, AvatarConfig.GetAvatar(avatarId)));
+        }
+
+        private void TickCampusDoorEntry(float deltaSeconds)
+        {
+            if (_entryLatched || deltaSeconds <= 0f || _campusEntrances.Count == 0)
+            {
+                return;
+            }
+
+            var inside = EntranceContaining(transform.position);
+            if (inside != _pendingEntrance)
+            {
+                SetPendingEntrance(inside);
+            }
+
+            if (_graceRemaining > 0f)
+            {
+                var consumed = Mathf.Min(_graceRemaining, deltaSeconds);
+                _graceRemaining -= consumed;
+                deltaSeconds -= consumed;
+            }
+
+            if (_pendingEntrance == null || deltaSeconds <= 0f)
+            {
+                return;
+            }
+
+            _dwellElapsed += deltaSeconds;
+            if (_dwellElapsed < PlayerAvatarController.AutoEntryDwellSeconds)
+            {
+                return;
+            }
+
+            var entrance = _pendingEntrance;
+            SetPendingEntrance(null);
+            EnterCampusEntrance(entrance);
+        }
+
+        private bool TryEnterNearestCampusEntrance()
+        {
+            var entrance = NearestEntrance(transform.position);
+            return entrance != null && entrance.Contains(transform.position) && EnterCampusEntrance(entrance);
+        }
+
+        private bool EnterCampusEntrance(BuildingEntrance entrance)
+        {
+            if (_entryLatched || entrance == null)
+            {
+                return false;
+            }
+
+            _entryLatched = true;
+            SetPendingEntrance(null);
+            AudioCueCatalog.TryPlay(AudioCueIds.DoorEnter);
+            _onCampusDestination?.Invoke(entrance);
+            return true;
+        }
+
+        private BuildingEntrance EntranceContaining(Vector2 worldPosition)
+        {
+            foreach (var entrance in _campusEntrances)
+            {
+                if (entrance != null && entrance.Contains(worldPosition))
+                {
+                    return entrance;
+                }
+            }
+
+            return null;
+        }
+
+        private BuildingEntrance NearestEntrance(Vector2 worldPosition)
+        {
+            BuildingEntrance nearest = null;
+            var nearestDistance = float.MaxValue;
+            foreach (var entrance in _campusEntrances)
+            {
+                if (entrance == null)
+                {
+                    continue;
+                }
+
+                var distance = Vector2.Distance(entrance.transform.position, worldPosition);
+                if (distance < nearestDistance)
+                {
+                    nearest = entrance;
+                    nearestDistance = distance;
+                }
+            }
+
+            return nearest;
+        }
+
+        private void SetPendingEntrance(BuildingEntrance entrance)
+        {
+            if (_pendingEntrance == entrance)
+            {
+                return;
+            }
+
+            SetEntranceHighlight(_pendingEntrance, false);
+            _pendingEntrance = entrance;
+            _dwellElapsed = 0f;
+            SetEntranceHighlight(_pendingEntrance, true);
+        }
+
+        private static void SetEntranceHighlight(BuildingEntrance entrance, bool active)
+        {
+            if (entrance == null)
+            {
+                return;
+            }
+
+            var sign = entrance.GetComponent<DoorSign>();
+            if (sign != null)
+            {
+                sign.SetPulsing(active);
+            }
         }
     }
 }

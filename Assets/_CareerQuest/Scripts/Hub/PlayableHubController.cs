@@ -10,6 +10,7 @@ namespace CareerQuest
 
         private CareerQuestApp _app;
         private PlayerAvatarController _player;
+        private PlayerAvatarNetwork _networkPlayer;
         private HubCameraRig _cameraRig;
 
         public IReadOnlyList<BuildingEntrance> Entrances => _entrances;
@@ -52,11 +53,25 @@ namespace CareerQuest
             AddDistrictHeaders(entranceSet);
 
             var playerSpawn = anchors != null ? anchors.PlayerSpawn : WorldAnchors.FallbackPlayerSpawn;
-            var playerObject = new GameObject("HubPlayer", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(PlayerAvatarController));
-            playerObject.transform.SetParent(transform, false);
-            playerObject.transform.position = new Vector3(playerSpawn.x, playerSpawn.y, 0f);
-            _player = playerObject.GetComponent<PlayerAvatarController>();
-            _player.Configure(session, _entrances, EnterEntrance);
+            var followTarget = default(Transform);
+            if (session != null && session.ConnectionMode.IsNetworked())
+            {
+                _networkPlayer = FindLocalNetworkPlayer();
+                if (_networkPlayer != null)
+                {
+                    _networkPlayer.ConfigureCampusEntrances(_entrances, EnterEntrance);
+                    followTarget = _networkPlayer.transform;
+                }
+            }
+            else
+            {
+                var playerObject = new GameObject("HubPlayer", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(PlayerAvatarController));
+                playerObject.transform.SetParent(transform, false);
+                playerObject.transform.position = new Vector3(playerSpawn.x, playerSpawn.y, 0f);
+                _player = playerObject.GetComponent<PlayerAvatarController>();
+                _player.Configure(session, _entrances, EnterEntrance);
+                followTarget = playerObject.transform;
+            }
 
             var guideSpawn = anchors != null ? anchors.GuideSpawn : WorldAnchors.FallbackGuideSpawn;
             var guideObject = new GameObject("CampusGuide", typeof(SpriteRenderer), typeof(AvatarRuntimeView), typeof(CampusGuideController));
@@ -68,10 +83,10 @@ namespace CareerQuest
             // P10: first hub entry of the session — greet by avatar name and
             // pulse the nearest unplayed door. No-ops on later hub entries.
             var firstRunBeat = guideObject.AddComponent<FirstRunGuideBeat>();
-            firstRunBeat.TryBegin(session, guide, _entrances, playerSpawn);
+            firstRunBeat.TryBegin(session, guide, _entrances, followTarget != null ? (Vector2)followTarget.position : playerSpawn);
 
             _cameraRig = gameObject.GetComponent<HubCameraRig>() ?? gameObject.AddComponent<HubCameraRig>();
-            _cameraRig.Configure(CameraDirector.Ensure(), playerObject.transform);
+            _cameraRig.Configure(CameraDirector.Ensure(), followTarget);
         }
 
         public void Hide()
@@ -231,13 +246,30 @@ namespace CareerQuest
 
         private void Clear()
         {
+            _cameraRig?.ClearFollow();
+            _networkPlayer?.ClearCampusEntrances();
             _entrances.Clear();
             _player = null;
+            _networkPlayer = null;
 
             for (var i = transform.childCount - 1; i >= 0; i--)
             {
                 Destroy(transform.GetChild(i).gameObject);
             }
+        }
+
+        private static PlayerAvatarNetwork FindLocalNetworkPlayer()
+        {
+            var avatars = FindObjectsByType<PlayerAvatarNetwork>(FindObjectsInactive.Exclude);
+            foreach (var avatar in avatars)
+            {
+                if (avatar != null && avatar.IsSpawned && avatar.IsOwner)
+                {
+                    return avatar;
+                }
+            }
+
+            return null;
         }
     }
 }
