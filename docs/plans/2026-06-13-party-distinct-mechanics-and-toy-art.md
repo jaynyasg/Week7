@@ -211,10 +211,24 @@ all built and proven: Trace (Spaceport `85017ab`, Weather `f5f7c66`), Shoot
 keeps the existing Tune dial; the rest keep place/sort/trio/care/compose. No two
 adjacent stations share a verb. Gate 1 met.
 
-Then Part B (toy art) — Gate 2, now unblocked. Per-unit proof discipline: each
-lands as its own atomic commit, EditMode+PlayMode green (combined run), plus a
-station screenshot. Open decisions before B1 (art source/style, wave scope)
-still need user sign-off per the "Open decisions" section above.
+**Part B (toy art) — ✅ DONE (commit `4dafd4f`), all 10 stations.** User chose
+imported/curated over the generator and all-ten scope; the executable answer was
+the owner-affirmed **Kenney-soft compositor** (the same pipeline that made the
+accessory art — distinct from the rejected sprite-kit generator), since no CC0
+object/food sprites exist in-repo for the whimsical toys. `CareerQuestPartyToyArt
+Builder` composes 102 cohesive station-colored tokens (flat fill + soft shadow +
+sticker sheen + a Kenney Game Icons glyph where a keyword fits) at
+`Resources/CareerQuest/Prop/prop.party.{station}.{object}.png`; `AssetCatalog.
+PartyToyEntries()` derives the keys from the seeds (one source of truth) and
+`PartyToyArtTests` polices that all 102 resolve to final art. `DecoratePlayfield`
+now keys the #2 halo/fade/label off ROLE not placeholder status, so the clarity
+treatment reads on the real sprites. EditMode 241/241, PlayMode 230/230. The 5
+token stations (Kitchen, Vet, Music, Game Studio, Green City) show the sprites
+directly; the verb stations keep their custom verb visuals. **Durable pipeline:**
+the catalog keys + builder + seam are the reusable part — the planned Gemini /
+AI-image pass later overwrites the same `{key}.png` files with literal toy
+illustration, no rewiring. SCREENSHOT/visual-fit + the AI-literal pass are the
+remaining follow-ups (worktree can't screenshot; owner verifies visually).
 
 **All three locked verbs are now built and proven** (trace `85017ab`, shoot
 `f7ed6ff`, deduce `ee06202`). Gate 1 (distinct verbs) is met for one station
