@@ -194,14 +194,27 @@ This keeps every district mixed (no two adjacent stations share a verb).
    fact-check deductions (paint-on-hands → Art Club; source clue → checked
    scoop). SCREENSHOT FOLLOW-UP: newsroom.png re-capture pending (same cold-
    import blocker as robotics.png); the deduce proof test is the binding evidence.
-4. **Roll each proven verb to its second station** — NEXT. trace→Weather Lab
-   (evac/shelter route), deduce→AI Lab (eliminate wrong sort rules). (Shoot has
-   no planned second station.) Each is a smaller change: swap the station's
-   pattern + reframe its seeds + re-baseline that station's tests; the kit/rules
-   work is already done.
+4. **Roll each proven verb to its second station** — ✅ DONE (commit `f5f7c66`).
+   trace→Weather Lab (SequenceCards→TracePath: forecast + shelter stops traced in
+   order on waypoint zones) and deduce→AI Lab (SortToBin→DeduceAnswer: cross out
+   the wrong sort rules, the right rule survives). EditMode 239/239, PlayMode
+   230/230. No kit/rules changes — pattern swap + seed reframe + that station's
+   test re-baseline only. Side effects: SequenceCards (both trace stations moved
+   off it) and SortToBin (AI Lab moved off it) are now unused-but-supported
+   library patterns; SortToBin keeps coverage via a synthetic-seed rule test.
+   SCREENSHOT FOLLOW-UP: weather.png + ai-lab.png re-capture pending (same cold-
+   import blocker); proof tests are the binding evidence.
 
-Then Part B (toy art). Per-verb proof discipline: each lands as its own atomic
-commit, EditMode+PlayMode green (combined run), plus a station screenshot.
+**Part A (distinct verbs) is COMPLETE.** Verb assignments per the locked map are
+all built and proven: Trace (Spaceport `85017ab`, Weather `f5f7c66`), Shoot
+(Robotics `f7ed6ff`), Deduce (Newsroom `ee06202`, AI Lab `f5f7c66`); Green City
+keeps the existing Tune dial; the rest keep place/sort/trio/care/compose. No two
+adjacent stations share a verb. Gate 1 met.
+
+Then Part B (toy art) — Gate 2, now unblocked. Per-unit proof discipline: each
+lands as its own atomic commit, EditMode+PlayMode green (combined run), plus a
+station screenshot. Open decisions before B1 (art source/style, wave scope)
+still need user sign-off per the "Open decisions" section above.
 
 **All three locked verbs are now built and proven** (trace `85017ab`, shoot
 `f7ed6ff`, deduce `ee06202`). Gate 1 (distinct verbs) is met for one station

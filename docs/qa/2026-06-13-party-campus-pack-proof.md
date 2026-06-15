@@ -102,12 +102,12 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 | `campus.png` | Campus hub (10 stations) | The merged district map: Tech Lane (AI Lab, Robotics, Spaceport), Quest Yard core (Design Build, Logic Court, Health Hero), Story Street (Newsroom, Music Studio, Game Studio), plus Care Corner, Kitchen, Green City. Robot-guide first-run bubble, 0/3 badge HUD, "Move: WASD" hint, footer "Walk into a career door to start a quest. It opens on its own!" (U2 auto-entry). |
 | `avatar.png` | Hero selection | Four Kenney Toon heroes (Sky Builder selected, Care Captain, Logic Spark, Art Inventor) with career-color stripes, large preview card, Back / Enter Campus. |
 | `robotics.png` | Robotics Rescue (party station) | Guide *Bolt the Bench Buddy* ("upbeat build coach"), intro "Bolt beeps: the robot is built — launch every part to the rescue spot!", **Tool Belt** reward preview, **ShootTarget** launch pad + rescue-spot target ring + pull-back launch toys (Battery Toast, Wheel Sandwich, Sensor Sticker, Route Beacon, Rescue Flag), NPC reaction line. *(Verb swapped DragToSlot→ShootTarget in `f7ed6ff`; PNG re-capture pending — see plan build-order note.)* |
-| `ai-lab.png` | AI Lab Sort (party station) | Guide *Pixel the Pattern Pal*, intro "Teach the bubblegum sorter by putting each example in its matching bin.", **Lab Goggles** reward, SortToBin bins (Reasoning, Creativity, Science), example tray. |
+| `ai-lab.png` | AI Lab Sort (party station) | Guide *Pixel the Pattern Pal*, intro "Pixel grins: the bubbles sort by color — which rule gets it right?", **Lab Goggles** reward, **DeduceAnswer** clue banner + rule cards to cross out (Size Rule, Loud Rule, Random Rule + the surviving Color Rule, Test Button). *(Verb swapped SortToBin→DeduceAnswer in `f5f7c66`; PNG re-capture pending.)* |
 | `music.png` | Music Remix (party station) | Guide *DJ Tempo*, intro "Layer the storm sounds into a parade beat and keep the tempo steady.", **Microphone** reward, Mix Spot + Tempo Dial (compose/meter), sample tray. |
 | `kitchen.png` | Community Kitchen Match (party station) | Guide *Chef Sunny*, intro "Solve the soup clues and serve a bowl every guest can enjoy.", **Chef Hat** reward, Match Tray + serving bowl (PickMatchingTrio + serve), ingredient tray. |
 | `vet.png` | Vet Clinic Diagnose (party station) | Guide *Nurse Nova* ("calm care guide"), intro "Read the care clues and pick a gentle plan for the hiccuping dragon.", **Care Cape** reward, MatchAndCare (Gentle Care Tool / Care Spot), tray (Care Clue Cards, Water Bowl, Comfort Blanket, Cozy Temp Sticker, Gentle Care Tool), pretend-play-safe NPC line. |
 | `game-studio.png` | Game Studio Compose (party station) | Guide *Captain Loop* ("playful design lead"), intro "Pick a goal, an obstacle, and a rule that fit, then run the playtest.", **Sketchbook** reward, Mix Spot (compose), tray (Hero Token, Obstacle Tile, Rule Card, Power-Up Sketch, Playtest Button). |
-| `weather.png` | Weather Lab Rescue (party station) | Guide *Radar Rae* ("alert safety planner"), intro "Order the forecast clues, then set up shelter before the parade starts.", **Weather Goggles** reward, Next Step (sequence), tray (Forecast Tiles, Umbrella Sign, Route Cones, Calm Radio, Shelter Flag), safe weather/emergency copy. |
+| `weather.png` | Weather Lab Rescue (party station) | Guide *Radar Rae* ("alert safety planner"), intro "Radar Rae points: rain clouds race the parade — trace the shelter route!", **Weather Goggles** reward, **TracePath** route line + numbered waypoint stops (Forecast Tiles → Umbrella Sign → Route Cones → Shelter Flag; Calm Radio poke), safe weather/emergency copy. *(Verb swapped SequenceCards→TracePath in `f5f7c66`; PNG re-capture pending.)* |
 | `spaceport.png` | Spaceport Pilot (party station) | Guide *Commander Orbit* ("focused mission guide"), intro "Sequence launch, orbit, delivery, and landing to fly the snack probe.", **Mission Patch** reward, Next Step (SequenceCards), tray (Launch Checklist, Fuel Bead, Snack Crate, Orbit Arrow, Landing Pad). |
 | `newsroom.png` | Newsroom Story Sprint (party station) | Guide *Scoop Rivera* ("fact-checking reporter"), intro "Scoop Rivera gasps: the mural maker had paint on their hands — who is it?", **Press Badge** reward, **DeduceAnswer** clue banner + candidate cards to cross out (Robot Rumor, Alien Rumor, Wind Rumor + the surviving Art Club Fact, Headline Stamp), source-safe copy. *(Verb swapped ComposeSet→DeduceAnswer in `ee06202`; PNG re-capture pending — see plan build-order note.)* |
 | `green-city.png` | Green City Builder (party station) | Guide *Grid Green* ("practical systems planner"), intro "Place four city pieces while keeping both meters happy and green.", **Green Hardhat** reward, **BalanceMeters** — Budget Meter + Happy Meter tap-dials with needles + Build Spot, four-piece tray (Solar Tile, Garden Block, Bike Path, Water Wheel). |
@@ -121,12 +121,13 @@ campus shot shows the merged 10-station map, not the pre-merge campus.
 All 10 party stations now have a dedicated `-cq-visual-state` case and a captured
 screenshot, each showing full station identity (guide + intro + reward preview +
 toy pattern + task tray + NPC reaction). The toy patterns are represented across
-the set: SortToBin (ai-lab), ComposeSet/meter (music, game-studio),
-PickMatchingTrio (kitchen), MatchAndCare (vet), SequenceCards (weather),
-BalanceMeters (green-city), plus the design-review #3 distinct verbs —
-TracePath (spaceport, `85017ab`), ShootTarget (robotics, `f7ed6ff`), and
-DeduceAnswer (newsroom, `ee06202`). DragToSlot is no longer used by a shipped
-station (Robotics moved to ShootTarget) but remains a supported pattern.
+the set: ComposeSet/meter (music, game-studio), PickMatchingTrio (kitchen),
+MatchAndCare (vet), BalanceMeters (green-city), plus the design-review #3
+distinct verbs — TracePath (spaceport `85017ab`, weather `f5f7c66`), ShootTarget
+(robotics `f7ed6ff`), and DeduceAnswer (newsroom `ee06202`, ai-lab `f5f7c66`).
+DragToSlot, SortToBin, and SequenceCards are no longer used by a shipped station
+(Robotics→ShootTarget, AI Lab→DeduceAnswer, Spaceport+Weather→TracePath) but all
+remain supported library patterns (SortToBin keeps a synthetic-seed rule test).
 
 ### Accessory fit
 
