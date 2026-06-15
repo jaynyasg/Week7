@@ -120,23 +120,23 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "AI Lab Sort",
-                new[] { "sort", "test" },
-                ToyPatternId.SortToBin,
+                new[] { "deduce", "test" },
+                ToyPatternId.DeduceAnswer,
                 "Pixel the Pattern Pal",
                 "curious data helper",
-                "Teach the bubblegum sorter by putting each example in its matching bin.",
+                "Read the clue, then cross out the sort rules that get it wrong.",
                 new[]
                 {
-                    // U5 sort tuning: fact and guess bubbles SORT APART — facts
-                    // land in the Reasoning bin, guesses in the Creativity bin
-                    // (a shared TraitHint would collapse the sort into one bin).
-                    Obj(id, "blue_fact_bubbles", "Blue Fact Bubbles", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
-                    Obj(id, "pink_guess_bubbles", "Pink Guess Bubbles", PartyStationObjectRole.CoreTask, "", "react.pop", "Creativity"),
-                    Obj(id, "training_tray", "Training Tray", PartyStationObjectRole.CoreTask, "", "react.glow", "Science"),
-                    Obj(id, "test_button", "Test Button", PartyStationObjectRole.Reaction, "training_tray", "react.sparkle"),
-                    Obj(id, "mystery_bubble", "Mystery Bubble", PartyStationObjectRole.CoreTask, "", "react.bounce", "Science")
+                    // DeduceAnswer: the wrong sort rules are the false candidates
+                    // (CoreTask) crossed out by elimination; the right rule is the
+                    // Clue answer that survives. Clue: the bubbles sort by color.
+                    Obj(id, "size_rule", "Size Rule", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                    Obj(id, "loud_rule", "Loud Rule", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                    Obj(id, "random_rule", "Random Rule", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
+                    Obj(id, "color_rule", "Color Rule", PartyStationObjectRole.Clue, "", "react.glow", "Science"),
+                    Obj(id, "test_button", "Test Button", PartyStationObjectRole.Reaction, "color_rule", "react.sparkle")
                 },
-                "Sort the examples into matching bins, then test one mystery example.",
+                "Cross out the rules that missort until the right sort rule survives.",
                 new[]
                 {
                     new TraitDelta("Reasoning", 5),
@@ -156,36 +156,37 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Sort the examples into matching bins, then test one mystery example.",
-                        "Pixel grins: let's teach the bubblegum sorter which bubbles match!",
-                        "Look at each bubble's color and shape before you pick a bin.",
-                        "The matching bin glows when you hold a bubble close.",
-                        "The sorter learned it! The mystery bubble landed just right.",
+                        "Cross out the rules that missort until the right sort rule survives.",
+                        "Pixel grins: the bubbles sort by color — which rule gets it right?",
+                        "Cross out a rule that sorts them wrong.",
+                        "Size and loudness don't match the colors — rule those out.",
+                        "The sorter learned it! The color rule sorts every bubble right.",
                         "Train the sorter to earn the Lab Goggles!",
-                        "You trained the bubblegum sorter and tested a mystery example. You practiced Reasoning + Science. New gear: Lab Goggles.",
+                        "You crossed out the wrong rules and kept the color sort rule. You practiced Reasoning + Science. New gear: Lab Goggles.",
                         "Pixel does a proud little data dance."),
                     new PartyStationSeedDefinition(
                         $"{id}.sock_satellite",
                         "Sock Satellite Classifier",
                         false,
-                        "Sort clear sock signals from fuzzy static so the satellite can launch.",
+                        "Read the signal clue, then cross out the rules that mislabel it.",
                         new[]
                         {
-                            // U5 sort tuning: clear signals and fuzzy static must
-                            // land in DIFFERENT bins for the separation to play.
-                            Obj(id, "striped_sock_signals", "Striped Sock Signals", PartyStationObjectRole.CoreTask, "", "react.pop", "Communication"),
-                            Obj(id, "star_stamps", "Star Stamps", PartyStationObjectRole.Clue, "striped_sock_signals", "react.glow", "Focus"),
-                            Obj(id, "static_dots", "Static Dots", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
-                            Obj(id, "training_bins", "Training Bins", PartyStationObjectRole.CoreTask, "", "react.glow", "Science"),
-                            Obj(id, "launch_check", "Launch Check", PartyStationObjectRole.Reaction, "training_bins", "react.cheer")
+                            // Cross out the rules that mislabel static as signal;
+                            // the stripe rule (Clue answer) is the only one that
+                            // spots the true signals.
+                            Obj(id, "speed_rule", "Speed Rule", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                            Obj(id, "guess_rule", "Guess Rule", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
+                            Obj(id, "shape_rule", "Shape Rule", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                            Obj(id, "stripe_rule", "Stripe Rule", PartyStationObjectRole.Clue, "", "react.glow", "Focus"),
+                            Obj(id, "launch_check", "Launch Check", PartyStationObjectRole.Reaction, "stripe_rule", "react.cheer")
                         },
-                        "Separate clear signals from static, then approve the clean launch check.",
-                        "Pixel whispers: the sock satellite is getting fuzzy signals — help sort!",
-                        "Stripes mean a clear signal; gray dots are just static.",
-                        "The star stamps mark which socks are true signals.",
-                        "Clean signals locked in — the sock satellite is ready to fly!",
+                        "Cross out the rules that mislabel signals until the stripe rule survives.",
+                        "Pixel whispers: clear signals have stripes — which rule spots them?",
+                        "Cross out a rule that labels static as signal.",
+                        "Speed and guessing won't find the stripes — rule those out.",
+                        "Clean signals locked in — the stripe rule sorts them right!",
                         "Clean up the signals to earn the Lab Goggles!",
-                        "You cleaned up the sock-satellite signals and launched the good data. You practiced Reasoning + Focus. New gear: Lab Goggles.",
+                        "You crossed out the wrong rules and kept the stripe sort rule. You practiced Reasoning + Focus. New gear: Lab Goggles.",
                         "The launch check light blinks a cheerful green.")
                 });
         }
@@ -480,11 +481,11 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "Weather Lab Rescue",
-                new[] { "predict", "protect" },
-                ToyPatternId.SequenceCards,
+                new[] { "trace", "protect" },
+                ToyPatternId.TracePath,
                 "Radar Rae",
                 "alert safety planner",
-                "Order the forecast clues, then set up shelter before the parade starts.",
+                "Trace the shelter route in order before the parade starts.",
                 new[]
                 {
                     Obj(id, "forecast_tiles", "Forecast Tiles", PartyStationObjectRole.Clue, "shelter_flag", "react.glow", "Science"),
@@ -493,7 +494,7 @@ namespace CareerQuest
                     Obj(id, "calm_radio", "Calm Radio", PartyStationObjectRole.Helper, "umbrella_sign", "react.sparkle", "Communication"),
                     Obj(id, "shelter_flag", "Shelter Flag", PartyStationObjectRole.CoreTask, "", "react.cheer", "Helping")
                 },
-                "Order the forecast clues, then place the shelter tools before the parade starts.",
+                "Trace the route from the forecast through the shelter stops, in order.",
                 new[]
                 {
                     new TraitDelta("Science", 5),
@@ -513,19 +514,19 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Order the forecast clues, then place the shelter tools before the parade starts.",
-                        "Radar Rae points: rain clouds are racing the parade — let's get ready!",
-                        "Read the forecast tiles in order, first to last.",
-                        "The next shelter spot glows on the parade route.",
-                        "The parade marches on, dry and happy under your shelter plan!",
+                        "Trace the route from the forecast through the shelter stops, in order.",
+                        "Radar Rae points: rain clouds race the parade — trace the shelter route!",
+                        "Trace the route stops in order, first to last.",
+                        "The next shelter stop glows on the parade route — trace to it.",
+                        "The parade marches on, dry and happy along your traced route!",
                         "Protect the parade to earn the Weather Goggles!",
-                        "You read the forecast and protected the thunder parade route. You practiced Science + Helping. New gear: Weather Goggles.",
+                        "You traced the forecast and shelter route to protect the parade. You practiced Science + Helping. New gear: Weather Goggles.",
                         "The calm radio plays a sunny little jingle."),
                     new PartyStationSeedDefinition(
                         $"{id}.bubblegum_flood",
                         "Bubblegum Flood Map",
                         false,
-                        "Match the water clues to safe map fixes, then send the helper update.",
+                        "Trace the safe route across the flood map, in order.",
                         new[]
                         {
                             Obj(id, "rain_gauge", "Rain Gauge", PartyStationObjectRole.Clue, "drain_tile", "react.glow", "Science"),
@@ -534,13 +535,13 @@ namespace CareerQuest
                             Obj(id, "warning_badge", "Heads-Up Badge", PartyStationObjectRole.Reaction, "helper_radio", "react.sparkle"),
                             Obj(id, "helper_radio", "Helper Radio", PartyStationObjectRole.CoreTask, "", "react.cheer", "Communication")
                         },
-                        "Match water clues to safe map fixes, then send the helper-radio update.",
-                        "Radar Rae laughs: a bubblegum flood is bubbling across the map!",
-                        "The rain gauge shows where the bubblegum rises first.",
-                        "Glowing map squares show where a fix will help most.",
-                        "Map fixed! The bubblegum drains away and the town stays cozy.",
+                        "Trace the route from the rain gauge through the safe map fixes, in order.",
+                        "Radar Rae laughs: a bubblegum flood is spreading — trace the safe route!",
+                        "Trace the route from the rain gauge, in order.",
+                        "Glowing map squares show the next stop — trace to it.",
+                        "Route traced! The bubblegum drains away and the town stays cozy.",
                         "Fix the map to earn the Weather Goggles!",
-                        "You mapped the bubblegum flood and chose safe fixes fast. You practiced Reasoning + Science. New gear: Weather Goggles.",
+                        "You traced a safe route across the bubblegum flood map. You practiced Reasoning + Science. New gear: Weather Goggles.",
                         "The helper radio beeps a proud all-clear tune.")
                 });
         }

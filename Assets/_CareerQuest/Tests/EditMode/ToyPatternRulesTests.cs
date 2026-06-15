@@ -160,7 +160,15 @@ namespace CareerQuest.Tests
         [Test]
         public void SortToBinDerivesTraitBinsAndRejectsWrongBin()
         {
-            var rules = RulesFor(CareerQuestCatalog.AiLabId);
+            // SortToBin is a supported pattern with no shipped station after AI
+            // Lab moved to DeduceAnswer, so this drives a synthetic seed directly
+            // to keep the trait-bin derivation + wrong-bin reject logic covered.
+            var rules = new ToyPatternRules(ToyPatternId.SortToBin, new[]
+            {
+                new PartyStationObjectDefinition("blue_fact_bubbles", "Blue Fact Bubbles", PartyStationObjectRole.CoreTask, "", "", "react.pop", "Reasoning"),
+                new PartyStationObjectDefinition("pink_guess_bubbles", "Pink Guess Bubbles", PartyStationObjectRole.CoreTask, "", "", "react.pop", "Creativity"),
+                new PartyStationObjectDefinition("training_tray", "Training Tray", PartyStationObjectRole.CoreTask, "", "", "react.glow", "Science")
+            });
 
             Assert.That(rules.ExpectedTargetFor("blue_fact_bubbles"), Is.EqualTo("bin.reasoning"));
             Assert.That(rules.ExpectedTargetFor("training_tray"), Is.EqualTo("bin.science"));

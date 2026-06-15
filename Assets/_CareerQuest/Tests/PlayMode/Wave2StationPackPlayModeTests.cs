@@ -17,8 +17,9 @@ namespace CareerQuest.Tests
     /// lifecycle (the rule-level golden/boundary coverage already lives in the
     /// U3 EditMode ToyPatternRulesTests, so these stay lean and scene-focused):
     ///
-    ///   - Weather Lab Rescue: SequenceCards "predict + protect" — order the
-    ///     forecast clue, then place the shelter tools; out-of-order is gentle.
+    ///   - Weather Lab Rescue: TracePath "predict + protect" — trace the forecast
+    ///     clue, then the shelter stops in order along the route, each on its own
+    ///     waypoint zone; out-of-order is gentle (design-review #3 verb).
     ///   - Spaceport Pilot:    TracePath launch/orbit/deliver/land — ordered
     ///     waypoints traced along the flight path (design-review #3 verb).
     ///   - Newsroom Story Sprint: DeduceAnswer fact-check — tap to cross out the
@@ -37,7 +38,7 @@ namespace CareerQuest.Tests
         /// <summary>The Wave 2 pack with each station's pattern proof (plan U10).</summary>
         private static readonly (string StationId, ToyPatternId Pattern)[] Wave2Stations =
         {
-            (CareerQuestCatalog.WeatherLabId, ToyPatternId.SequenceCards),
+            (CareerQuestCatalog.WeatherLabId, ToyPatternId.TracePath),
             (CareerQuestCatalog.SpaceportId, ToyPatternId.TracePath),
             (CareerQuestCatalog.NewsroomId, ToyPatternId.DeduceAnswer),
             (CareerQuestCatalog.GreenCityId, ToyPatternId.BalanceMeters)
@@ -123,13 +124,15 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// Weather Lab Rescue proves "predict + protect": the forecast clue is
-        /// sequenced first, then the shelter tools follow in authored order. A
-        /// shelter tool dropped before its turn bounces as a gentle hint, never
-        /// a harsh fail — and the safe weather/emergency copy drives the beat.
+        /// Weather Lab Rescue proves TracePath (design-review #3, trace verb's
+        /// second station): the forecast clue is the first route stop, then the
+        /// shelter stops are traced in authored order — each on its OWN waypoint
+        /// zone (vs SequenceCards' single shared target). A stop traced before its
+        /// turn bounces as a gentle hint, never a harsh fail — and the safe
+        /// weather/emergency copy drives the beat.
         /// </summary>
         [UnityTest]
-        public IEnumerator WeatherLabRescueProvesSequenceThenProtect()
+        public IEnumerator WeatherLabRescueProvesTraceRoute()
         {
             var appObject = new GameObject("wave2-weather-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -143,21 +146,23 @@ namespace CareerQuest.Tests
             var seed = definition.DefaultSeed;
             var rules = controller.Pattern.Rules;
 
-            // Predict first: the forecast clue is the head of the sequence.
+            // Predict first: the forecast clue is the first stop on the route,
+            // on its own waypoint zone (vs SequenceCards' single shared target).
             Assert.That(rules.NextExpectedObjectId, Is.EqualTo("forecast_tiles"));
-            Assert.That(rules.ExpectedTargetFor("forecast_tiles"), Is.EqualTo(ToyPatternRules.SequenceTargetId));
+            Assert.That(rules.ExpectedTargetFor("forecast_tiles"),
+                Is.EqualTo(ToyPatternRules.WaypointTargetPrefix + "forecast_tiles"));
 
-            // Protect before predicting -> gentle bounce + hint copy (the drop
-            // seam maps both wrong-target and out-of-order rejects to the same
-            // gentle RejectedWrongSlot outcome — never a harsh fail).
-            Assert.That(controller.TrySubmitDrop("shelter_flag", ToyPatternRules.SequenceTargetId),
+            // Tracing a later stop before its turn -> gentle bounce + hint copy
+            // (the drop seam maps both wrong-target and out-of-order rejects to
+            // the same gentle RejectedWrongSlot outcome — never a harsh fail).
+            Assert.That(controller.TrySubmitDrop("shelter_flag", rules.ExpectedTargetFor("shelter_flag")),
                 Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
             Assert.That(TmpText(StationGuideView.LineTextName), Is.EqualTo(seed.HintLine));
             Assert.That(controller.IsToyAccepted("shelter_flag"), Is.False);
 
-            // Order the forecast, then place the shelter tools in turn — the
-            // whole protect chain rides the real drop seam to completion.
-            Assert.That(controller.TrySubmitDrop("forecast_tiles", ToyPatternRules.SequenceTargetId),
+            // Trace the forecast first, then the shelter stops in turn — the
+            // whole route rides the real drop seam to completion.
+            Assert.That(controller.TrySubmitDrop("forecast_tiles", rules.ExpectedTargetFor("forecast_tiles")),
                 Is.EqualTo(DropSubmitResult.Accepted));
             Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
 

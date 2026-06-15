@@ -23,7 +23,7 @@ namespace CareerQuest.Tests
         private static readonly (string StationId, ToyPatternId Pattern)[] FirstSixStations =
         {
             (CareerQuestCatalog.RoboticsGarageId, ToyPatternId.ShootTarget),
-            (CareerQuestCatalog.AiLabId, ToyPatternId.SortToBin),
+            (CareerQuestCatalog.AiLabId, ToyPatternId.DeduceAnswer),
             (CareerQuestCatalog.CommunityKitchenId, ToyPatternId.PickMatchingTrio),
             (CareerQuestCatalog.MusicStudioId, ToyPatternId.ComposeSet),
             (CareerQuestCatalog.VetClinicId, ToyPatternId.MatchAndCare),
@@ -107,7 +107,7 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
-        public IEnumerator AiLabSortsFactsAndGuessesIntoDifferentBinsThroughTheRealSeam()
+        public IEnumerator AiLabDeducesTheRightSortRuleThroughTheRealSeam()
         {
             var appObject = new GameObject("first-six-ailab-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -120,23 +120,24 @@ namespace CareerQuest.Tests
             var seed = PartyStationDefinitions.GetById(CareerQuestCatalog.AiLabId).DefaultSeed;
             var rules = controller.Pattern.Rules;
 
-            // The sort is a real decision: facts and guesses land in
-            // DIFFERENT bins (a shared bin would collapse the pattern).
-            Assert.That(rules.ExpectedTargetFor("blue_fact_bubbles"), Is.EqualTo("bin.reasoning"));
-            Assert.That(rules.ExpectedTargetFor("pink_guess_bubbles"), Is.EqualTo("bin.creativity"));
-            Assert.That(controller.ZoneFor("bin.reasoning"), Is.Not.Null);
-            Assert.That(controller.ZoneFor("bin.creativity"), Is.Not.Null);
+            // DeduceAnswer (trace/shoot/deduce verb 3, second station): the wrong
+            // rules cross out onto their own cross zones; the right rule (the Clue
+            // answer) has none — it is not in the eliminate-chain, it survives.
+            Assert.That(rules.ExpectedTargetFor("size_rule"),
+                Is.EqualTo(ToyPatternRules.CrossTargetPrefix + "size_rule"));
+            Assert.That(rules.ExpectedTargetFor("color_rule"), Is.Null,
+                "The right rule (Clue answer) has no cross zone — it survives.");
 
-            // Wrong bin bounces gently and speaks the seed's hint copy.
-            Assert.That(controller.TrySubmitDrop("blue_fact_bubbles", "bin.science"),
+            // Crossing out the right rule bounces gently and speaks the hint copy.
+            Assert.That(controller.TrySubmitDrop("color_rule", ToyPatternRules.CrossTargetPrefix + "color_rule"),
                 Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
             Assert.That(TmpText(StationGuideView.LineTextName), Is.EqualTo(seed.HintLine));
-            Assert.That(controller.IsToyAccepted("blue_fact_bubbles"), Is.False);
+            Assert.That(controller.IsToyAccepted("color_rule"), Is.False);
 
-            // The right bin accepts through the same seam.
-            Assert.That(controller.TrySubmitDrop("blue_fact_bubbles", "bin.reasoning"),
+            // Crossing out a wrong rule accepts through the same seam.
+            Assert.That(controller.TrySubmitDrop("size_rule", rules.ExpectedTargetFor("size_rule")),
                 Is.EqualTo(DropSubmitResult.Accepted));
-            Assert.That(controller.IsToyAccepted("blue_fact_bubbles"), Is.True);
+            Assert.That(controller.IsToyAccepted("size_rule"), Is.True);
 
             Object.DestroyImmediate(appObject);
         }
@@ -356,8 +357,8 @@ namespace CareerQuest.Tests
             yield return MountFrames();
 
             Assert.That(TmpText("PartyStationPrompt"), Is.EqualTo(aiLab.ResolvePrompt(alternate)));
-            Assert.That(controller.PieceFor("striped_sock_signals"), Is.Not.Null);
-            Assert.That(controller.PieceFor("blue_fact_bubbles"), Is.Null);
+            Assert.That(controller.PieceFor("stripe_rule"), Is.Not.Null);
+            Assert.That(controller.PieceFor("size_rule"), Is.Null);
 
             Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
 
