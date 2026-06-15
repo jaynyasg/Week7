@@ -88,6 +88,22 @@ namespace CareerQuest
             maxBounds = bounds.max;
         }
 
+        /// <summary>
+        /// Test seam: re-arm the auto-entry clock to a fresh state (full return
+        /// grace, no dwell, unlatched, no pending door). Deterministic-clock tests
+        /// call this right after toggling <see cref="AutoEntryAutoTick"/> off so
+        /// they don't inherit real-time grace/dwell accrual from the mount frames
+        /// (which scales with scene-load cost and would otherwise make the dwell
+        /// assertions timing-dependent).
+        /// </summary>
+        public void ResetAutoEntryClock()
+        {
+            _entryLatched = false;
+            _dwellElapsed = 0f;
+            _graceRemaining = ReturnToCampusGraceSeconds;
+            SetPendingEntrance(null);
+        }
+
         private void Update()
         {
             var move = ReadMove();

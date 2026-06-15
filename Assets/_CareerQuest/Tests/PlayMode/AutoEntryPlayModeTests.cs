@@ -28,6 +28,7 @@ namespace CareerQuest.Tests
 
             var player = hub.Player;
             player.AutoEntryAutoTick = false; // deterministic clock
+            player.ResetAutoEntryClock(); // drop any grace/dwell accrued during the real-time mount frames
             var entrance = hub.Entrances.First(candidate => candidate.StationId == CareerQuestCatalog.VetClinicId);
             player.transform.position = entrance.transform.position;
 
@@ -58,6 +59,7 @@ namespace CareerQuest.Tests
             var returnedPlayer = remountedHub.Player;
             Assert.That(returnedPlayer, Is.Not.Null);
             returnedPlayer.AutoEntryAutoTick = false;
+            returnedPlayer.ResetAutoEntryClock(); // deterministic: don't inherit the remount frame's grace accrual
             // The first hub's entrances were destroyed on route change; find the
             // same station's door on the remounted hub.
             var returnedEntrance = remountedHub.Entrances.First(
