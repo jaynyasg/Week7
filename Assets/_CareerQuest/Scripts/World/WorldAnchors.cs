@@ -146,7 +146,7 @@ namespace CareerQuest
             new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(5.8f, -0.5f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
             // Care Corner (bottom row) — kitchen routes by legacy route; vet,
             // weather, and green city join via the station fallback.
-            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-2.9f, -2.5f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
+            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-2.9f, -2.05f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
         };
 
         /// <summary>
@@ -175,11 +175,13 @@ namespace CareerQuest
             // Tech Lane, spread out at the right edge.
             new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(4.3f, -0.7f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
             new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(5.6f, 1f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
-            // Care Corner (bottom row, continues community_kitchen) — spread wide
-            // so the four bottom doors read as separate buildings.
-            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-1f, -2.9f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
-            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(1f, -2.9f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
-            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(2.9f, -2.5f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
+            // Care Corner (bottom row, continues community_kitchen) — a clean
+            // flat row spread wide so the four doors read as separate buildings.
+            // Design-review (2026-06-16): raised to y -2.05 (was -2.5/-2.9) so the
+            // door labels (door - 0.62) clear the bottom instruction strip.
+            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-1f, -2.05f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
+            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(1f, -2.05f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(2.9f, -2.05f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
         };
 
         /// <summary>

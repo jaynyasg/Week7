@@ -539,7 +539,7 @@ namespace CareerQuest.Editor
             // spread-out districts and the zoomed-out camera (orthoSize 3.6, far
             // edge +-9.9) never pan past the grass edge.
             AddSprite(world, "Ground", Hub("hub_ground.png"), new Vector2(0f, -1.9f), new Vector2(20.4f, 5f), 200);
-            AddSprite(world, "Plaza", Hub("hub_plaza.png"), new Vector2(0f, -0.55f), new Vector2(3f, 1.15f), 206);
+            AddSprite(world, "Plaza", Hub("hub_plaza.png"), new Vector2(0f, -0.55f), new Vector2(3.8f, 1.5f), 206);
 
             // Color-coded district roads: one spoke from the central plaza to each
             // district, tinted that district's accent, then a branch line to every
@@ -577,7 +577,7 @@ namespace CareerQuest.Editor
             AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-5.6f, 1.55f));
             AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-4.3f, -0.15f));
             AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(5.8f, 0.05f));
-            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-2.9f, -1.95f));
+            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-2.9f, -1.5f));
 
             // Design-review (2026-06-15): these six stations are fully playable
             // (each routes the generic PartyStation branch and runs a real verb),
@@ -589,9 +589,9 @@ namespace CareerQuest.Editor
             AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-5.8f, 0.05f));
             AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(4.3f, -0.15f));
             AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(5.6f, 1.55f));
-            AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-1f, -2.35f));
-            AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(1f, -2.35f));
-            AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(2.9f, -1.95f));
+            AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-1f, -1.5f));
+            AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(1f, -1.5f));
+            AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(2.9f, -1.5f));
 
             // Living-campus beats (P9): waving flag and butterflies.
             AddSprite(world, "FlagPole", Hub("hub_flag_pole.png"), new Vector2(1.05f, -0.05f), new Vector2(0.08f, 1.35f), 246);
@@ -654,40 +654,49 @@ namespace CareerQuest.Editor
         /// </summary>
         private static void AddDistrictRoads(Transform world)
         {
-            var plaza = new Vector2(0f, -0.55f);
-            var gold = PathGold;                                       // Quest Yard
-            var techBlue = Color.Lerp(ScienceBlue, Color.white, 0.2f); // Tech Lane
+            var gold = PathGold;                                        // Quest Yard
+            var techBlue = Color.Lerp(ScienceBlue, Color.white, 0.2f);  // Tech Lane
             var storyLilac = Color.Lerp(MusicLilac, Color.white, 0.2f); // Story Street
-            var careGreen = Color.Lerp(SuccessGreen, Color.white, 0.2f); // Care Corner
+            var careGreen = Color.Lerp(SuccessGreen, Color.white, 0.2f);// Care Corner
 
-            var qy = new Vector2(0f, 0.4f);
-            var tl = new Vector2(-4.5f, -0.3f);
-            var ss = new Vector2(4.5f, -0.3f);
-            var cc = new Vector2(0f, -1.65f);
+            // Design-review (2026-06-16): calmer convergence. Spokes emanate from
+            // the PLAZA EDGE (not one dead-center point) so the middle reads as a
+            // plaza with four roads leaving it, instead of a knot of lines over the
+            // fountain. The wide plaza sprite covers the hub; branches fan out near
+            // each cluster, away from center.
+            var qyEdge = new Vector2(0f, 0.05f);
+            var ccEdge = new Vector2(0f, -1.15f);
+            var tlEdge = new Vector2(-1.45f, -0.55f);
+            var ssEdge = new Vector2(1.45f, -0.55f);
 
-            // Spokes (plaza -> district junction).
-            AddRoad(world, "RoadSpokeQuestYard", plaza, qy, 0.46f, gold, 209);
-            AddRoad(world, "RoadSpokeTechLane", plaza, tl, 0.46f, techBlue, 209);
-            AddRoad(world, "RoadSpokeStoryStreet", plaza, ss, 0.46f, storyLilac, 209);
-            AddRoad(world, "RoadSpokeCareCorner", plaza, cc, 0.46f, careGreen, 209);
+            var qy = new Vector2(0f, 0.7f);
+            var tl = new Vector2(-4.7f, -0.4f);
+            var ss = new Vector2(4.7f, -0.4f);
+            var cc = new Vector2(0f, -1.9f);
 
-            // Branch lines (junction -> each door).
-            AddRoad(world, "RoadQuestYardDesignBuild", qy, new Vector2(-2.2f, 0.95f), 0.3f, gold, 208);
-            AddRoad(world, "RoadQuestYardHealthHero", qy, new Vector2(0f, 1.25f), 0.3f, gold, 208);
-            AddRoad(world, "RoadQuestYardLogicCourt", qy, new Vector2(2.2f, 0.95f), 0.3f, gold, 208);
+            // Spokes (plaza edge -> district junction), thinner than before.
+            AddRoad(world, "RoadSpokeQuestYard", qyEdge, qy, 0.4f, gold, 209);
+            AddRoad(world, "RoadSpokeTechLane", tlEdge, tl, 0.4f, techBlue, 209);
+            AddRoad(world, "RoadSpokeStoryStreet", ssEdge, ss, 0.4f, storyLilac, 209);
+            AddRoad(world, "RoadSpokeCareCorner", ccEdge, cc, 0.4f, careGreen, 209);
 
-            AddRoad(world, "RoadTechLaneAiLab", tl, new Vector2(-5.6f, 1f), 0.3f, techBlue, 208);
-            AddRoad(world, "RoadTechLaneSpaceport", tl, new Vector2(-5.8f, -0.5f), 0.3f, techBlue, 208);
-            AddRoad(world, "RoadTechLaneRobotics", tl, new Vector2(-4.3f, -0.7f), 0.3f, techBlue, 208);
+            // Branch lines (junction -> each door), thin.
+            AddRoad(world, "RoadQuestYardDesignBuild", qy, new Vector2(-2.2f, 0.95f), 0.24f, gold, 208);
+            AddRoad(world, "RoadQuestYardHealthHero", qy, new Vector2(0f, 1.25f), 0.24f, gold, 208);
+            AddRoad(world, "RoadQuestYardLogicCourt", qy, new Vector2(2.2f, 0.95f), 0.24f, gold, 208);
 
-            AddRoad(world, "RoadStoryStreetNewsroom", ss, new Vector2(5.6f, 1f), 0.3f, storyLilac, 208);
-            AddRoad(world, "RoadStoryStreetMusic", ss, new Vector2(5.8f, -0.5f), 0.3f, storyLilac, 208);
-            AddRoad(world, "RoadStoryStreetGameStudio", ss, new Vector2(4.3f, -0.7f), 0.3f, storyLilac, 208);
+            AddRoad(world, "RoadTechLaneAiLab", tl, new Vector2(-5.6f, 1f), 0.24f, techBlue, 208);
+            AddRoad(world, "RoadTechLaneSpaceport", tl, new Vector2(-5.8f, -0.5f), 0.24f, techBlue, 208);
+            AddRoad(world, "RoadTechLaneRobotics", tl, new Vector2(-4.3f, -0.7f), 0.24f, techBlue, 208);
 
-            AddRoad(world, "RoadCareCornerKitchen", cc, new Vector2(-2.9f, -2.5f), 0.3f, careGreen, 208);
-            AddRoad(world, "RoadCareCornerVet", cc, new Vector2(-1f, -2.9f), 0.3f, careGreen, 208);
-            AddRoad(world, "RoadCareCornerWeather", cc, new Vector2(1f, -2.9f), 0.3f, careGreen, 208);
-            AddRoad(world, "RoadCareCornerGreenCity", cc, new Vector2(2.9f, -2.5f), 0.3f, careGreen, 208);
+            AddRoad(world, "RoadStoryStreetNewsroom", ss, new Vector2(5.6f, 1f), 0.24f, storyLilac, 208);
+            AddRoad(world, "RoadStoryStreetMusic", ss, new Vector2(5.8f, -0.5f), 0.24f, storyLilac, 208);
+            AddRoad(world, "RoadStoryStreetGameStudio", ss, new Vector2(4.3f, -0.7f), 0.24f, storyLilac, 208);
+
+            AddRoad(world, "RoadCareCornerKitchen", cc, new Vector2(-2.9f, -2.05f), 0.24f, careGreen, 208);
+            AddRoad(world, "RoadCareCornerVet", cc, new Vector2(-1f, -2.05f), 0.24f, careGreen, 208);
+            AddRoad(world, "RoadCareCornerWeather", cc, new Vector2(1f, -2.05f), 0.24f, careGreen, 208);
+            AddRoad(world, "RoadCareCornerGreenCity", cc, new Vector2(2.9f, -2.05f), 0.24f, careGreen, 208);
         }
 
         /// <summary>Places the neutral hub_road strip between two points, rotated
