@@ -811,10 +811,28 @@ namespace CareerQuest
             // the wide trace/launch/deduce layouts whose widgets fill the center.
             if (StationSubjectCatalog.TryGet(_seed.SeedId, out var subject))
             {
-                var widePattern = rules.Pattern == ToyPatternId.TracePath
-                    || rules.Pattern == ToyPatternId.ShootTarget
-                    || rules.Pattern == ToyPatternId.DeduceAnswer;
-                var subjectPosition = widePattern ? new Vector3(-4.4f, 1.95f, 0f) : new Vector3(0f, 1.95f, 0f);
+                // Placement dodges each verb's widgets:
+                // - DeduceAnswer fills the panel with candidate cards AND a top
+                //   banner, leaving no clean interior corner — the subject sits
+                //   just left of the panel.
+                // - TracePath / ShootTarget leave the upper-left interior open
+                //   (the route arcs / launch pad sit center+low), so the subject
+                //   tucks inside the panel's top-left.
+                // - Drag/match verbs leave the top-center open above the targets.
+                Vector3 subjectPosition;
+                if (rules.Pattern == ToyPatternId.DeduceAnswer)
+                {
+                    subjectPosition = new Vector3(-4.6f, 1.95f, 0f);
+                }
+                else if (rules.Pattern == ToyPatternId.TracePath || rules.Pattern == ToyPatternId.ShootTarget)
+                {
+                    subjectPosition = new Vector3(-2.9f, 2f, 0f);
+                }
+                else
+                {
+                    subjectPosition = new Vector3(0f, 1.95f, 0f);
+                }
+
                 StationSubjectView.Mount(_kit.Root, subject.Kind, subject.Name, _accent, subjectPosition);
             }
 
