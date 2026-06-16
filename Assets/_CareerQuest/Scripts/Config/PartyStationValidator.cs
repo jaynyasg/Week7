@@ -145,6 +145,14 @@ namespace CareerQuest
                 issues.AddRange(Validate(station));
             }
 
+            // Every seed must map to a drawn scene subject (design-review
+            // 2026-06-16): the playfield renders the named character, so a seed
+            // with no subject would silently fall back to "no character shown".
+            foreach (var missingSeedId in StationSubjectCatalog.MissingSeedIds())
+            {
+                issues.Add($"{missingSeedId}: no scene subject mapped (StationSubjectCatalog)");
+            }
+
             ValidateAccessoryConfig(issues);
             ValidateComboConfig(issues);
             return issues;
@@ -492,6 +500,19 @@ namespace CareerQuest
             issues.AddRange(CheckGuideLine(seed.RewardPreviewLine, $"{context}.reward_preview"));
             issues.AddRange(CheckGuideLine(seed.NpcReaction, $"{context}.npc_reaction"));
             issues.AddRange(CheckResultSummary(seed.ResultSummary, $"{context}.result_summary"));
+
+            // Scene subject name (the drawn character) is kid-facing copy too.
+            if (StationSubjectCatalog.TryGet(seed.SeedId, out var subject))
+            {
+                if (string.IsNullOrWhiteSpace(subject.Name))
+                {
+                    issues.Add($"{context}: scene subject name is empty");
+                }
+                else
+                {
+                    issues.AddRange(CheckCopySafety(subject.Name, $"{context}.subject"));
+                }
+            }
 
             ValidateSeedObjects(issues, definition, seed, context);
         }

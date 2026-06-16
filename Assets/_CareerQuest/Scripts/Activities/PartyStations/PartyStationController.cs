@@ -804,6 +804,20 @@ namespace CareerQuest
                     candidateId => TrySubmitDrop(candidateId, ToyPatternRules.CrossTargetPrefix + candidateId, 0));
             }
 
+            // Design-review (2026-06-16): draw the scene subject the seed copy
+            // names (the dragon, the sleepy robot, the guest) above the toys, so
+            // "help the dragon" actually shows a dragon. Top-center for the
+            // drag/match playfields (nothing else lives up there); top-left for
+            // the wide trace/launch/deduce layouts whose widgets fill the center.
+            if (StationSubjectCatalog.TryGet(_seed.SeedId, out var subject))
+            {
+                var widePattern = rules.Pattern == ToyPatternId.TracePath
+                    || rules.Pattern == ToyPatternId.ShootTarget
+                    || rules.Pattern == ToyPatternId.DeduceAnswer;
+                var subjectPosition = widePattern ? new Vector3(-4.4f, 1.95f, 0f) : new Vector3(0f, 1.95f, 0f);
+                StationSubjectView.Mount(_kit.Root, subject.Kind, subject.Name, _accent, subjectPosition);
+            }
+
             // Pre-existing shared progress (joining a partner mid-attempt)
             // renders on mount without celebration spam.
             SyncFromNetwork(celebrateNew: false);
