@@ -60,6 +60,13 @@ namespace CareerQuest
             Room("room.music_studio", "Music Studio Room", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
             Room("room.robotics_garage", "Robotics Garage Room", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
             Room("room.community_kitchen", "Community Kitchen Room", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
+            // U11 net-new station interiors (CareerQuestOptionalArtBuilder writes final art).
+            Room("room.vet_clinic", "Vet Clinic Room", new Color(0.36f, 0.78f, 0.6f), new Color(1f, 0.97f, 0.88f)),
+            Room("room.game_studio", "Game Studio Room", new Color(0.94f, 0.34f, 0.28f), new Color(1f, 0.92f, 0.64f)),
+            Room("room.weather_lab", "Weather Lab Room", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f)),
+            Room("room.spaceport", "Spaceport Room", new Color(0.32f, 0.5f, 0.85f), new Color(0.96f, 0.86f, 0.35f)),
+            Room("room.newsroom", "Newsroom Room", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f)),
+            Room("room.green_city", "Green City Room", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f)),
 
             Prop("prop.blueprint", "Blueprint", new Color(0.83f, 0.96f, 1f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_clinic", "Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.04f, 0.3f, 0.32f)),
@@ -71,14 +78,14 @@ namespace CareerQuest
             // no skyline piece (CareerQuestOptionalArtBuilder writes final art).
             Prop("prop.city_piece_garage", "Garage City Piece", new Color(0.13f, 0.55f, 0.58f), new Color(0.08f, 0.26f, 0.55f)),
             Prop("prop.city_piece_kitchen", "Kitchen City Piece", new Color(0.55f, 0.82f, 0.5f), new Color(0.96f, 0.62f, 0.18f)),
-            // U1 Party Pack evolution pieces — intentional placeholders until
-            // the U8 campus evolution art pass.
-            Prop("prop.city_piece_vet_clinic", "Vet Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f), false),
-            Prop("prop.city_piece_game_studio", "Game Studio Pixel Tower Piece", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f), false),
-            Prop("prop.city_piece_weather_lab", "Weather Tower City Piece", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f), false),
-            Prop("prop.city_piece_spaceport", "Spaceport Mast City Piece", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
-            Prop("prop.city_piece_newsroom", "Newsroom Kiosk City Piece", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
-            Prop("prop.city_piece_green_city", "Green City Park Piece", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f), false),
+            // U11 Party Pack evolution pieces — final art written by
+            // CareerQuestOptionalArtBuilder; now required + player-facing.
+            Prop("prop.city_piece_vet_clinic", "Vet Clinic City Piece", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f)),
+            Prop("prop.city_piece_game_studio", "Game Studio Pixel Tower Piece", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f)),
+            Prop("prop.city_piece_weather_lab", "Weather Tower City Piece", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f)),
+            Prop("prop.city_piece_spaceport", "Spaceport Mast City Piece", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f)),
+            Prop("prop.city_piece_newsroom", "Newsroom Kiosk City Piece", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f)),
+            Prop("prop.city_piece_green_city", "Green City Park Piece", new Color(0.25f, 0.64f, 0.3f), new Color(0.48f, 0.78f, 0.36f)),
             // Accessory rewards (AccessoryRewardConfig). U11 accessory art pass:
             // CareerQuestAccessoryArtBuilder.Generate writes the final 128px PNG
             // for every accessory id, so these are now required + player-facing —
@@ -122,14 +129,14 @@ namespace CareerQuest
             Badge("badge.music_studio", "Music Studio Badge", new Color(0.62f, 0.522f, 0.863f), new Color(1f, 0.92f, 0.64f)),
             Badge("badge.robotics_garage", "Robotics Garage Badge", new Color(0.055f, 0.42f, 0.435f), new Color(0.83f, 0.96f, 1f)),
             Badge("badge.community_kitchen", "Community Kitchen Badge", new Color(0.55f, 0.82f, 0.5f), new Color(1f, 0.97f, 0.88f)),
-            // U1 Party Pack station badges — intentional placeholders until
-            // the U5/U10 station art pass flips them into the badge art gate.
-            Badge("badge.vet_clinic", "Vet Clinic Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f), false),
-            Badge("badge.game_studio", "Game Studio Badge", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f), false),
-            Badge("badge.weather_lab", "Weather Lab Badge", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f), false),
-            Badge("badge.spaceport", "Spaceport Badge", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f), false),
-            Badge("badge.newsroom", "Newsroom Badge", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f), false),
-            Badge("badge.green_city", "Green City Badge", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f), false),
+            // U11 Party Pack station badges — final art written by
+            // CareerQuestOptionalArtBuilder; now required + player-facing.
+            Badge("badge.vet_clinic", "Vet Clinic Badge", new Color(0.36f, 0.78f, 0.6f), new Color(0.94f, 0.78f, 0.6f)),
+            Badge("badge.game_studio", "Game Studio Badge", new Color(0.62f, 0.52f, 0.86f), new Color(0.28f, 0.66f, 0.94f)),
+            Badge("badge.weather_lab", "Weather Lab Badge", new Color(0.28f, 0.66f, 0.94f), new Color(0.83f, 0.96f, 1f)),
+            Badge("badge.spaceport", "Spaceport Badge", new Color(0.08f, 0.26f, 0.55f), new Color(0.96f, 0.86f, 0.35f)),
+            Badge("badge.newsroom", "Newsroom Badge", new Color(0.96f, 0.62f, 0.18f), new Color(1f, 0.97f, 0.88f)),
+            Badge("badge.green_city", "Green City Badge", new Color(0.25f, 0.64f, 0.3f), new Color(0.96f, 0.86f, 0.35f)),
 
             Ui("ui.exit", "Exit Game Icon", new Color(0.09f, 0.31f, 0.42f), new Color(1f, 1f, 1f)),
             Ui("ui.gallery", "Gallery Icon", new Color(0.92f, 0.82f, 0.54f), new Color(0.13f, 0.55f, 0.58f)),

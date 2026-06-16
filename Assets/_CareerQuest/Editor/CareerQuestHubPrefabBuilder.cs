@@ -418,48 +418,6 @@ namespace CareerQuest.Editor
             });
             WritePng(butterfly, $"{HubArtFolder}/hub_butterfly.png");
             UnityEngine.Object.DestroyImmediate(butterfly);
-
-            // U8 station construction-site marker (campus visibility rule): a
-            // soft, friendly "coming soon" scaffold — base plot, a little A-frame
-            // building outline, and warning-stripe banner posts. White-tinted so
-            // AddStationSite can recolor it per station accent.
-            var site = DrawWithPixels(180, 180, (pixels, w, h) =>
-            {
-                var scaffold = new Color(0.55f, 0.42f, 0.3f);
-                var plot = new Color(0.86f, 0.82f, 0.7f);
-                var stripe = PathGold;
-
-                // Ground shadow + plot pad.
-                FillEllipse(pixels, w, h, w / 2, (int)(h * 0.1f), (int)(w * 0.44f), (int)(h * 0.06f), SoftShadow);
-                FillRoundedRect(pixels, w, h, (int)(w * 0.14f), (int)(h * 0.1f), (int)(w * 0.72f), (int)(h * 0.16f), 10, plot);
-
-                // A-frame building-to-be outline.
-                for (var x = 0; x < w; x++)
-                {
-                    var t = (float)x / w;
-                    var roofHalf = (int)((h * 0.42f) * (1f - System.Math.Abs(t - 0.5f) * 2f));
-                    if (roofHalf < 1)
-                    {
-                        continue;
-                    }
-
-                    FillRect(pixels, w, h, x, (int)(h * 0.26f), 1, System.Math.Min(roofHalf, (int)(h * 0.34f)), Color.Lerp(plot, Color.white, 0.3f));
-                }
-
-                // Scaffold poles + warning-stripe banner across the top.
-                FillRoundedRect(pixels, w, h, (int)(w * 0.16f), (int)(h * 0.24f), 8, (int)(h * 0.56f), 4, scaffold);
-                FillRoundedRect(pixels, w, h, (int)(w * 0.79f), (int)(h * 0.24f), 8, (int)(h * 0.56f), 4, scaffold);
-                var bannerY = (int)(h * 0.74f);
-                var bannerStripes = 6;
-                var stripeW = (int)(w * 0.66f) / bannerStripes;
-                for (var i = 0; i < bannerStripes; i++)
-                {
-                    var color = i % 2 == 0 ? stripe : new Color(1f, 0.97f, 0.88f);
-                    FillRoundedRect(pixels, w, h, (int)(w * 0.17f) + i * stripeW, bannerY, stripeW, (int)(h * 0.06f), 2, color);
-                }
-            });
-            WritePng(site, $"{HubArtFolder}/hub_station_site.png");
-            UnityEngine.Object.DestroyImmediate(site);
         }
 
         // ------------------------------------------------------------------
@@ -659,24 +617,6 @@ namespace CareerQuest.Editor
         private static void AddSmallBuilding(Transform parent, string name, string assetId, Vector2 position)
         {
             AddSprite(parent, name, Campus(assetId), position, new Vector2(1.45f, 1.3f), 238);
-        }
-
-        /// <summary>
-        /// U8 construction-site marker for a station whose final campus art has
-        /// not landed yet (campus visibility rule). A generated placeholder
-        /// scaffold sprite, tinted with the station accent, plus a small "Soon"
-        /// banner — the readable station name still mounts at runtime via the
-        /// door sign. U11 replaces these with the real campus.{id} buildings.
-        /// </summary>
-        private static void AddStationSite(Transform parent, string name, Color accent, Vector2 position)
-        {
-            var site = AddSprite(parent, name, Hub("hub_station_site.png"), position, new Vector2(1.2f, 1.1f), 238);
-            site.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.white, accent, 0.35f);
-
-            var banner = new GameObject($"{name}Banner");
-            banner.transform.SetParent(parent, false);
-            banner.transform.localPosition = new Vector3(position.x, position.y + 0.18f, 0f);
-            banner.AddComponent<DoorSign>().SetData("Soon", accent, 0f, 260, 1.1f, 1.2f, plate: true);
         }
 
         /// <summary>

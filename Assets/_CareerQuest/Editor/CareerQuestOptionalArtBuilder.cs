@@ -52,6 +52,14 @@ namespace CareerQuest.Editor
         private static readonly Color WorkshopTeal = new(0.055f, 0.42f, 0.435f);
         private static readonly Color KitchenLeaf = new(0.55f, 0.82f, 0.5f);
 
+        // U11 net-new station identity colors (vet/game/weather/spaceport/newsroom/green city).
+        private static readonly Color CareMint = new(0.36f, 0.78f, 0.6f);
+        private static readonly Color PlayCoral = new(0.94f, 0.34f, 0.28f);
+        private static readonly Color SkyBlue = new(0.28f, 0.66f, 0.94f);
+        private static readonly Color OrbitBlue = new(0.32f, 0.5f, 0.85f);
+        private static readonly Color NewsOrange = new(0.96f, 0.62f, 0.18f);
+        private static readonly Color CityGreen = new(0.25f, 0.64f, 0.3f);
+
         private sealed class BadgeSpec
         {
             public string Id;
@@ -71,7 +79,14 @@ namespace CareerQuest.Editor
             new("badge.ai_lab", ScienceBlue, "gear.png"),
             new("badge.music_studio", MusicLilac, "musicOn.png"),
             new("badge.robotics_garage", WorkshopTeal, "wrench.png"),
-            new("badge.community_kitchen", KitchenLeaf, "shoppingBasket.png")
+            new("badge.community_kitchen", KitchenLeaf, "shoppingBasket.png"),
+            // U11 net-new station badges.
+            new("badge.vet_clinic", CareMint, "home.png"),
+            new("badge.game_studio", PlayCoral, "gamepad.png"),
+            new("badge.weather_lab", SkyBlue, "warning.png"),
+            new("badge.spaceport", OrbitBlue, "target.png"),
+            new("badge.newsroom", NewsOrange, "checkmark.png"),
+            new("badge.green_city", CityGreen, "star.png")
         };
 
         private static readonly (string Id, Color Career)[] Rooms =
@@ -79,7 +94,14 @@ namespace CareerQuest.Editor
             ("room.ai_lab", ScienceBlue),
             ("room.music_studio", MusicLilac),
             ("room.robotics_garage", WorkshopTeal),
-            ("room.community_kitchen", KitchenLeaf)
+            ("room.community_kitchen", KitchenLeaf),
+            // U11 net-new station interiors.
+            ("room.vet_clinic", CareMint),
+            ("room.game_studio", PlayCoral),
+            ("room.weather_lab", SkyBlue),
+            ("room.spaceport", OrbitBlue),
+            ("room.newsroom", NewsOrange),
+            ("room.green_city", CityGreen)
         };
 
         [MenuItem("Career Quest/Art/Generate Optional Surface Art")]
@@ -138,7 +160,13 @@ namespace CareerQuest.Editor
                     UnityEngine.Object.DestroyImmediate(texture);
                 }
 
-                foreach (var id in new[] { "prop.city_piece_garage", "prop.city_piece_kitchen" })
+                foreach (var id in new[]
+                {
+                    "prop.city_piece_garage", "prop.city_piece_kitchen",
+                    "prop.city_piece_vet_clinic", "prop.city_piece_game_studio",
+                    "prop.city_piece_weather_lab", "prop.city_piece_spaceport",
+                    "prop.city_piece_newsroom", "prop.city_piece_green_city"
+                })
                 {
                     var texture = DrawCityPiece(id);
                     written.AddRange(WriteBoth(texture, id, PropResourcesFolder, PropReviewFolder));
@@ -153,7 +181,7 @@ namespace CareerQuest.Editor
 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                Debug.Log($"CQ_OPTIONAL_ART Generate: complete ({Badges.Length} badges, {Rooms.Length} rooms, 2 city pieces).");
+                Debug.Log($"CQ_OPTIONAL_ART Generate: complete ({Badges.Length} badges, {Rooms.Length} rooms, 8 city pieces).");
                 ExitIfHeadless(exitWhenDone, 0);
             }
             catch (Exception exception)
@@ -250,6 +278,24 @@ namespace CareerQuest.Editor
                     break;
                 case "room.robotics_garage":
                     DrawRoboticsStation(pixels, w, h, career);
+                    break;
+                case "room.vet_clinic":
+                    DrawVetStation(pixels, w, h, career);
+                    break;
+                case "room.game_studio":
+                    DrawGameStudioStation(pixels, w, h, career);
+                    break;
+                case "room.weather_lab":
+                    DrawWeatherStation(pixels, w, h, career);
+                    break;
+                case "room.spaceport":
+                    DrawSpaceportStation(pixels, w, h, career);
+                    break;
+                case "room.newsroom":
+                    DrawNewsroomStation(pixels, w, h, career);
+                    break;
+                case "room.green_city":
+                    DrawGreenCityStation(pixels, w, h, career);
                     break;
                 default:
                     DrawKitchenStation(pixels, w, h, career);
@@ -356,6 +402,125 @@ namespace CareerQuest.Editor
             {
                 FillRoundedRect(pixels, w, h, (int)(w * offset), (int)(h * 0.60f), (int)(w * 0.035f), (int)(h * 0.08f), 5, jarColor);
             }
+        }
+
+        private static void DrawVetStation(Color[] pixels, int w, int h, Color career)
+        {
+            // Exam table with a friendly pet + a wall health cross.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.30f), (int)(h * 0.16f), (int)(w * 0.40f), (int)(h * 0.13f), 10, Color.Lerp(PaperShadow, Ink, 0.16f));
+            FillRect(pixels, w, h, (int)(w * 0.31f), (int)(h * 0.26f), (int)(w * 0.38f), (int)(h * 0.03f), Paper);
+
+            // Pet: round body, head, two ears.
+            FillEllipse(pixels, w, h, (int)(w * 0.50f), (int)(h * 0.36f), (int)(w * 0.07f), (int)(h * 0.08f), Color.Lerp(career, Color.white, 0.35f));
+            FillEllipse(pixels, w, h, (int)(w * 0.57f), (int)(h * 0.44f), (int)(w * 0.045f), (int)(w * 0.045f), Color.Lerp(career, Color.white, 0.45f));
+            FillTriangleDown(pixels, w, h, (int)(w * 0.555f), (int)(h * 0.52f), (int)(w * 0.02f), (int)(h * 0.05f), Color.Lerp(career, Ink, 0.2f));
+            FillTriangleDown(pixels, w, h, (int)(w * 0.59f), (int)(h * 0.52f), (int)(w * 0.02f), (int)(h * 0.05f), Color.Lerp(career, Ink, 0.2f));
+            FillEllipse(pixels, w, h, (int)(w * 0.585f), (int)(h * 0.45f), 3, 3, Ink);
+
+            // Health-cross sign on the wall.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.36f), (int)(h * 0.62f), (int)(w * 0.10f), (int)(h * 0.16f), 8, Paper);
+            FillRect(pixels, w, h, (int)(w * 0.395f), (int)(h * 0.655f), (int)(w * 0.03f), (int)(h * 0.09f), career);
+            FillRect(pixels, w, h, (int)(w * 0.375f), (int)(h * 0.685f), (int)(w * 0.07f), (int)(h * 0.03f), career);
+        }
+
+        private static void DrawGameStudioStation(Color[] pixels, int w, int h, Color career)
+        {
+            // Big play screen with a pixel hero + a gamepad on the desk.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.31f), (int)(h * 0.16f), (int)(w * 0.38f), (int)(h * 0.12f), 8, Color.Lerp(career, Ink, 0.35f));
+            FillRoundedRect(pixels, w, h, (int)(w * 0.34f), (int)(h * 0.31f), (int)(w * 0.32f), (int)(h * 0.30f), 12, Color.Lerp(career, Ink, 0.45f));
+            FillRoundedRect(pixels, w, h, (int)(w * 0.355f), (int)(h * 0.34f), (int)(w * 0.29f), (int)(h * 0.24f), 9, new Color(0.12f, 0.16f, 0.22f, 1f));
+
+            // Pixel hero (blocky) + a coin.
+            foreach (var (ox, oy, c) in new[] { (0.46f, 0.42f, career), (0.49f, 0.42f, career), (0.46f, 0.45f, Color.Lerp(career, Color.white, 0.4f)), (0.49f, 0.45f, Color.Lerp(career, Color.white, 0.4f)), (0.475f, 0.48f, career) })
+            {
+                FillRect(pixels, w, h, (int)(w * ox), (int)(h * oy), (int)(w * 0.025f), (int)(h * 0.04f), c);
+            }
+            FillEllipse(pixels, w, h, (int)(w * 0.57f), (int)(h * 0.50f), 7, 7, new Color(0.98f, 0.82f, 0.3f, 1f));
+
+            // Gamepad on the desk.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.43f), (int)(h * 0.18f), (int)(w * 0.14f), (int)(h * 0.06f), 8, Color.Lerp(career, Color.white, 0.3f));
+            FillEllipse(pixels, w, h, (int)(w * 0.46f), (int)(h * 0.21f), 4, 4, Ink);
+            FillEllipse(pixels, w, h, (int)(w * 0.54f), (int)(h * 0.21f), 4, 4, Ink);
+        }
+
+        private static void DrawWeatherStation(Color[] pixels, int w, int h, Color career)
+        {
+            // Forecast screen: sun behind a cloud with rain.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.32f), (int)(h * 0.30f), (int)(w * 0.36f), (int)(h * 0.32f), 12, Color.Lerp(career, Ink, 0.42f));
+            FillRoundedRect(pixels, w, h, (int)(w * 0.335f), (int)(h * 0.33f), (int)(w * 0.33f), (int)(h * 0.26f), 9, Color.Lerp(SkyBlue, Color.white, 0.55f));
+            FillRoundedRect(pixels, w, h, (int)(w * 0.33f), (int)(h * 0.16f), (int)(w * 0.34f), (int)(h * 0.12f), 8, Color.Lerp(career, Ink, 0.3f));
+
+            // Sun.
+            FillEllipse(pixels, w, h, (int)(w * 0.44f), (int)(h * 0.52f), (int)(w * 0.04f), (int)(w * 0.04f), new Color(0.99f, 0.84f, 0.32f, 1f));
+            // Cloud (overlapping puffs).
+            FillEllipse(pixels, w, h, (int)(w * 0.52f), (int)(h * 0.48f), (int)(w * 0.05f), (int)(h * 0.05f), Color.white);
+            FillEllipse(pixels, w, h, (int)(w * 0.57f), (int)(h * 0.46f), (int)(w * 0.04f), (int)(h * 0.045f), Color.white);
+            FillEllipse(pixels, w, h, (int)(w * 0.485f), (int)(h * 0.46f), (int)(w * 0.035f), (int)(h * 0.04f), Color.white);
+            // Rain.
+            foreach (var rx in new[] { 0.50f, 0.54f, 0.58f })
+            {
+                FillRect(pixels, w, h, (int)(w * rx), (int)(h * 0.37f), 3, (int)(h * 0.05f), SkyBlue);
+            }
+        }
+
+        private static void DrawSpaceportStation(Color[] pixels, int w, int h, Color career)
+        {
+            // Launch pad + rocket aimed at a rescue-target ring.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.34f), (int)(h * 0.16f), (int)(w * 0.20f), (int)(h * 0.05f), 6, Color.Lerp(PaperShadow, Ink, 0.2f));
+
+            // Rocket body + nose + fins + flame.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.41f), (int)(h * 0.24f), (int)(w * 0.06f), (int)(h * 0.26f), 10, Color.Lerp(career, Color.white, 0.4f));
+            FillTriangleDown(pixels, w, h, (int)(w * 0.44f) - (int)(w * 0.04f) / 2, (int)(h * 0.60f), (int)(w * 0.04f), (int)(h * 0.08f), Color.Lerp(PlayCoral, Color.white, 0.2f));
+            FillEllipse(pixels, w, h, (int)(w * 0.44f), (int)(h * 0.40f), 6, 6, Glass);
+            FillTriangleDown(pixels, w, h, (int)(w * 0.40f), (int)(h * 0.30f), (int)(w * 0.03f), (int)(h * 0.06f), Color.Lerp(career, Ink, 0.2f));
+            FillTriangleDown(pixels, w, h, (int)(w * 0.46f), (int)(h * 0.30f), (int)(w * 0.03f), (int)(h * 0.06f), Color.Lerp(career, Ink, 0.2f));
+            FillTriangleDown(pixels, w, h, (int)(w * 0.425f), (int)(h * 0.20f), (int)(w * 0.03f), (int)(h * 0.05f), new Color(0.99f, 0.66f, 0.22f, 1f));
+
+            // Rescue-target ring stage-right.
+            FillEllipse(pixels, w, h, (int)(w * 0.62f), (int)(h * 0.50f), (int)(w * 0.05f), (int)(w * 0.05f), Color.Lerp(career, Color.white, 0.45f));
+            FillEllipse(pixels, w, h, (int)(w * 0.62f), (int)(h * 0.50f), (int)(w * 0.03f), (int)(w * 0.03f), Paper);
+            FillEllipse(pixels, w, h, (int)(w * 0.62f), (int)(h * 0.50f), (int)(w * 0.012f), (int)(w * 0.012f), PlayCoral);
+        }
+
+        private static void DrawNewsroomStation(Color[] pixels, int w, int h, Color career)
+        {
+            // News desk + headline board + a standing microphone.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.30f), (int)(h * 0.16f), (int)(w * 0.40f), (int)(h * 0.14f), 10, Color.Lerp(career, Ink, 0.32f));
+            FillRect(pixels, w, h, (int)(w * 0.31f), (int)(h * 0.27f), (int)(w * 0.38f), (int)(h * 0.03f), Paper);
+
+            // Headline board with three text bars.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.33f), (int)(h * 0.33f), (int)(w * 0.30f), (int)(h * 0.28f), 10, Paper);
+            FillRect(pixels, w, h, (int)(w * 0.345f), (int)(h * 0.36f), (int)(w * 0.27f), (int)(h * 0.05f), career);
+            foreach (var by in new[] { 0.45f, 0.50f, 0.55f })
+            {
+                FillRect(pixels, w, h, (int)(w * 0.355f), (int)(h * by), (int)(w * 0.24f), (int)(h * 0.018f), Color.Lerp(Ink, Paper, 0.3f));
+            }
+
+            // Standing microphone.
+            FillRect(pixels, w, h, (int)(w * 0.66f), (int)(h * 0.17f), 4, (int)(h * 0.30f), Color.Lerp(career, Ink, 0.3f));
+            FillEllipse(pixels, w, h, (int)(w * 0.665f) + 2, (int)(h * 0.49f), 8, 10, Color.Lerp(career, Ink, 0.45f));
+        }
+
+        private static void DrawGreenCityStation(Color[] pixels, int w, int h, Color career)
+        {
+            // Eco skyline of blocks + two balance gauges + a solar panel.
+            foreach (var (bx, bh, c) in new[] { (0.34f, 0.20f, career), (0.40f, 0.30f, Color.Lerp(career, Ink, 0.2f)), (0.46f, 0.24f, Color.Lerp(career, Color.white, 0.25f)) })
+            {
+                FillRoundedRect(pixels, w, h, (int)(w * bx), (int)(h * 0.16f), (int)(w * 0.05f), (int)(h * bh), 5, c);
+            }
+            // Leaf on the tallest block.
+            FillEllipse(pixels, w, h, (int)(w * 0.425f), (int)(h * 0.50f), (int)(w * 0.025f), (int)(h * 0.05f), Color.Lerp(KitchenLeaf, Color.white, 0.2f));
+
+            // Two balance gauges (the BalanceMeters verb), needles in the green.
+            foreach (var gx in new[] { 0.56f, 0.64f })
+            {
+                FillEllipse(pixels, w, h, (int)(w * gx), (int)(h * 0.40f), (int)(w * 0.035f), (int)(w * 0.035f), Paper);
+                FillEllipse(pixels, w, h, (int)(w * gx), (int)(h * 0.40f), (int)(w * 0.03f), (int)(w * 0.03f), Color.Lerp(career, Color.white, 0.4f));
+                FillRect(pixels, w, h, (int)(w * gx), (int)(h * 0.40f), 3, (int)(h * 0.05f), Ink);
+            }
+
+            // Solar panel on a small stand.
+            FillRoundedRect(pixels, w, h, (int)(w * 0.55f), (int)(h * 0.18f), (int)(w * 0.10f), (int)(h * 0.05f), 4, Color.Lerp(SkyBlue, Ink, 0.3f));
         }
 
         // ------------------------------------------------------------------
