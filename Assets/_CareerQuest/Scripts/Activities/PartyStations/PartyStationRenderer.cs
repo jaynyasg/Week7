@@ -302,6 +302,21 @@ namespace CareerQuest
                 zone.transform.localPosition = position;
                 positions[i] = position;
 
+                // Real toy at the stop when it has final art, so the route reads
+                // as "trace the rocket -> the fuel -> the snack", not numbered dots.
+                // The number cue (above) and zone label (below) still frame it.
+                var stopArt = ToyArtFor(rules, objectId);
+                if (stopArt != null)
+                {
+                    var stopToy = new GameObject($"{TraceStepLabelName}{i}Toy", typeof(SpriteRenderer));
+                    stopToy.transform.SetParent(zone.transform, false);
+                    stopToy.transform.localScale = new Vector3(0.62f, 0.62f, 1f);
+                    var stopToyRenderer = stopToy.GetComponent<SpriteRenderer>();
+                    stopToyRenderer.sprite = stopArt;
+                    stopToyRenderer.color = Color.white;
+                    stopToyRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 5;
+                }
+
                 // Step number above the stop (non-color order cue, R19).
                 AddWorldLabel(zone.transform, $"{TraceStepLabelName}{i}", (i + 1).ToString(), new Vector3(0f, 0.52f, 0f), 2.4f, ToyInteractionKit.ZoneSortingOrder + 43);
 
@@ -433,8 +448,12 @@ namespace CareerQuest
                 toy.transform.localPosition = origin;
                 toy.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
                 var toyRenderer = toy.GetComponent<SpriteRenderer>();
-                toyRenderer.sprite = CampusWorldSprites.Circle;
-                toyRenderer.color = accent;
+                // Launch the real toy (a battery, a wheel) when it has final art;
+                // fall back to the accent token otherwise.
+                var launchArt = ToyArtFor(rules, objectId);
+                toyRenderer.sprite = launchArt != null ? launchArt : CampusWorldSprites.Circle;
+                toyRenderer.color = launchArt != null ? Color.white : accent;
+                toy.transform.localScale = launchArt != null ? new Vector3(0.95f, 0.95f, 1f) : toy.transform.localScale;
                 toyRenderer.sortingOrder = ToyInteractionKit.PieceSortingOrder;
 
                 AddWorldLabel(toy.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -0.62f, 0f), 1.4f, ToyInteractionKit.PieceSortingOrder + 2);
@@ -526,7 +545,26 @@ namespace CareerQuest
                 faceRenderer.color = PaperColor;
                 faceRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder;
 
-                AddWorldLabel(card.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, 0f, 0f), 1.5f, ToyInteractionKit.ZoneSortingOrder + 2);
+                // Real toy on the card face when it has final art, so each
+                // candidate reads as a picture you cross out, not a name string.
+                // Added AFTER the face so StationCandidate.MarkCrossed still dims
+                // the face (its first child SpriteRenderer). The X mark (+6) draws
+                // over the toy (+1); the name drops to a caption below the picture.
+                var cardArt = ToyArtFor(rules, objectId);
+                if (cardArt != null)
+                {
+                    var cardToy = new GameObject($"{DeduceCardName}{i}Toy", typeof(SpriteRenderer));
+                    cardToy.transform.SetParent(card.transform, false);
+                    cardToy.transform.localPosition = new Vector3(0f, 0.32f, 0f);
+                    cardToy.transform.localScale = new Vector3(1.15f, 1.15f, 1f);
+                    var cardToyRenderer = cardToy.GetComponent<SpriteRenderer>();
+                    cardToyRenderer.sprite = cardArt;
+                    cardToyRenderer.color = Color.white;
+                    cardToyRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 1;
+                }
+
+                var nameLabelY = cardArt != null ? -0.74f : 0f;
+                AddWorldLabel(card.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, nameLabelY, 0f), 1.5f, ToyInteractionKit.ZoneSortingOrder + 2);
 
                 var localId = objectId;
                 var candidate = card.AddComponent<StationCandidate>();
@@ -607,6 +645,26 @@ namespace CareerQuest
             }
 
             return objectId.Replace('_', ' ');
+        }
+
+        /// <summary>
+        /// The toy SpriteKey for an object id, if it has real FINAL art. Returns
+        /// null when the object is unknown or still a placeholder, so the
+        /// new-verb playfields (launcher / trace stop / deduce card) layer the
+        /// real toy on top of their affordance only when art exists, and fall
+        /// back to the bare token shape otherwise.
+        /// </summary>
+        private static Sprite ToyArtFor(ToyPatternRules rules, string objectId)
+        {
+            foreach (var definition in rules.Objects)
+            {
+                if (definition.ObjectId == objectId && !IsPlaceholderToySprite(definition.SpriteKey))
+                {
+                    return ResolveToySprite(definition.SpriteKey);
+                }
+            }
+
+            return null;
         }
 
         private static Vector3 SpreadPosition(int index, int count, float spacing, float y)
