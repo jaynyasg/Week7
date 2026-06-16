@@ -452,7 +452,7 @@ namespace CareerQuest
                 var t = count <= 1 ? 0.5f : i / (float)(count - 1);
                 var origin = new Vector3(Mathf.Lerp(-1.9f, 1.9f, t), padLocal.y + 0.55f, 0f);
 
-                var toy = new GameObject($"{LaunchToyName}{i}", typeof(SpriteRenderer));
+                var toy = new GameObject($"{LaunchToyName}{i}", typeof(SpriteRenderer), typeof(BoxCollider2D));
                 toy.transform.SetParent(kit.Root, false);
                 toy.transform.localPosition = origin;
                 toy.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
@@ -464,6 +464,11 @@ namespace CareerQuest
                 toyRenderer.color = launchArt != null ? Color.white : accent;
                 toy.transform.localScale = launchArt != null ? new Vector3(0.95f, 0.95f, 1f) : toy.transform.localScale;
                 toyRenderer.sortingOrder = ToyInteractionKit.PieceSortingOrder;
+                // Design-review (2026-06-16): launch toys had no collider, so the
+                // Physics2DRaycaster could not hit them and the pull-back drag never
+                // started ("can't launch anything"). A generous box makes each part
+                // an easy grab; the kit already ensured the raycaster + EventSystem.
+                toy.GetComponent<BoxCollider2D>().size = new Vector2(1.2f, 1.2f);
 
                 AddWorldLabel(toy.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -0.62f, 0f), 1.4f, ToyInteractionKit.PieceSortingOrder + 2);
 
@@ -1294,3 +1299,4 @@ namespace CareerQuest
         }
     }
 }
+
