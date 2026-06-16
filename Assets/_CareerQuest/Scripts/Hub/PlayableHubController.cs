@@ -197,16 +197,16 @@ namespace CareerQuest
             var glow = new GameObject($"{name}Glow", typeof(SpriteRenderer));
             glow.transform.SetParent(parent, false);
             glow.transform.localPosition = new Vector3(0f, -0.12f, 0f);
-            glow.transform.localScale = new Vector3(radius * 3.8f, radius * 2.2f, 1f);
+            glow.transform.localScale = new Vector3(radius * 2.8f, radius * 1.6f, 1f);
             var glowRenderer = glow.GetComponent<SpriteRenderer>();
             glowRenderer.sprite = CampusWorldSprites.Circle;
-            glowRenderer.color = new Color(color.r, color.g, color.b, 0.32f);
+            glowRenderer.color = new Color(color.r, color.g, color.b, 0.22f);
             glowRenderer.sortingOrder = 300;
 
             var mat = new GameObject(name, typeof(SpriteRenderer));
             mat.transform.SetParent(parent, false);
             mat.transform.localPosition = new Vector3(0f, -0.12f, 0f);
-            mat.transform.localScale = new Vector3(radius * 2.8f, radius * 1.6f, 1f);
+            mat.transform.localScale = new Vector3(radius * 2.0f, radius * 1.15f, 1f);
             var matRenderer = mat.GetComponent<SpriteRenderer>();
             matRenderer.sprite = CampusWorldSprites.Circle;
             matRenderer.color = new Color(color.r, color.g, color.b, 0.7f);
@@ -215,7 +215,7 @@ namespace CareerQuest
             var rim = new GameObject($"{name}Rim", typeof(SpriteRenderer));
             rim.transform.SetParent(parent, false);
             rim.transform.localPosition = new Vector3(0f, -0.12f, 0f);
-            rim.transform.localScale = new Vector3(radius * 1.85f, radius * 1.05f, 1f);
+            rim.transform.localScale = new Vector3(radius * 1.4f, radius * 0.8f, 1f);
             var rimRenderer = rim.GetComponent<SpriteRenderer>();
             rimRenderer.sprite = CampusWorldSprites.Circle;
             rimRenderer.color = new Color(1f, 0.97f, 0.88f, 0.62f);
@@ -302,3 +302,4 @@ namespace CareerQuest
         }
     }
 }
+

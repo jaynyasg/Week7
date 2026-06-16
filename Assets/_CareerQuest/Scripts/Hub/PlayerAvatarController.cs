@@ -22,7 +22,7 @@ namespace CareerQuest
         /// never fires. Tunable; the locked design specifies roughly
         /// 0.15-0.25s so entry feels effortless without firing on a brush.
         /// </summary>
-        public const float AutoEntryDwellSeconds = 0.2f;
+        public const float AutoEntryDwellSeconds = 0.35f;
 
         /// <summary>
         /// U2 return-to-campus grace: applied every time the hub avatar is
@@ -43,6 +43,10 @@ namespace CareerQuest
         private float _dwellElapsed;
         private float _graceRemaining;
         private bool _entryLatched;
+        // Design-review (2026-06-16): true on frames the player presses a move
+        // direction. Dwell only accrues when this is false, so walking through a
+        // door circle never auto-enters it — you stop on the mat to go in.
+        private bool _movingThisFrame;
 
         /// <summary>Real-time auto-entry clock toggle. Tests set false and drive TickAutoEntry directly.</summary>
         public bool AutoEntryAutoTick { get; set; } = true;
@@ -107,6 +111,7 @@ namespace CareerQuest
         private void Update()
         {
             var move = ReadMove();
+            _movingThisFrame = move.sqrMagnitude > 0f;
             if (move.sqrMagnitude > 0f)
             {
                 Move(move * moveSpeed * Time.deltaTime);
@@ -182,6 +187,16 @@ namespace CareerQuest
 
             if (_pendingEntrance == null || deltaSeconds <= 0f)
             {
+                return;
+            }
+
+            // Design-review (2026-06-16): only dwell while standing still. The
+            // ~1.0-wide trigger circle takes longer to walk across than the dwell,
+            // so a straight pass-by used to open whichever door you brushed - often
+            // not the one you aimed at. Stop on the glowing mat to enter.
+            if (_movingThisFrame)
+            {
+                _dwellElapsed = 0f;
                 return;
             }
 
@@ -339,3 +354,5 @@ namespace CareerQuest
         }
     }
 }
+
+
