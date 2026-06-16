@@ -574,9 +574,9 @@ namespace CareerQuest.Editor
             // converted optional rooms keep their owned small-building art.
             // Positions track their WorldAnchors door (door + ~0.55 up), pulled in
             // from the camera edge so the buildings stop clipping.
-            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-5.6f, 1.55f));
-            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-4.3f, -0.15f));
-            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(5.8f, 0.05f));
+            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-6.2f, 1.85f));
+            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-4.4f, 0.55f));
+            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(6.2f, -0.75f));
             AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-2.9f, -1.5f));
 
             // Design-review (2026-06-15): these six stations are fully playable
@@ -586,9 +586,9 @@ namespace CareerQuest.Editor
             // = trace, Weather Lab = trace, Newsroom = deduce) look unbuilt, so kids
             // never entered them. Building art keys match the Buildings specs above;
             // the readable station label still mounts at runtime via the door sign.
-            AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-5.8f, 0.05f));
-            AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(4.3f, -0.15f));
-            AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(5.6f, 1.55f));
+            AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-6.2f, -0.75f));
+            AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(4.4f, 0.55f));
+            AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(6.2f, 1.85f));
             AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-1f, -1.5f));
             AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(1f, -1.5f));
             AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(2.9f, -1.5f));
@@ -670,8 +670,8 @@ namespace CareerQuest.Editor
             var ssEdge = new Vector2(1.45f, -0.55f);
 
             var qy = new Vector2(0f, 0.7f);
-            var tl = new Vector2(-4.7f, -0.4f);
-            var ss = new Vector2(4.7f, -0.4f);
+            var tl = new Vector2(-5f, 0f);
+            var ss = new Vector2(5f, 0f);
             var cc = new Vector2(0f, -1.9f);
 
             // Spokes (plaza edge -> district junction), thinner than before.
@@ -685,13 +685,13 @@ namespace CareerQuest.Editor
             AddRoad(world, "RoadQuestYardHealthHero", qy, new Vector2(0f, 1.25f), 0.24f, gold, 208);
             AddRoad(world, "RoadQuestYardLogicCourt", qy, new Vector2(2.2f, 0.95f), 0.24f, gold, 208);
 
-            AddRoad(world, "RoadTechLaneAiLab", tl, new Vector2(-5.6f, 1f), 0.24f, techBlue, 208);
-            AddRoad(world, "RoadTechLaneSpaceport", tl, new Vector2(-5.8f, -0.5f), 0.24f, techBlue, 208);
-            AddRoad(world, "RoadTechLaneRobotics", tl, new Vector2(-4.3f, -0.7f), 0.24f, techBlue, 208);
+            AddRoad(world, "RoadTechLaneAiLab", tl, new Vector2(-6.2f, 1.3f), 0.24f, techBlue, 208);
+            AddRoad(world, "RoadTechLaneSpaceport", tl, new Vector2(-6.2f, -1.3f), 0.24f, techBlue, 208);
+            AddRoad(world, "RoadTechLaneRobotics", tl, new Vector2(-4.4f, 0f), 0.24f, techBlue, 208);
 
-            AddRoad(world, "RoadStoryStreetNewsroom", ss, new Vector2(5.6f, 1f), 0.24f, storyLilac, 208);
-            AddRoad(world, "RoadStoryStreetMusic", ss, new Vector2(5.8f, -0.5f), 0.24f, storyLilac, 208);
-            AddRoad(world, "RoadStoryStreetGameStudio", ss, new Vector2(4.3f, -0.7f), 0.24f, storyLilac, 208);
+            AddRoad(world, "RoadStoryStreetNewsroom", ss, new Vector2(6.2f, 1.3f), 0.24f, storyLilac, 208);
+            AddRoad(world, "RoadStoryStreetMusic", ss, new Vector2(6.2f, -1.3f), 0.24f, storyLilac, 208);
+            AddRoad(world, "RoadStoryStreetGameStudio", ss, new Vector2(4.4f, 0f), 0.24f, storyLilac, 208);
 
             AddRoad(world, "RoadCareCornerKitchen", cc, new Vector2(-2.9f, -2.05f), 0.24f, careGreen, 208);
             AddRoad(world, "RoadCareCornerVet", cc, new Vector2(-1f, -2.05f), 0.24f, careGreen, 208);

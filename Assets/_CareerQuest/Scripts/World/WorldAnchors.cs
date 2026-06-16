@@ -106,7 +106,7 @@ namespace CareerQuest
         /// orthoSize 3.6) so the bigger campus still frames cleanly. Player/guide
         /// spawn on the central plaza between the Quest Yard and the station rows.
         /// </summary>
-        public static readonly Rect FallbackWalkBounds = new(-7f, -3.3f, 14f, 5.6f);
+        public static readonly Rect FallbackWalkBounds = new(-7.3f, -3.3f, 14.6f, 5.6f);
 
         public static readonly Vector2 FallbackPlayerSpawn = new(0f, -1.1f);
         public static readonly Vector2 FallbackGuideSpawn = new(1.5f, -1.1f);
@@ -137,13 +137,15 @@ namespace CareerQuest
             new("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(2.2f, 0.95f), new Color(0.96f, 0.62f, 0.18f), CoreEntranceRadius),
             // Tech Lane (left cluster) — converted optional rooms route by their
             // legacy ActivityRoute; spaceport joins via the station fallback.
-            // Design-review (2026-06-16): spread into a clear triangle out at the
-            // left edge so AI Lab / Spaceport / Robotics stop clumping.
-            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-5.6f, 1f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
-            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(-4.3f, -0.7f), new Color(0.13f, 0.55f, 0.58f), StationEntranceRadius),
+            // Design-review (2026-06-16, r2): a TALL, wide triangle so each door
+            // is individually reachable — ai_lab/spaceport form a left column,
+            // robotics juts toward the central path. Vertical span 2.6 (was 1.7).
+            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-6.2f, 1.3f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(-4.4f, 0f), new Color(0.13f, 0.55f, 0.58f), StationEntranceRadius),
             // Story Street (right cluster) — music routes by legacy route;
-            // game studio + newsroom join via the station fallback.
-            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(5.8f, -0.5f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            // game studio + newsroom join via the station fallback. Mirror of
+            // Tech Lane: newsroom/music form a right column, game_studio juts in.
+            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(6.2f, -1.3f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
             // Care Corner (bottom row) — kitchen routes by legacy route; vet,
             // weather, and green city join via the station fallback.
             new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-2.9f, -2.05f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
@@ -170,11 +172,11 @@ namespace CareerQuest
         {
             // Tech Lane (left cluster, continues ai_lab + robotics) — the lower
             // apex of the triangle (design-review 2026-06-16).
-            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(-5.8f, -0.5f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
+            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(-6.2f, -1.3f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
             // Story Street (right cluster, continues music_studio) — mirror of
-            // Tech Lane, spread out at the right edge.
-            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(4.3f, -0.7f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
-            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(5.6f, 1f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
+            // the tall Tech Lane triangle.
+            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(4.4f, 0f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(6.2f, 1.3f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
             // Care Corner (bottom row, continues community_kitchen) — a clean
             // flat row spread wide so the four doors read as separate buildings.
             // Design-review (2026-06-16): raised to y -2.05 (was -2.5/-2.9) so the
