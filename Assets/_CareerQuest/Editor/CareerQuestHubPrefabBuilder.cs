@@ -586,16 +586,18 @@ namespace CareerQuest.Editor
             // baked); PlayableHubController adds the per-door label at runtime.
 
             // Quest Yard (core quad) — upgraded owned building art.
-            AddMainBuilding(world, "DesignBuildStudio", "campus.design_build_studio", "Design Build", Coral, new Vector2(-1.3f, 1.3f));
+            AddMainBuilding(world, "DesignBuildStudio", "campus.design_build_studio", "Design Build", Coral, new Vector2(-1.7f, 1.3f));
             AddMainBuilding(world, "HealthHeroClinic", "campus.health_hero_clinic", "Health Hero", Mint, new Vector2(0f, 1.65f));
-            AddMainBuilding(world, "LogicCourt", "campus.logic_court", "Logic Court", Amber, new Vector2(1.3f, 1.3f));
+            AddMainBuilding(world, "LogicCourt", "campus.logic_court", "Logic Court", Amber, new Vector2(1.7f, 1.3f));
 
             // Tech Lane (left column) + Story Street (right column): the four
             // converted optional rooms keep their owned small-building art.
-            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-5f, 0.85f));
-            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-5.2f, -0.45f));
-            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(3.9f, 0.15f));
-            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-1.8f, -1.75f));
+            // Positions track their WorldAnchors door (door + ~0.55 up), pulled in
+            // from the camera edge so the buildings stop clipping.
+            AddSmallBuilding(world, "AiLab", "campus.space_lab", new Vector2(-4.5f, 1.05f));
+            AddSmallBuilding(world, "RoboticsGarage", "campus.robotics_garage", new Vector2(-4.6f, -0.35f));
+            AddSmallBuilding(world, "MusicStudio", "campus.music_studio", new Vector2(3.4f, 0.1f));
+            AddSmallBuilding(world, "CommunityKitchen", "campus.community_kitchen", new Vector2(-2.3f, -1.65f));
 
             // Design-review (2026-06-15): these six stations are fully playable
             // (each routes the generic PartyStation branch and runs a real verb),
@@ -604,12 +606,12 @@ namespace CareerQuest.Editor
             // = trace, Weather Lab = trace, Newsroom = deduce) look unbuilt, so kids
             // never entered them. Building art keys match the Buildings specs above;
             // the readable station label still mounts at runtime via the door sign.
-            AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-3.9f, 0.1f));
-            AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(5.2f, -0.5f));
-            AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(5f, 0.8f));
-            AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-0.6f, -2.1f));
-            AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(0.6f, -2.1f));
-            AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(1.8f, -1.8f));
+            AddSmallBuilding(world, "Spaceport", "campus.spaceport", new Vector2(-3.4f, 0.1f));
+            AddSmallBuilding(world, "GameStudio", "campus.game_studio", new Vector2(4.6f, -0.35f));
+            AddSmallBuilding(world, "Newsroom", "campus.newsroom", new Vector2(4.5f, 1.05f));
+            AddSmallBuilding(world, "VetClinic", "campus.vet_clinic", new Vector2(-0.9f, -2.0f));
+            AddSmallBuilding(world, "WeatherLab", "campus.weather_lab", new Vector2(0.9f, -2.0f));
+            AddSmallBuilding(world, "GreenCity", "campus.green_city", new Vector2(2.3f, -1.65f));
 
             // Living-campus beats (P9): waving flag and butterflies.
             AddSprite(world, "FlagPole", Hub("hub_flag_pole.png"), new Vector2(1.05f, -0.05f), new Vector2(0.08f, 1.35f), 246);

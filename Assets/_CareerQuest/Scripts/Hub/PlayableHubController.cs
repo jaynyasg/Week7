@@ -130,7 +130,7 @@ namespace CareerQuest
             entrance.Configure(anchor.Route, anchor.ResolveStationId(), anchor.Label, anchor.Radius, EnterEntrance);
             _entrances.Add(entrance);
 
-            AddEntranceMarker(entranceObject.transform, $"{anchor.Id}_EntranceMarker", anchor.AccentColor);
+            AddEntranceMarker(entranceObject.transform, $"{anchor.Id}_EntranceMarker", anchor.AccentColor, anchor.Radius);
 
             // Door label is world-space TMP (DoorSign pattern) — the hub
             // TextMesh labels died in U4 per plan.
@@ -180,17 +180,46 @@ namespace CareerQuest
             }
         }
 
-        private static void AddEntranceMarker(Transform parent, string name, Color color)
+        /// <summary>
+        /// A glowing "step here" doormat on the ground at the entry circle so every
+        /// door reads as an obvious walk-in target, not just a floating name plate.
+        /// Three stacked ground decals sized to the entry radius — a soft accent
+        /// glow halo, a brighter accent pad, and a paper threshold rim — all below
+        /// the buildings and the player so the avatar walks onto the mat. The mat
+        /// is a child of the entrance object, so it pulses with the door on
+        /// first-run focus (<see cref="DoorSign.SetPulsing"/>).
+        /// </summary>
+        private static void AddEntranceMarker(Transform parent, string name, Color color, float radius)
         {
-            var marker = new GameObject(name, typeof(SpriteRenderer));
-            marker.transform.SetParent(parent, false);
-            marker.transform.localPosition = Vector3.zero;
-            marker.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+            // Sorting band: the mat sits ABOVE the buildings (238-247) so it reads
+            // as a doormat in front of its door, but BELOW the avatar (320) so the
+            // player walks on top of it. Mirrors the old door marker's 305.
+            var glow = new GameObject($"{name}Glow", typeof(SpriteRenderer));
+            glow.transform.SetParent(parent, false);
+            glow.transform.localPosition = new Vector3(0f, -0.12f, 0f);
+            glow.transform.localScale = new Vector3(radius * 3.8f, radius * 2.2f, 1f);
+            var glowRenderer = glow.GetComponent<SpriteRenderer>();
+            glowRenderer.sprite = CampusWorldSprites.Circle;
+            glowRenderer.color = new Color(color.r, color.g, color.b, 0.32f);
+            glowRenderer.sortingOrder = 300;
 
-            var renderer = marker.GetComponent<SpriteRenderer>();
-            renderer.sprite = AssetCatalog.SpriteFor("ui.confirm");
-            renderer.color = new Color(color.r, color.g, color.b, 0.62f);
-            renderer.sortingOrder = 305;
+            var mat = new GameObject(name, typeof(SpriteRenderer));
+            mat.transform.SetParent(parent, false);
+            mat.transform.localPosition = new Vector3(0f, -0.12f, 0f);
+            mat.transform.localScale = new Vector3(radius * 2.8f, radius * 1.6f, 1f);
+            var matRenderer = mat.GetComponent<SpriteRenderer>();
+            matRenderer.sprite = CampusWorldSprites.Circle;
+            matRenderer.color = new Color(color.r, color.g, color.b, 0.7f);
+            matRenderer.sortingOrder = 301;
+
+            var rim = new GameObject($"{name}Rim", typeof(SpriteRenderer));
+            rim.transform.SetParent(parent, false);
+            rim.transform.localPosition = new Vector3(0f, -0.12f, 0f);
+            rim.transform.localScale = new Vector3(radius * 1.85f, radius * 1.05f, 1f);
+            var rimRenderer = rim.GetComponent<SpriteRenderer>();
+            rimRenderer.sprite = CampusWorldSprites.Circle;
+            rimRenderer.color = new Color(1f, 0.97f, 0.88f, 0.62f);
+            rimRenderer.sortingOrder = 302;
         }
 
         /// <summary>

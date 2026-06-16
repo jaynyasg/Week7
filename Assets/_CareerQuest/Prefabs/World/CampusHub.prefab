@@ -350,7 +350,7 @@ Transform:
   m_GameObject: {fileID: 1768171349619478336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.9, y: 0.15, z: 0}
+  m_LocalPosition: {x: 3.4, y: 0.1, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -441,7 +441,7 @@ Transform:
   m_GameObject: {fileID: 2134679271895312269}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 0.8, z: 0}
+  m_LocalPosition: {x: 4.5, y: 1.05, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -672,7 +672,7 @@ Transform:
   m_GameObject: {fileID: 2303659895226589140}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.2, y: -0.5, z: 0}
+  m_LocalPosition: {x: 4.6, y: -0.35, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1316,7 +1316,7 @@ MonoBehaviour:
   - Id: design_build
     Route: 6
     Label: Design Build
-    Position: {x: -1.3, y: 0.7}
+    Position: {x: -1.7, y: 0.7}
     AccentColor: {r: 0.94, g: 0.34, b: 0.28, a: 1}
     Radius: 0.6
     StationId: 
@@ -1330,77 +1330,77 @@ MonoBehaviour:
   - Id: logic_court
     Route: 8
     Label: Logic Court
-    Position: {x: 1.3, y: 0.7}
+    Position: {x: 1.7, y: 0.7}
     AccentColor: {r: 0.96, g: 0.62, b: 0.18, a: 1}
     Radius: 0.6
     StationId: 
   - Id: ai_lab
     Route: 9
     Label: AI Lab
-    Position: {x: -5, y: 0.3}
+    Position: {x: -4.5, y: 0.5}
     AccentColor: {r: 0.28, g: 0.66, b: 0.94, a: 1}
     Radius: 0.5
     StationId: 
   - Id: robotics_garage
     Route: 11
     Label: Robotics
-    Position: {x: -5.2, y: -1}
+    Position: {x: -4.6, y: -0.9}
     AccentColor: {r: 0.13, g: 0.55, b: 0.58, a: 1}
     Radius: 0.5
     StationId: 
   - Id: music_studio
     Route: 10
     Label: Music Studio
-    Position: {x: 3.9, y: -0.4}
+    Position: {x: 3.4, y: -0.45}
     AccentColor: {r: 0.62, g: 0.52, b: 0.86, a: 1}
     Radius: 0.5
     StationId: 
   - Id: community_kitchen
     Route: 12
     Label: Kitchen
-    Position: {x: -1.8, y: -2.3}
+    Position: {x: -2.3, y: -2.2}
     AccentColor: {r: 0.55, g: 0.82, b: 0.5, a: 1}
     Radius: 0.5
     StationId: 
   - Id: spaceport
     Route: 16
     Label: Spaceport
-    Position: {x: -3.9, y: -0.4}
+    Position: {x: -3.4, y: -0.45}
     AccentColor: {r: 0.08, g: 0.26, b: 0.55, a: 1}
     Radius: 0.5
     StationId: spaceport
   - Id: game_studio
     Route: 16
     Label: Game Studio
-    Position: {x: 5.2, y: -1}
+    Position: {x: 4.6, y: -0.9}
     AccentColor: {r: 0.62, g: 0.52, b: 0.86, a: 1}
     Radius: 0.5
     StationId: game_studio
   - Id: newsroom
     Route: 16
     Label: Newsroom
-    Position: {x: 5, y: 0.3}
+    Position: {x: 4.5, y: 0.5}
     AccentColor: {r: 0.96, g: 0.62, b: 0.18, a: 1}
     Radius: 0.5
     StationId: newsroom
   - Id: vet_clinic
     Route: 16
     Label: Vet Clinic
-    Position: {x: -0.6, y: -2.6}
+    Position: {x: -0.9, y: -2.55}
     AccentColor: {r: 0.36, g: 0.78, b: 0.6, a: 1}
     Radius: 0.5
     StationId: vet_clinic
   - Id: weather_lab
     Route: 16
     Label: Weather Lab
-    Position: {x: 0.6, y: -2.6}
+    Position: {x: 0.9, y: -2.55}
     AccentColor: {r: 0.28, g: 0.66, b: 0.94, a: 1}
     Radius: 0.5
     StationId: weather_lab
   - Id: green_city
     Route: 16
     Label: Green City
-    Position: {x: 1.8, y: -2.3}
+    Position: {x: 2.3, y: -2.2}
     AccentColor: {r: 0.25, g: 0.64, b: 0.3, a: 1}
     Radius: 0.5
     StationId: green_city
@@ -1821,7 +1821,7 @@ Transform:
   m_GameObject: {fileID: 5608140213854278803}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.6, y: -2.1, z: 0}
+  m_LocalPosition: {x: 0.9, y: -2, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1912,7 +1912,7 @@ Transform:
   m_GameObject: {fileID: 5621834363965272996}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.9, y: 0.1, z: 0}
+  m_LocalPosition: {x: -3.4, y: 0.1, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2185,7 +2185,7 @@ Transform:
   m_GameObject: {fileID: 6029476659230277313}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.8, y: -1.8, z: 0}
+  m_LocalPosition: {x: 2.3, y: -1.65, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2276,7 +2276,7 @@ Transform:
   m_GameObject: {fileID: 6116887401063403327}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.8, y: -1.75, z: 0}
+  m_LocalPosition: {x: -2.3, y: -1.65, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2458,7 +2458,7 @@ Transform:
   m_GameObject: {fileID: 6272612312671272660}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.3, y: 1.3, z: 0}
+  m_LocalPosition: {x: -1.7, y: 1.3, z: 0}
   m_LocalScale: {x: 0.47851565, y: 0.4776786, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3477,7 +3477,7 @@ Transform:
   m_GameObject: {fileID: 7288953185846184950}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5, y: 0.85, z: 0}
+  m_LocalPosition: {x: -4.5, y: 1.05, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3659,7 +3659,7 @@ Transform:
   m_GameObject: {fileID: 7392177395144980940}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6, y: -2.1, z: 0}
+  m_LocalPosition: {x: -0.9, y: -2, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4263,7 +4263,7 @@ Transform:
   m_GameObject: {fileID: 8225580092234159702}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.3, y: 1.3, z: 0}
+  m_LocalPosition: {x: 1.7, y: 1.3, z: 0}
   m_LocalScale: {x: 0.47851565, y: 0.4776786, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4354,7 +4354,7 @@ Transform:
   m_GameObject: {fileID: 8310184426623624282}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.2, y: -0.45, z: 0}
+  m_LocalPosition: {x: -4.6, y: -0.35, z: 0}
   m_LocalScale: {x: 0.453125, y: 0.45138887, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
