@@ -139,6 +139,15 @@ namespace CareerQuest
                     continue;
                 }
 
+                // DeduceAnswer renders each cross-target as a full card (toy +
+                // name + X) in MountDeduceBoard; the generic pad/label here would
+                // float behind the cards as a duplicate name. The card is the UI,
+                // so skip the cross-target zones' generic decoration.
+                if (targetId.StartsWith(ToyPatternRules.CrossTargetPrefix, System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 AddShape(zone.transform, ZonePadName, new Vector3(0f, 0f, 0f), new Vector3(1.25f, 1.05f, 1f), PadColor, ToyInteractionKit.ZoneSortingOrder - 2);
                 AddShape(zone.transform, $"{ZonePadName}Ring", new Vector3(0f, -0.46f, 0f), new Vector3(1.25f, 0.07f, 1f), accent, ToyInteractionKit.ZoneSortingOrder - 1);
                 AddWorldLabel(zone.transform, ZoneLabelName, TargetLabelFor(rules, targetId), new Vector3(0f, -0.66f, 0f), 1.7f, ToyInteractionKit.ZoneSortingOrder + 40);
