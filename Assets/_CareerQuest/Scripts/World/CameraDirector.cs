@@ -52,7 +52,12 @@ namespace CareerQuest
         /// </summary>
         public static CameraFollowSettings HubDefault => new CameraFollowSettings
         {
-            OrthographicSize = 3.0f,
+            // Design-review (2026-06-16): zoomed out from 3.0 to 3.6 so the
+            // spread-out 13-door campus (districts pushed apart to x +-5.5 /
+            // y -2.85) reads without the building art clumping. At orthoSize 3.6
+            // the 16:9 view half-width is ~6.4 and half-height 3.6; the +-3.5
+            // follow clamp keeps the far edge at +-9.9.
+            OrthographicSize = 3.6f,
             HorizontalFactor = 1f,
             HorizontalClamp = 3.5f,
             LerpSpeed = 5f,

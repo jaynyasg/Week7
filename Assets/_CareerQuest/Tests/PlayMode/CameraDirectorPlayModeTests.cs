@@ -69,7 +69,7 @@ namespace CareerQuest.Tests
 
             Assert.That(director.ActiveMode, Is.EqualTo(CameraDirectorMode.Follow));
             Assert.That(director.IsRestored, Is.False);
-            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.0f).Within(0.001f));
+            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.6f).Within(0.001f));
 
             TickMany(director, 120, 0.05f);
             var position = director.Camera.transform.position;
@@ -212,7 +212,7 @@ namespace CareerQuest.Tests
 
             Assert.That(director.ActiveMode, Is.EqualTo(CameraDirectorMode.Follow));
             Assert.That(director.Camera.orthographic, Is.True);
-            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.0f).Within(0.001f), "campus framing size (zoomed-in follow)");
+            Assert.That(director.Camera.orthographicSize, Is.EqualTo(3.6f).Within(0.001f), "campus framing size (zoomed-out follow)");
 
             TickMany(director, 120, 0.05f);
             var position = director.Camera.transform.position;

@@ -98,13 +98,15 @@ namespace CareerQuest
         public static string ActivePrefabResourcePath => _prefabResourcePathOverride ?? PrefabResourcePath;
 
         /// <summary>
-        /// U8 ten-station campus walk bounds. Widened from the U2 rect so the
-        /// full 13-door district map (3 core + 10 stations) lays out as four
-        /// readable clusters with non-overlapping auto-entry circles instead of
-        /// one crowded row. Player/guide spawn on the central plaza between the
-        /// Quest Yard and the station rows.
+        /// Campus walk bounds. Design-review (2026-06-16): widened from the U8
+        /// rect (-6.2,-3.2,12.4,5) so the four districts spread far enough apart
+        /// that the building ART (larger than the auto-entry circles) stops
+        /// overlapping — the Tech Lane / Story Street trios used to clump. Paired
+        /// with the zoomed-out follow camera (CameraFollowSettings.HubDefault
+        /// orthoSize 3.6) so the bigger campus still frames cleanly. Player/guide
+        /// spawn on the central plaza between the Quest Yard and the station rows.
         /// </summary>
-        public static readonly Rect FallbackWalkBounds = new(-6.2f, -3.2f, 12.4f, 5f);
+        public static readonly Rect FallbackWalkBounds = new(-7f, -3.3f, 14f, 5.6f);
 
         public static readonly Vector2 FallbackPlayerSpawn = new(0f, -1.1f);
         public static readonly Vector2 FallbackGuideSpawn = new(1.5f, -1.1f);
@@ -128,22 +130,23 @@ namespace CareerQuest
         /// </summary>
         private static readonly WorldAnchorEntrance[] FallbackEntrancesData =
         {
-            // Quest Yard (core quad) — top and center, spread so the three main
-            // buildings stop overlapping each other.
-            new("design_build", ActivityRoute.DesignBuild, "Design Build", new Vector2(-1.7f, 0.7f), new Color(0.94f, 0.34f, 0.28f), CoreEntranceRadius),
-            new("health_hero", ActivityRoute.HealthHero, "Health Hero", new Vector2(0f, 1.05f), new Color(0.36f, 0.78f, 0.6f), CoreEntranceRadius),
-            new("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(1.7f, 0.7f), new Color(0.96f, 0.62f, 0.18f), CoreEntranceRadius),
-            // Tech Lane (left column) — converted optional rooms route by their
+            // Quest Yard (core quad) — top and center, spread to +-2.2 so the
+            // three flagship buildings clear each other (design-review 2026-06-16).
+            new("design_build", ActivityRoute.DesignBuild, "Design Build", new Vector2(-2.2f, 0.95f), new Color(0.94f, 0.34f, 0.28f), CoreEntranceRadius),
+            new("health_hero", ActivityRoute.HealthHero, "Health Hero", new Vector2(0f, 1.25f), new Color(0.36f, 0.78f, 0.6f), CoreEntranceRadius),
+            new("logic_court", ActivityRoute.LogicCourt, "Logic Court", new Vector2(2.2f, 0.95f), new Color(0.96f, 0.62f, 0.18f), CoreEntranceRadius),
+            // Tech Lane (left cluster) — converted optional rooms route by their
             // legacy ActivityRoute; spaceport joins via the station fallback.
-            // Pulled in from the camera edge so the buildings stop clipping.
-            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-4.5f, 0.5f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
-            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(-4.6f, -0.9f), new Color(0.13f, 0.55f, 0.58f), StationEntranceRadius),
-            // Story Street (right column) — music routes by legacy route;
+            // Design-review (2026-06-16): spread into a clear triangle out at the
+            // left edge so AI Lab / Spaceport / Robotics stop clumping.
+            new("ai_lab", ActivityRoute.AiLab, "AI Lab", new Vector2(-5.6f, 1f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("robotics_garage", ActivityRoute.RoboticsGarage, "Robotics", new Vector2(-4.3f, -0.7f), new Color(0.13f, 0.55f, 0.58f), StationEntranceRadius),
+            // Story Street (right cluster) — music routes by legacy route;
             // game studio + newsroom join via the station fallback.
-            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(3.4f, -0.45f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            new("music_studio", ActivityRoute.MusicStudio, "Music Studio", new Vector2(5.8f, -0.5f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
             // Care Corner (bottom row) — kitchen routes by legacy route; vet,
             // weather, and green city join via the station fallback.
-            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-2.3f, -2.2f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
+            new("community_kitchen", ActivityRoute.CommunityKitchen, "Kitchen", new Vector2(-2.9f, -2.5f), new Color(0.55f, 0.82f, 0.5f), StationEntranceRadius)
         };
 
         /// <summary>
@@ -165,17 +168,18 @@ namespace CareerQuest
         /// </summary>
         public static readonly WorldAnchorEntrance[] FallbackStationEntrancesData =
         {
-            // Tech Lane (left column, continues ai_lab + robotics).
-            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(-3.4f, -0.45f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
-            // Story Street (right column, continues music_studio). Pulled in from
-            // the camera edge so game studio + newsroom stop clipping.
-            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(4.6f, -0.9f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
-            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(4.5f, 0.5f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
+            // Tech Lane (left cluster, continues ai_lab + robotics) — the lower
+            // apex of the triangle (design-review 2026-06-16).
+            new("spaceport", ActivityRoute.PartyStation, CareerQuestCatalog.SpaceportId, "Spaceport", new Vector2(-5.8f, -0.5f), new Color(0.08f, 0.26f, 0.55f), StationEntranceRadius),
+            // Story Street (right cluster, continues music_studio) — mirror of
+            // Tech Lane, spread out at the right edge.
+            new("game_studio", ActivityRoute.PartyStation, CareerQuestCatalog.GameStudioId, "Game Studio", new Vector2(4.3f, -0.7f), new Color(0.62f, 0.52f, 0.86f), StationEntranceRadius),
+            new("newsroom", ActivityRoute.PartyStation, CareerQuestCatalog.NewsroomId, "Newsroom", new Vector2(5.6f, 1f), new Color(0.96f, 0.62f, 0.18f), StationEntranceRadius),
             // Care Corner (bottom row, continues community_kitchen) — spread wide
             // so the four bottom doors read as separate buildings.
-            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-0.9f, -2.55f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
-            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(0.9f, -2.55f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
-            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(2.3f, -2.2f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
+            new("vet_clinic", ActivityRoute.PartyStation, CareerQuestCatalog.VetClinicId, "Vet Clinic", new Vector2(-1f, -2.9f), new Color(0.36f, 0.78f, 0.6f), StationEntranceRadius),
+            new("weather_lab", ActivityRoute.PartyStation, CareerQuestCatalog.WeatherLabId, "Weather Lab", new Vector2(1f, -2.9f), new Color(0.28f, 0.66f, 0.94f), StationEntranceRadius),
+            new("green_city", ActivityRoute.PartyStation, CareerQuestCatalog.GreenCityId, "Green City", new Vector2(2.9f, -2.5f), new Color(0.25f, 0.64f, 0.3f), StationEntranceRadius)
         };
 
         /// <summary>

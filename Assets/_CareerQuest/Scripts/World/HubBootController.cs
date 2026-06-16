@@ -75,8 +75,12 @@ namespace CareerQuest
         {
             _builder.AddSky();
             _builder.AddGround();
-            _builder.AddPath(new Vector2(0f, -0.96f), new Vector2(8.6f, 0.42f), 0f);
-            _builder.AddPath(new Vector2(0f, -0.5f), new Vector2(0.46f, 3.2f), 0f);
+            // Design-review (2026-06-16): the minimal fallback keeps a central
+            // cross sized to the widened campus (the authored prefab carries the
+            // full color-coded district road network). Horizontal reach extended
+            // to the spread-out side clusters; vertical reach down to Care Corner.
+            _builder.AddPath(new Vector2(0f, -0.55f), new Vector2(11.4f, 0.46f), 0f);
+            _builder.AddPath(new Vector2(0f, -1f), new Vector2(0.5f, 3.6f), 0f);
         }
 
         private IEnumerator FinishDecor()

@@ -36,13 +36,13 @@ namespace CareerQuest
 
         public void AddGround()
         {
-            // Design review #1: widened from 11.2 to 18 so the zoomed-in,
-            // player-following campus camera (CameraFollowSettings.HubDefault)
-            // never pans past the grass edge into sky-colored void. The ±3.5
-            // camera clamp at orthoSize 3.0 reaches x ±8.83; the ±9 grass covers
-            // it with margin. Taller too (3.25 -> 3.8) so the lower districts
-            // sit on grass when the view drops to its bottom.
-            AddShape("CampusGrass", CampusSpriteKind.Square, new Vector2(0f, -2.4f), new Vector2(18f, 3.8f), CampusWorldPalette.Grass, 0);
+            // Design review #1: widened from 11.2 to 18 so the player-following
+            // campus camera never pans past the grass edge into sky-colored void.
+            // Design-review (2026-06-16): widened again to 20.4 and taller (5.0)
+            // for the zoomed-out camera (orthoSize 3.6, far edge x +-9.9) and the
+            // spread-out districts (down to y -2.9). The +-10.2 grass covers the
+            // far edge with margin.
+            AddShape("CampusGrass", CampusSpriteKind.Square, new Vector2(0f, -1.9f), new Vector2(20.4f, 5f), CampusWorldPalette.Grass, 0);
         }
 
         public void AddPath(Vector2 position, Vector2 size, float rotation)
