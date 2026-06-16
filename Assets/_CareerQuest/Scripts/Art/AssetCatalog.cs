@@ -25,6 +25,19 @@ namespace CareerQuest
             Npc("npc.patient", "Clinic Patient", new Color(0.36f, 0.78f, 0.6f), new Color(0.83f, 0.96f, 1f)),
             Npc("npc.judge", "Logic Judge", new Color(0.96f, 0.62f, 0.18f), new Color(0.68f, 0.36f, 0.03f)),
 
+            // Design-review (2026-06-16): party-station scene subjects — the
+            // character each seed names (the dragon, the sleepy robot, a guest).
+            // Curated Kenney art (Monster Builder composites + Toon robot/person
+            // + a background-element cloud) ships at Resources/CareerQuest/Npc and
+            // routes through the catalog like any NPC; StationSubjectView mounts
+            // them. Player-facing + required, so the fallback gate polices them.
+            Npc("npc.subject_dragon", "Scene Subject Dragon", new Color(0.96f, 0.32f, 0.38f), new Color(0.99f, 0.86f, 0.6f)),
+            Npc("npc.subject_critter", "Scene Subject Critter", new Color(0.34f, 0.8f, 0.9f), new Color(0.95f, 0.72f, 0.7f)),
+            Npc("npc.subject_robot", "Scene Subject Robot", new Color(0.62f, 0.7f, 0.8f), new Color(0.96f, 0.86f, 0.35f)),
+            Npc("npc.subject_cloud", "Scene Subject Cloud", new Color(0.83f, 0.92f, 1f), new Color(0.55f, 0.7f, 0.9f)),
+            Npc("npc.subject_blob", "Scene Subject Blob", new Color(0.35f, 0.78f, 0.45f), new Color(0.9f, 1f, 0.9f)),
+            Npc("npc.subject_person", "Scene Subject Person", new Color(0.55f, 0.62f, 0.86f), new Color(0.96f, 0.8f, 0.66f)),
+
             Campus("campus.design_build_studio", "Design Build Studio", new Color(0.94f, 0.34f, 0.28f), new Color(0.55f, 0.12f, 0.12f)),
             Campus("campus.health_hero_clinic", "Health Hero Clinic", new Color(0.36f, 0.78f, 0.6f), new Color(0.04f, 0.3f, 0.32f)),
             Campus("campus.logic_court", "Logic Court", new Color(0.96f, 0.62f, 0.18f), new Color(0.68f, 0.36f, 0.03f)),
@@ -455,3 +468,4 @@ namespace CareerQuest
         }
     }
 }
+

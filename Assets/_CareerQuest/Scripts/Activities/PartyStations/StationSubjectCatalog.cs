@@ -14,7 +14,6 @@ namespace CareerQuest
         Critter,
         Robot,
         Cloud,
-        Star,
         Blob,
         Person
     }
@@ -51,7 +50,7 @@ namespace CareerQuest
             ["robotics_garage.moon_cart"] = new(StationSubjectKind.Robot, "the Moon Cart"),
             // AI Lab Sort — the bubbles / signals being sorted.
             ["ai_lab.bubblegum_garden"] = new(StationSubjectKind.Blob, "the Bubble Bunch"),
-            ["ai_lab.sock_satellite"] = new(StationSubjectKind.Star, "the Sock Satellite"),
+            ["ai_lab.sock_satellite"] = new(StationSubjectKind.Critter, "the Sock Satellite"),
             // Community Kitchen — the guest you serve.
             ["community_kitchen.chef_detective"] = new(StationSubjectKind.Person, "a Hungry Guest"),
             ["community_kitchen.tiny_planet_picnic"] = new(StationSubjectKind.Person, "a Tiny Planet Pal"),
@@ -68,8 +67,8 @@ namespace CareerQuest
             ["weather_lab.thunder_parade"] = new(StationSubjectKind.Cloud, "the Parade Cloud"),
             ["weather_lab.bubblegum_flood"] = new(StationSubjectKind.Cloud, "the Bubblegum Cloud"),
             // Spaceport — the probe / mail bot you fly.
-            ["spaceport.snack_probe"] = new(StationSubjectKind.Star, "the Snack Probe"),
-            ["spaceport.moon_mail"] = new(StationSubjectKind.Star, "the Moon Mail Bot"),
+            ["spaceport.snack_probe"] = new(StationSubjectKind.Robot, "the Snack Probe"),
+            ["spaceport.moon_mail"] = new(StationSubjectKind.Robot, "the Moon Mail Bot"),
             // Newsroom — the person at the heart of the story.
             ["newsroom.mystery_mural"] = new(StationSubjectKind.Person, "the Mural Maker"),
             ["newsroom.invention_scoop"] = new(StationSubjectKind.Person, "the Inventor"),
@@ -117,3 +116,4 @@ namespace CareerQuest
         }
     }
 }
+

@@ -9,9 +9,10 @@ using UnityEngine.TestTools;
 namespace CareerQuest.Tests
 {
     /// <summary>
-    /// Design-review (2026-06-16): the scene subject is drawn from shape
-    /// primitives. These verify a Mount produces a named, visible creature and
-    /// that each subject kind composes without error.
+    /// Design-review (2026-06-16, art pass): the scene subject now mounts curated
+    /// Kenney art routed through AssetCatalog (npc.subject_*), not flat shape
+    /// primitives. These verify a Mount produces a named, visible, size-normalized
+    /// sprite and that every subject kind resolves a cataloged sprite.
     /// </summary>
     public class StationSubjectViewPlayModeTests
     {
@@ -33,7 +34,7 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
-        public IEnumerator MountBuildsANamedVisibleCreature()
+        public IEnumerator MountBuildsANamedVisibleSubject()
         {
             var root = StationSubjectView.Mount(
                 _parent.transform,
@@ -46,10 +47,14 @@ namespace CareerQuest.Tests
             Assert.That(root.name, Is.EqualTo(StationSubjectView.RootName));
             Assert.That(root.transform.parent, Is.EqualTo(_parent.transform));
 
-            // The creature is actually drawn (multiple sprite parts incl. a body).
+            // The subject is drawn: a shadow + the body sprite, and the body
+            // carries an actual sprite (the curated art, not a null renderer).
             var sprites = root.GetComponentsInChildren<SpriteRenderer>();
-            Assert.That(sprites.Length, Is.GreaterThanOrEqualTo(6), "subject should be composed of several shape parts");
-            Assert.That(sprites.Any(s => s.gameObject.name == StationSubjectView.BodyName), Is.True, "subject needs a body");
+            Assert.That(sprites.Length, Is.GreaterThanOrEqualTo(2), "subject needs a shadow and a body sprite");
+
+            var bodyRenderer = sprites.FirstOrDefault(s => s.gameObject.name == StationSubjectView.BodyName);
+            Assert.That(bodyRenderer, Is.Not.Null, "subject needs a body");
+            Assert.That(bodyRenderer.sprite, Is.Not.Null, "subject body needs a sprite");
 
             // The kid-facing name is shown.
             var label = root.GetComponentsInChildren<TextMeshPro>()
@@ -61,10 +66,13 @@ namespace CareerQuest.Tests
         }
 
         [UnityTest]
-        public IEnumerator EverySubjectKindComposesWithoutError()
+        public IEnumerator EverySubjectKindResolvesCuratedArt()
         {
             foreach (StationSubjectKind kind in System.Enum.GetValues(typeof(StationSubjectKind)))
             {
+                var id = StationSubjectView.CatalogId(kind);
+                Assert.That(AssetCatalog.TryGetDefinition(id, out _), Is.True, $"{kind} -> {id} must be cataloged");
+
                 var root = StationSubjectView.Mount(
                     _parent.transform,
                     kind,
@@ -72,7 +80,11 @@ namespace CareerQuest.Tests
                     Color.cyan,
                     Vector3.zero);
                 Assert.That(root, Is.Not.Null, kind.ToString());
-                Assert.That(root.GetComponentsInChildren<SpriteRenderer>().Length, Is.GreaterThan(3), kind.ToString());
+
+                var body = root.GetComponentsInChildren<SpriteRenderer>()
+                    .FirstOrDefault(s => s.gameObject.name == StationSubjectView.BodyName);
+                Assert.That(body, Is.Not.Null, kind.ToString());
+                Assert.That(body.sprite, Is.Not.Null, kind.ToString());
                 Object.DestroyImmediate(root);
             }
 
