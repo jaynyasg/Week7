@@ -160,14 +160,19 @@ namespace CareerQuest
                 ? (Vector2)host.sprite.bounds.extents
                 : new Vector2(0.9f, 1.2f);
 
+            // Design-review (2026-06-16): the Kenney Toon avatars carry ~27% transparent
+            // padding above the head (measured: head-top ~0.48*extents.y, feet ~ -0.98),
+            // so the old Head=0.78 / Face=0.42 fractions floated hats/goggles in that
+            // empty space. Recalibrated onto the visible body (crown ~0.40, face ~0.27,
+            // chest ~ -0.03); per-accessory LocalOffset still fine-tunes on top.
             var anchor = accessory.Slot switch
             {
-                AccessorySlot.Head => new Vector2(0f, extents.y * 0.78f),
-                AccessorySlot.Face => new Vector2(extents.x * 0.2f, extents.y * 0.42f),
-                AccessorySlot.Torso => new Vector2(0f, extents.y * 0.02f),
-                AccessorySlot.Back => new Vector2(-extents.x * 0.38f, extents.y * 0.2f),
-                AccessorySlot.Hand => new Vector2(extents.x * 0.52f, -extents.y * 0.28f),
-                _ => new Vector2(extents.x * 0.06f, extents.y * 0.14f) // Sash
+                AccessorySlot.Head => new Vector2(0f, extents.y * 0.40f),
+                AccessorySlot.Face => new Vector2(0f, extents.y * 0.27f),
+                AccessorySlot.Torso => new Vector2(0f, -extents.y * 0.03f),
+                AccessorySlot.Back => new Vector2(0f, -extents.y * 0.05f),
+                AccessorySlot.Hand => new Vector2(extents.x * 0.42f, -extents.y * 0.10f),
+                _ => new Vector2(0f, -extents.y * 0.05f) // Sash
             };
 
             anchor += accessory.LocalOffset;
@@ -232,3 +237,4 @@ namespace CareerQuest
         }
     }
 }
+
