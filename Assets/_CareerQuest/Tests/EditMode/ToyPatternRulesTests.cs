@@ -111,7 +111,7 @@ namespace CareerQuest.Tests
             var rules = RulesFor(CareerQuestCatalog.AiLabId);
 
             Assert.That(rules.DraggableObjectIds,
-                Is.EquivalentTo(new[] { "size_rule", "loud_rule", "random_rule" }));
+                Is.EquivalentTo(new[] { "size_rule", "loud_rule", "random_rule", "shape_rule" }));
             Assert.That(rules.ExpectedTargetFor("size_rule"),
                 Is.EqualTo(ToyPatternRules.CrossTargetPrefix + "size_rule"));
             Assert.That(rules.ExpectedTargetFor("color_rule"), Is.Null,
@@ -123,6 +123,7 @@ namespace CareerQuest.Tests
 
             Assert.That(rules.Submit(new ToyAction("random_rule", rules.ExpectedTargetFor("random_rule"))).IsAccepted, Is.True);
             Assert.That(rules.Submit(new ToyAction("size_rule", rules.ExpectedTargetFor("size_rule"))).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("shape_rule", rules.ExpectedTargetFor("shape_rule"))).IsAccepted, Is.True);
             Assert.That(rules.Complete, Is.False, "One wrong rule still stands.");
             Assert.That(rules.Submit(new ToyAction("loud_rule", rules.ExpectedTargetFor("loud_rule"))).StationCompleted, Is.True);
 

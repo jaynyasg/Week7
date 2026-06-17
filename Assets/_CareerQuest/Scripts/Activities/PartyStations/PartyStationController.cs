@@ -747,12 +747,17 @@ namespace CareerQuest
 
             var pieceCount = trayCount;
             var targetCount = rules.TargetIds.Count;
+
+            // Difficulty: scramble the tray order so the toys never line up in the
+            // order you need them. Toys are matched by id, so tray position is
+            // purely cosmetic (local; never networked).
+            var trayOrder = ContentShuffle.DeriveOrder(UnityEngine.Random.Range(1, int.MaxValue), pieceCount);
             _kit.Mount(
                 worldRoot,
                 _pattern,
                 this,
                 spriteFor: PartyStationRenderer.ResolveToySprite,
-                trayPositionFor: index => PartyStationRenderer.TrayPosition(index, pieceCount),
+                trayPositionFor: index => PartyStationRenderer.TrayPosition(trayOrder[index], pieceCount),
                 targetPositionFor: index => PartyStationRenderer.TargetPosition(index, targetCount));
             PartyStationRenderer.DecoratePlayfield(_kit, rules, _accent);
 

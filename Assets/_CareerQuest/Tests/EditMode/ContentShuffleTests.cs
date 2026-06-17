@@ -65,5 +65,31 @@ namespace CareerQuest.Tests
             Assert.That(ContentShuffle.NextSeed(5, 1), Is.Not.Zero);
             Assert.That(ContentShuffle.NextSeed(0, 0), Is.Not.Zero);
         }
+
+        [Test]
+        public void DerivedDerangementNeverLeavesAnItemInItsHomeSlot()
+        {
+            // Difficulty contract: a deranged order is still a complete
+            // permutation, but no element keeps its own index (so a Design Build
+            // piece is never the tray slot directly under its matching lot).
+            foreach (var seed in new[] { 0, 1, 7, 42, 99, 123456, int.MaxValue - 1 })
+            {
+                foreach (var count in new[] { 2, 3, 4, 5, 6 })
+                {
+                    var order = ContentShuffle.DeriveDerangement(seed, count);
+                    Assert.That(order.OrderBy(value => value), Is.EqualTo(Enumerable.Range(0, count)),
+                        $"seed {seed}, count {count} must still permute every index once");
+                    for (var i = 0; i < count; i++)
+                    {
+                        Assert.That(order[i], Is.Not.EqualTo(i),
+                            $"seed {seed}, count {count}: index {i} stayed in its home slot");
+                    }
+                }
+            }
+
+            // Degenerate domains cannot be deranged and are returned unchanged.
+            Assert.That(ContentShuffle.DeriveDerangement(7, 1), Is.EqualTo(new[] { 0 }));
+            Assert.That(ContentShuffle.DeriveDerangement(7, 0), Is.Empty);
+        }
     }
 }

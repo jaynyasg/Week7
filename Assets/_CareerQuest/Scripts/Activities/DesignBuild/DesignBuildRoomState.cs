@@ -30,9 +30,18 @@ namespace CareerQuest
         /// <summary>Last shared attempt number this room state was synced against (2P).</summary>
         public int SyncedAttemptNumber { get; set; } = 1;
 
+        /// <summary>
+        /// Local seed for the tray derangement: each fresh attempt reshuffles
+        /// which tray slot every city piece rests in, so a piece is never sitting
+        /// in the slot directly under its matching lot. Tray order is cosmetic and
+        /// id-matched, so this stays local (never networked).
+        /// </summary>
+        public int TrayShuffleSeed { get; private set; }
+
         public void ResetForAttempt()
         {
             Blueprint = FutureCityBlueprint.CreateDefault();
+            TrayShuffleSeed = ContentShuffle.NextSeed(TrayShuffleSeed, Blueprint.Pieces.Count);
             AcceptedPlacements = 0;
             Feedback = DefaultFeedback;
             ResultEmitted = false;

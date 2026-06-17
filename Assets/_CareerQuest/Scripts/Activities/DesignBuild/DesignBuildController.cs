@@ -423,17 +423,23 @@ namespace CareerQuest
             _renderedAccepted.Clear();
 
             var pieces = _state.Blueprint.Pieces;
+
+            // Difficulty: derange the tray so a piece never rests in the tray slot
+            // directly under its matching lot. The lots stay fixed at
+            // SlotPosition(i); only the tray order is shuffled (cosmetic, id-matched).
+            var trayOrder = ContentShuffle.DeriveDerangement(_state.TrayShuffleSeed, pieces.Count);
             for (var i = 0; i < pieces.Count; i++)
             {
                 var pieceId = pieces[i].Id;
+                var traySlot = trayOrder[i];
                 var slotPosition = ToyInteractionKit.AnchorPosition(
                     worldRoot,
                     DesignBuildStudioLayout.SlotAnchorPrefix + pieceId,
                     DesignBuildStudioLayout.SlotPosition(i));
                 var trayPosition = ToyInteractionKit.AnchorPosition(
                     worldRoot,
-                    DesignBuildStudioLayout.TrayAnchorPrefix + i,
-                    DesignBuildStudioLayout.TrayPosition(i));
+                    DesignBuildStudioLayout.TrayAnchorPrefix + traySlot,
+                    DesignBuildStudioLayout.TrayPosition(traySlot));
 
                 var zoneObject = new GameObject($"DropZone_{pieceId}", typeof(BoxCollider2D), typeof(DropZone));
                 zoneObject.transform.SetParent(playfield, false);

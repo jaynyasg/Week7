@@ -40,6 +40,35 @@ namespace CareerQuest
         }
 
         /// <summary>
+        /// Like <see cref="DeriveOrder"/> but guarantees a derangement when
+        /// <paramref name="count"/> is >= 2: no element keeps its home index
+        /// (order[i] != i for every i). Use this where an item resting in its
+        /// own "answer" position would give the puzzle away (e.g. a Design Build
+        /// piece must never sit in the tray slot directly under its matching
+        /// lot). A single item (or none) cannot be deranged, so it is returned
+        /// unchanged.
+        /// </summary>
+        public static int[] DeriveDerangement(int seed, int count)
+        {
+            var order = DeriveOrder(seed, count);
+
+            // Repair any fixed point by swapping it with its neighbour. Swapping
+            // order[i]==i with order[j] (j != i) can never re-fix i (no other
+            // slot holds value i) nor fix j (it receives i != j), so one pass
+            // clears every fixed point without creating new ones.
+            for (var i = 0; i < order.Length; i++)
+            {
+                if (order[i] == i)
+                {
+                    var j = i == order.Length - 1 ? 0 : i + 1;
+                    (order[i], order[j]) = (order[j], order[i]);
+                }
+            }
+
+            return order;
+        }
+
+        /// <summary>
         /// A fresh non-zero seed whose derived order differs from the previous
         /// seed's order (count permitting — a single-item order can never differ).
         /// </summary>

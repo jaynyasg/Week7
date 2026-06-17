@@ -141,7 +141,10 @@ namespace CareerQuest.Tests
 
                     Assert.That(CountActive(ToyInteractionKit.DefaultPlayfieldName), Is.EqualTo(1), $"{stationId} cycle {cycle}");
                     Assert.That(CountActive(PartyStationRenderer.SetRootName), Is.EqualTo(1), $"{stationId} cycle {cycle}");
-                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                    // Count inactive too: verb stations (RhythmTap/Pour/Wire/Scan)
+                    // hide their tray pieces, so an active-only scan would read 0
+                    // and miss leaked-but-hidden pieces across churn cycles.
+                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                         Is.EqualTo(pieceCount), $"{stationId} cycle {cycle}: pieces never accumulate");
                     Assert.That(Object.FindObjectsByType<StationMeterWidget>(FindObjectsSortMode.None).Length,
                         Is.EqualTo(meterCount), $"{stationId} cycle {cycle}: one widget per meter zone");
@@ -150,7 +153,7 @@ namespace CareerQuest.Tests
                     yield return null;
                     yield return null; // deferred Destroy of the cleared world/UI
 
-                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsSortMode.None).Length,
+                    Assert.That(Object.FindObjectsByType<DraggablePiece>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                         Is.EqualTo(0), $"{stationId} cycle {cycle}: no orphaned drag pieces");
                     Assert.That(Object.FindObjectsByType<StationMeterWidget>(FindObjectsSortMode.None).Length,
                         Is.EqualTo(0), $"{stationId} cycle {cycle}: no orphaned meter widgets");

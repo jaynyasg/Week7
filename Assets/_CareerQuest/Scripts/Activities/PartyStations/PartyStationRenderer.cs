@@ -528,6 +528,10 @@ namespace CareerQuest
                 }
             }
 
+            // Difficulty: shuffle the candidate cards so the right answer never
+            // sits in the same spot from one play to the next.
+            ShuffleInPlace(candidates);
+
             var count = candidates.Count;
             if (count == 0)
             {
@@ -792,7 +796,9 @@ namespace CareerQuest
                 return;
             }
 
-            var order = rules.DraggableObjectIds;
+            // Difficulty: scramble node positions so wired partners are not handed
+            // to the player as neighbours (wiring is by id, so position is cosmetic).
+            var order = ShuffleToList(rules.DraggableObjectIds);
             var count = order.Count;
             if (count == 0)
             {
@@ -863,7 +869,9 @@ namespace CareerQuest
                 return;
             }
 
-            var order = rules.DraggableObjectIds;
+            // Difficulty: scramble where each hidden item sits so the scan isn't
+            // a fixed left-to-right sweep (items confirm by id, so this is cosmetic).
+            var order = ShuffleToList(rules.DraggableObjectIds);
             var count = order.Count;
             if (count == 0)
             {
@@ -1033,6 +1041,33 @@ namespace CareerQuest
             var safeCount = Mathf.Max(1, count);
             var x = (index - (safeCount - 1) * 0.5f) * spacing;
             return new Vector3(x, y, 0f);
+        }
+
+        /// <summary>
+        /// Difficulty: reorder a board's items so the answer/choices never land in
+        /// a predictable spot from one play to the next. Item identity is matched
+        /// by id, so shuffling only moves where each item is drawn.
+        /// </summary>
+        private static void ShuffleInPlace<T>(System.Collections.Generic.IList<T> items)
+        {
+            if (items == null || items.Count < 2)
+            {
+                return;
+            }
+
+            var order = ContentShuffle.DeriveOrder(UnityEngine.Random.Range(1, int.MaxValue), items.Count);
+            var copy = new System.Collections.Generic.List<T>(items);
+            for (var i = 0; i < items.Count; i++)
+            {
+                items[i] = copy[order[i]];
+            }
+        }
+
+        private static System.Collections.Generic.List<string> ShuffleToList(System.Collections.Generic.IReadOnlyList<string> items)
+        {
+            var copy = new System.Collections.Generic.List<string>(items);
+            ShuffleInPlace(copy);
+            return copy;
         }
 
         internal static void AddShape(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Color color, int sortingOrder)

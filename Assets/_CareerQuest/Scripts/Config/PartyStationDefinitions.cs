@@ -133,6 +133,7 @@ namespace CareerQuest
                     Obj(id, "size_rule", "Size Rule", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
                     Obj(id, "loud_rule", "Loud Rule", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
                     Obj(id, "random_rule", "Random Rule", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
+                    Obj(id, "shape_rule", "Shape Rule", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
                     Obj(id, "color_rule", "Color Rule", PartyStationObjectRole.Clue, "", "react.glow", "Science"),
                     Obj(id, "test_button", "Test Button", PartyStationObjectRole.Reaction, "color_rule", "react.sparkle")
                 },
@@ -177,6 +178,7 @@ namespace CareerQuest
                             Obj(id, "speed_rule", "Speed Rule", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
                             Obj(id, "guess_rule", "Guess Rule", PartyStationObjectRole.CoreTask, "", "react.wobble", "Reasoning"),
                             Obj(id, "shape_rule", "Shape Rule", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                            Obj(id, "loud_rule", "Loud Rule", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
                             Obj(id, "stripe_rule", "Stripe Rule", PartyStationObjectRole.Clue, "", "react.glow", "Focus"),
                             Obj(id, "launch_check", "Launch Check", PartyStationObjectRole.Reaction, "stripe_rule", "react.cheer")
                         },
