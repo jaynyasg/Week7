@@ -1,6 +1,6 @@
 # Brainlift — Career Quest Campus
 
-A daily build log for the rubric's learning/process requirement: **what shipped each day, and which AI prompts/skills helped.** Career Quest Campus is a kid-facing, multiplayer Unity game where a child explores a handmade "Future Workshop" campus, plays short career mini-games (each a distinct verb), earns badges and a Career DNA reveal. Built 2026-06-08 → 2026-06-15.
+A daily build log for the rubric's learning/process requirement: **what shipped each day, and which AI prompts/skills helped.** Career Quest Campus is a kid-facing, multiplayer Unity game where a child explores a handmade "Future Workshop" campus, plays short career mini-games (each a distinct verb), earns badges and a Career DNA reveal. Built 2026-06-08 → 2026-06-17.
 
 Stack: Unity `6000.4.10f1`, C#, Netcode for GameObjects + Unity Transport, Windows-first. All art is procedurally generated in-editor (Kenney CC0 + code-drawn sprites) — no hand-authored scene.
 
@@ -57,6 +57,14 @@ AI: `/design-review` (verb rollout); `/gauntlet-submit` discipline → `docs/qa/
 ### 2026-06-15 — Toy art + campus polish + compounding
 Shipped: Kenney-soft per-station toy art for all ten stations (parallel session); verb-aware instruction strip (the HUD now names trace/shoot/deduce); six "Soon" construction-scaffold stations turned into real enterable buildings; Quest Yard de-cluttered to one name per door. Gate green (EditMode 241/241, PlayMode 233/233). Documented the core lesson into `docs/solutions/`.
 AI: `/design-review` (caught "I don't see the new toys / ways to solve / it's clunky") drove the four fixes, each verified with before/after `-cq-visual-state` screenshots; `/ce-sessions` mined the 06-13 session; `/ce-compound` wrote `docs/solutions/design-patterns/data-display-seams-invisible-content-2026-06-15.md`.
+
+### 2026-06-16 — De-compact the campus + four more verbs + scene subjects
+Shipped (19 commits): repo documentation gate for the Game Week rubric; a bigger, spread-out campus — color-coded district roads, glowing doormats at every door, Tech Lane & Story Street spread into tall reachable triangles, Care Corner raised above the HUD strip, calmer central roads; final station art for the 6 net-new Party Pack stations plus Kenney-art "scene subjects" (the creature each mini-game's copy names) tucked inside the room panels; readable building entrances that stop accidental entry; avatar accessories anchored to the visible body (not the padding) and gear kept attached through the reveal celebrate jump; robotics launch parts made grabbable. Then **four more distinct verbs** beyond the first three — RhythmTap, PourToLine, WireUp, ScanReveal — each with its own input component (beat / pour / wire / scan).
+AI: `/design-review` drove the campus de-compacting and entrance-readability passes (before/after `-cq-visual-state` frames); the new verbs continued the "variety lives in the verb" thread from 06-13.
+
+### 2026-06-17 — Difficulty tuning + campus scale + design-review polish
+Shipped (4 commits): mini-games made less obvious — Future City tray deranged so no piece sits in the slot under its matching lot, party-station trays + AI Lab deduction cards + Spaceport/Newsroom boards shuffled, and an extra distractor rule added to each AI Lab seed (`ContentShuffle.DeriveDerangement` + tests). Campus scaled down (buildings −10%, player character −20%) with the character raised above the door labels so it reads in front. A `/design-review` pass then fixed three player-reported issues — the bottom instruction strip lowered off the Care Corner door labels, the Music tempo dial moved off the center beat pad, and both characters spawned on the central plaza — plus a toy-art bug where the Rain Shaker beat showed a warning icon instead of a music note (the art builder matched "rain" to the weather glyph group).
+AI: `/design-review` (user-invoked) drove the three layout fixes and surfaced the Rain Shaker art bug, each verified with before/after `-cq-visual-state` captures; EditMode 250/250 + PlayMode 235/235 green throughout.
 
 ## Key learnings (the spiky bits)
 
