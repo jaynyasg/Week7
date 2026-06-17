@@ -48,6 +48,8 @@ namespace CareerQuest
             PassportPage.Results
         };
 
+        private const float BadgeGearGridStartY = 116f;
+
         // U11 (Gate B simplify Finding 4): locked-slot colors moved to the shared
         // QuestStageUi tokens (they were identical here and in the gallery).
 
@@ -177,7 +179,7 @@ namespace CareerQuest
             var entries = CareerQuestCatalog.AllWithPartyStations.ToList();
             var columns = 5;
             var startX = -340f;
-            var startY = 150f;
+            var startY = BadgeGearGridStartY;
             var stepX = 170f;
             var stepY = -132f;
 
@@ -261,7 +263,7 @@ namespace CareerQuest
 
             var columns = 5;
             var startX = -340f;
-            var startY = 150f;
+            var startY = BadgeGearGridStartY;
             var stepX = 170f;
             var stepY = -132f;
             for (var i = 0; i < distinct.Count; i++)

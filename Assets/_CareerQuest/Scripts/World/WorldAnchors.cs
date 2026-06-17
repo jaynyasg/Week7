@@ -108,8 +108,16 @@ namespace CareerQuest
         /// </summary>
         public static readonly Rect FallbackWalkBounds = new(-7.3f, -3.3f, 14.6f, 5.6f);
 
-        public static readonly Vector2 FallbackPlayerSpawn = new(0f, -0.55f);
-        public static readonly Vector2 FallbackGuideSpawn = new(0.9f, -0.55f);
+        // Design-review (2026-06-17): start the player left of the central plaza
+        // so the avatar does not cover the Care Corner district sign. Keep x
+        // just right of the Health Hero/Design Build nearest-door boundary so
+        // the first-run guide still points kids to Health Hero.
+        public static readonly Vector2 FallbackPlayerSpawn = new(-0.8f, -0.55f);
+
+        // The guide robot sits above the Weather Lab roofline instead of on top
+        // of the building art, while still staying close enough to the player
+        // for the speech bubble to read as guidance.
+        public static readonly Vector2 FallbackGuideSpawn = new(0.9f, -0.25f);
 
         private static string _prefabResourcePathOverride;
         private static WorldAnchors _assetAnchors;

@@ -184,7 +184,7 @@ namespace CareerQuest
                 AccessorySlot.Face => new Vector2(0f, extents.y * 0.27f),
                 AccessorySlot.Torso => new Vector2(0f, -extents.y * 0.03f),
                 AccessorySlot.Back => new Vector2(0f, -extents.y * 0.05f),
-                AccessorySlot.Hand => new Vector2(extents.x * 0.42f, -extents.y * 0.10f),
+                AccessorySlot.Hand => new Vector2(extents.x * 0.54f, -extents.y * 0.32f),
                 _ => new Vector2(0f, -extents.y * 0.05f) // Sash
             };
 
