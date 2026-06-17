@@ -108,8 +108,8 @@ namespace CareerQuest
         /// </summary>
         public static readonly Rect FallbackWalkBounds = new(-7.3f, -3.3f, 14.6f, 5.6f);
 
-        public static readonly Vector2 FallbackPlayerSpawn = new(0f, -1.1f);
-        public static readonly Vector2 FallbackGuideSpawn = new(1.5f, -1.1f);
+        public static readonly Vector2 FallbackPlayerSpawn = new(0f, -0.55f);
+        public static readonly Vector2 FallbackGuideSpawn = new(0.9f, -0.55f);
 
         private static string _prefabResourcePathOverride;
         private static WorldAnchors _assetAnchors;

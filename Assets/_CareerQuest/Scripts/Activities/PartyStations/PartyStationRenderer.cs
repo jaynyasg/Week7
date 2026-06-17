@@ -649,6 +649,18 @@ namespace CareerQuest
                 beatZone.transform.localPosition = new Vector3(0f, 0.35f, 0f);
             }
 
+            // Park the tempo dial below the beat bar so it never overlaps a beat
+            // pad. It sat at the target band (~0.85, 0.55) before, right on top of
+            // the center pad, burying that beat behind the dial + keyboard.
+            foreach (var meterId in rules.MeterObjectIds)
+            {
+                var meterZone = kit.ZoneFor(ToyPatternRules.MeterTargetPrefix + meterId);
+                if (meterZone != null)
+                {
+                    meterZone.transform.localPosition = new Vector3(0f, -1.2f, 0f);
+                }
+            }
+
             var boardRoot = new GameObject(RhythmBoardName).transform;
             boardRoot.SetParent(kit.Root, false);
 

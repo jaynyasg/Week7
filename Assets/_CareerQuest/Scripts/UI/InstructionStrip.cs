@@ -104,10 +104,10 @@ namespace CareerQuest
         public static TextMeshProUGUI Build(Transform parent, GameSession session, string stationId = null)
         {
             var panel = UiBuilder.InstructionStripPanel(parent, PanelName, Paper, TealAccent);
-            UiBuilder.Place(panel, 0f, -305f, 1120f, 64f);
+            UiBuilder.Place(panel, 0f, -325f, 1120f, 44f);
 
             var label = UiBuilder.Text(panel, LabelName, ResolveMessage(session, stationId), 20, TextAnchor.MiddleCenter, Ink, TypeRole.Body, TypeWeight.Medium);
-            UiBuilder.Place(label.rectTransform, 0f, 0f, 1040f, 48f);
+            UiBuilder.Place(label.rectTransform, 0f, 0f, 1040f, 38f);
 
             // Long kid-facing strings must wrap or shrink instead of overflowing the strip.
             label.textWrappingMode = TextWrappingModes.Normal;
