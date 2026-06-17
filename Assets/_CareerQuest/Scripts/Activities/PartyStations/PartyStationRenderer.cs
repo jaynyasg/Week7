@@ -35,6 +35,19 @@ namespace CareerQuest
         public const string DeduceBoardName = "StationDeduceBoard";
         public const string DeduceCardName = "StationDeduceCard";
         public const string DeduceClueName = "StationDeduceClue";
+        public const string RhythmBoardName = "StationRhythmBoard";
+        public const string RhythmBannerName = "StationRhythmBanner";
+        public const string BeatBarName = "StationBeatBar";
+        public const string BeatPadName = "StationBeatPad";
+        public const string PourBoardName = "StationPourBoard";
+        public const string PourBannerName = "StationPourBanner";
+        public const string PourCupName = "StationPourCup";
+        public const string WireBoardName = "StationWireBoard";
+        public const string WireBannerName = "StationWireBanner";
+        public const string WireNodeName = "StationWireNode";
+        public const string ScanBoardName = "StationScanBoard";
+        public const string ScanBannerName = "StationScanBanner";
+        public const string ScanItemName = "StationScanItem";
 
         /// <summary>Optional poke-toys render at this alpha so the actionable set stands out.</summary>
         public const float OptionalToyAlpha = 0.45f;
@@ -583,6 +596,326 @@ namespace CareerQuest
                 var localId = objectId;
                 var candidate = card.AddComponent<StationCandidate>();
                 candidate.Configure(localId, accent, cardSize, () => submitCandidate(localId));
+            }
+        }
+
+        /// <summary>
+        /// Verb diversity (RhythmTap): lays the beat pads in a row on a rhythm
+        /// bar, hides the (unused) tray pieces, parks the shared beat zone under
+        /// the bar, and makes each pad a tap target over the SAME drop seam. The
+        /// player taps the glowing beats (any order); the tempo meter dial rides
+        /// its own zone widget and gates completion. Pointer-first, motion cue
+        /// (the pads pulse), no harsh fail (R19). Pads ride their own objects
+        /// under the kit root, so kit teardown still owns them.
+        /// </summary>
+        public static void MountRhythmBoard(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitBeat)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitBeat == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // RhythmTap taps the beat pads; the tray pieces are not dragged. Hide
+            // every kit piece so only the beat pads are interactable (the tempo
+            // meter dial rides its own zone widget, mounted separately).
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            // Park the shared beat zone under the bar so its drop seam + label
+            // stay intact without floating a stray pad elsewhere.
+            var beatZone = kit.ZoneFor(ToyPatternRules.BeatTargetId);
+            if (beatZone != null)
+            {
+                beatZone.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+            }
+
+            var boardRoot = new GameObject(RhythmBoardName).transform;
+            boardRoot.SetParent(kit.Root, false);
+
+            AddWorldLabel(boardRoot, RhythmBannerName, "Tap each beat!", new Vector3(0f, 2.0f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+
+            var bar = new GameObject(BeatBarName, typeof(SpriteRenderer));
+            bar.transform.SetParent(boardRoot, false);
+            bar.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+            bar.transform.localScale = new Vector3(7.2f, 0.16f, 1f);
+            var barRenderer = bar.GetComponent<SpriteRenderer>();
+            barRenderer.sprite = CampusWorldSprites.Square;
+            var barColor = accent;
+            barColor.a = 0.4f;
+            barRenderer.color = barColor;
+            barRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 3;
+
+            var padSize = new Vector2(1.2f, 1.2f);
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.0f, 3.0f, t), 0.35f, 0f);
+
+                var pad = new GameObject($"{BeatPadName}{objectId}", typeof(BoxCollider2D));
+                pad.transform.SetParent(boardRoot, false);
+                pad.transform.localPosition = position;
+                pad.GetComponent<BoxCollider2D>().size = padSize;
+
+                var face = new GameObject("Face", typeof(SpriteRenderer));
+                face.transform.SetParent(pad.transform, false);
+                face.transform.localScale = new Vector3(padSize.x, padSize.y, 1f);
+                var faceRenderer = face.GetComponent<SpriteRenderer>();
+                var beatArt = ToyArtFor(rules, objectId);
+                faceRenderer.sprite = beatArt != null ? beatArt : CampusWorldSprites.Circle;
+                faceRenderer.color = beatArt != null ? Color.white : accent;
+                faceRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 1;
+
+                AddWorldLabel(pad.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -0.86f, 0f), 1.4f, ToyInteractionKit.ZoneSortingOrder + 2);
+
+                var localId = objectId;
+                var beatPad = pad.AddComponent<StationBeatPad>();
+                beatPad.Configure(localId, accent, () => submitBeat(localId));
+            }
+        }
+
+        /// <summary>
+        /// Verb diversity (PourToLine): replaces the pour pieces with tap-to-fill
+        /// cups, hides only the pour pieces (any serve/confirm poke stays live),
+        /// and parks the shared pour zone below. Each tap raises the cup fill;
+        /// when it lands in the green band it submits the pour through the SAME
+        /// drop seam. Overfill wraps back to empty (no harsh fail, R19).
+        /// </summary>
+        public static void MountPourLine(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitPour)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitPour == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // Hide only the pour pieces; keep any confirm/serve poke interactable.
+            var pourIds = new HashSet<string>(order);
+            foreach (var pair in kit.Pieces)
+            {
+                if (pair.Value != null && pourIds.Contains(pair.Key))
+                {
+                    pair.Value.gameObject.SetActive(false);
+                }
+            }
+
+            var pourZone = kit.ZoneFor(ToyPatternRules.PourTargetId);
+            if (pourZone != null)
+            {
+                pourZone.transform.localPosition = new Vector3(0f, -1.9f, 0f);
+            }
+
+            var boardRoot = new GameObject(PourBoardName).transform;
+            boardRoot.SetParent(kit.Root, false);
+            AddWorldLabel(boardRoot, PourBannerName, "Fill each cup to the line!", new Vector3(0f, 2.0f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+
+            var cupSize = new Vector2(1.0f, 1.6f);
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.0f, 3.0f, t), 0.2f, 0f);
+
+                var cup = new GameObject($"{PourCupName}{objectId}", typeof(BoxCollider2D));
+                cup.transform.SetParent(boardRoot, false);
+                cup.transform.localPosition = position;
+                cup.GetComponent<BoxCollider2D>().size = cupSize;
+
+                var glass = new GameObject("Glass", typeof(SpriteRenderer));
+                glass.transform.SetParent(cup.transform, false);
+                glass.transform.localScale = new Vector3(cupSize.x, cupSize.y, 1f);
+                var glassRenderer = glass.GetComponent<SpriteRenderer>();
+                glassRenderer.sprite = CampusWorldSprites.Square;
+                var glassColor = PaperColor;
+                glassColor.a = 0.5f;
+                glassRenderer.color = glassColor;
+                glassRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder;
+
+                var fill = new GameObject(StationPourCup.FillName, typeof(SpriteRenderer));
+                fill.transform.SetParent(cup.transform, false);
+                fill.transform.localScale = new Vector3(cupSize.x * 0.8f, 0.001f, 1f);
+                var fillRenderer = fill.GetComponent<SpriteRenderer>();
+                fillRenderer.sprite = CampusWorldSprites.Square;
+                fillRenderer.color = accent;
+                fillRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 1;
+
+                AddShape(cup.transform, "PourLineMark", new Vector3(0f, 0f, 0f), new Vector3(cupSize.x, 0.06f, 1f), accent, ToyInteractionKit.ZoneSortingOrder + 2);
+                AddWorldLabel(cup.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -1.05f, 0f), 1.3f, ToyInteractionKit.ZoneSortingOrder + 3);
+
+                var localId = objectId;
+                var cupComp = cup.AddComponent<StationPourCup>();
+                cupComp.Configure(localId, accent, fill.transform, () => submitPour(localId));
+            }
+        }
+
+        /// <summary>
+        /// Verb diversity (WireUp): hides the tray pieces and lays each node as a
+        /// tap-to-connect plug managed by a StationWireBoard. Tapping a node arms
+        /// it; tapping its matching partner connects the pair and submits both
+        /// nodes through the SAME drop seam (any order). A non-partner tap just
+        /// moves the selection (no harsh fail, R19).
+        /// </summary>
+        public static void MountWireBoard(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitWire)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitWire == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            var boardObject = new GameObject(WireBoardName);
+            boardObject.transform.SetParent(kit.Root, false);
+            var board = boardObject.AddComponent<StationWireBoard>();
+            AddWorldLabel(boardObject.transform, WireBannerName, "Connect each pair!", new Vector3(0f, 2.0f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+
+            var nodeSize = new Vector2(1.2f, 1.2f);
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.2f, 3.2f, t), 0.3f, 0f);
+
+                var node = new GameObject($"{WireNodeName}{objectId}", typeof(BoxCollider2D));
+                node.transform.SetParent(boardObject.transform, false);
+                node.transform.localPosition = position;
+                node.GetComponent<BoxCollider2D>().size = nodeSize;
+
+                var face = new GameObject("Face", typeof(SpriteRenderer));
+                face.transform.SetParent(node.transform, false);
+                face.transform.localScale = new Vector3(nodeSize.x, nodeSize.y, 1f);
+                var faceRenderer = face.GetComponent<SpriteRenderer>();
+                var nodeArt = ToyArtFor(rules, objectId);
+                faceRenderer.sprite = nodeArt != null ? nodeArt : CampusWorldSprites.Circle;
+                faceRenderer.color = nodeArt != null ? Color.white : accent;
+                faceRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 1;
+
+                AddWorldLabel(node.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -0.86f, 0f), 1.3f, ToyInteractionKit.ZoneSortingOrder + 2);
+
+                var expected = rules.ExpectedTargetFor(objectId);
+                var partnerId = !string.IsNullOrEmpty(expected) && expected.StartsWith(ToyPatternRules.WireTargetPrefix, System.StringComparison.Ordinal)
+                    ? expected.Substring(ToyPatternRules.WireTargetPrefix.Length)
+                    : string.Empty;
+
+                var localId = objectId;
+                var wireNode = node.AddComponent<StationWireNode>();
+                wireNode.Configure(localId, partnerId, accent, board, () => submitWire(localId));
+            }
+        }
+
+        /// <summary>
+        /// Verb diversity (ScanReveal): hides the tray pieces and lays each hidden
+        /// clue under a cover. The first tap scans/reveals it (removes the cover);
+        /// the second tap confirms it onto its reveal zone through the SAME drop
+        /// seam (any order). Nothing fails — an unrevealed item just waits.
+        /// </summary>
+        public static void MountScanBoard(
+            ToyInteractionKit kit,
+            ToyPatternRules rules,
+            Color accent,
+            Func<string, DropSubmitResult> submitReveal)
+        {
+            if (kit == null || rules == null || !kit.IsMounted || submitReveal == null)
+            {
+                return;
+            }
+
+            var order = rules.DraggableObjectIds;
+            var count = order.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            foreach (var piece in kit.Pieces.Values)
+            {
+                if (piece != null)
+                {
+                    piece.gameObject.SetActive(false);
+                }
+            }
+
+            var boardRoot = new GameObject(ScanBoardName).transform;
+            boardRoot.SetParent(kit.Root, false);
+            AddWorldLabel(boardRoot, ScanBannerName, "Scan to reveal, then tap!", new Vector3(0f, 2.0f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+
+            var itemSize = new Vector2(1.5f, 1.5f);
+            for (var i = 0; i < count; i++)
+            {
+                var objectId = order[i];
+                var t = count <= 1 ? 0.5f : i / (float)(count - 1);
+                var position = new Vector3(Mathf.Lerp(-3.2f, 3.2f, t), 0.3f, 0f);
+
+                var item = new GameObject($"{ScanItemName}{objectId}", typeof(BoxCollider2D));
+                item.transform.SetParent(boardRoot, false);
+                item.transform.localPosition = position;
+                item.GetComponent<BoxCollider2D>().size = itemSize;
+
+                var face = new GameObject("Face", typeof(SpriteRenderer));
+                face.transform.SetParent(item.transform, false);
+                face.transform.localScale = new Vector3(itemSize.x, itemSize.y, 1f);
+                var faceRenderer = face.GetComponent<SpriteRenderer>();
+                var itemArt = ToyArtFor(rules, objectId);
+                faceRenderer.sprite = itemArt != null ? itemArt : CampusWorldSprites.Circle;
+                faceRenderer.color = itemArt != null ? Color.white : accent;
+                faceRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 1;
+
+                AddWorldLabel(item.transform, TokenLabelName, ObjectDisplayName(rules, objectId), new Vector3(0f, -1.0f, 0f), 1.3f, ToyInteractionKit.ZoneSortingOrder + 2);
+
+                var cover = new GameObject(StationScanItem.CoverName, typeof(SpriteRenderer));
+                cover.transform.SetParent(item.transform, false);
+                cover.transform.localScale = new Vector3(itemSize.x + 0.1f, itemSize.y + 0.1f, 1f);
+                var coverRenderer = cover.GetComponent<SpriteRenderer>();
+                coverRenderer.sprite = CampusWorldSprites.Square;
+                coverRenderer.color = new Color(0.27f, 0.36f, 0.4f, 0.92f);
+                coverRenderer.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 4;
+
+                var localId = objectId;
+                var scanItem = item.AddComponent<StationScanItem>();
+                scanItem.Configure(localId, accent, cover, () => submitReveal(localId));
             }
         }
 
@@ -1310,6 +1643,446 @@ namespace CareerQuest
             renderer.sprite = CampusWorldSprites.Square;
             renderer.color = _accent;
             renderer.sortingOrder = sortingOrder;
+        }
+    }
+
+    /// <summary>
+    /// Verb diversity (RhythmTap): one tappable beat pad on the rhythm bar. It
+    /// pulses to the beat (motion cue) and, on tap, submits its beat through the
+    /// station drop seam (any order, shared beat target). The pointer handler is
+    /// a thin wrapper over <see cref="Tap"/>, the seam the tests drive (house
+    /// idiom, mirrors StationWaypoint.Tap()). Timing-window scoring is a later
+    /// refinement; v1 reads as "tap the glowing beats".
+    /// </summary>
+    public class StationBeatPad : MonoBehaviour, IPointerClickHandler
+    {
+        public const string PlayedMarkName = "BeatPlayedMark";
+        private const float PulseSeconds = 0.9f;
+
+        private string _objectId;
+        private Color _accent;
+        private Func<DropSubmitResult> _submit;
+        private bool _played;
+        private float _pulseElapsed;
+        private SpriteRenderer _renderer;
+
+        /// <summary>Real-time clock toggle (house idiom). Tests set false and drive Tick.</summary>
+        public bool AutoTick { get; set; } = true;
+        public string ObjectId => _objectId;
+        public bool Played => _played;
+
+        public void Configure(string objectId, Color accent, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _submit = submit;
+            _renderer = GetComponentInChildren<SpriteRenderer>();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE beat seam (pointer + tests share it). True when the beat landed.</summary>
+        public bool Tap()
+        {
+            if (_submit == null || _played)
+            {
+                return false;
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                AudioCueCatalog.TryPlay(AudioCueIds.DropReject);
+                return false;
+            }
+
+            _played = true;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            MarkPlayed();
+            return true;
+        }
+
+        public void Tick(float deltaSeconds)
+        {
+            if (_played || _renderer == null || deltaSeconds <= 0f)
+            {
+                return;
+            }
+
+            _pulseElapsed += deltaSeconds;
+            var wave = 0.5f + 0.5f * Mathf.Sin(_pulseElapsed * (2f * Mathf.PI / PulseSeconds));
+            _renderer.transform.localScale = Vector3.one * Mathf.Lerp(0.92f, 1.12f, wave);
+        }
+
+        private void Update()
+        {
+            if (AutoTick)
+            {
+                Tick(Time.deltaTime);
+            }
+        }
+
+        private void MarkPlayed()
+        {
+            if (_renderer != null)
+            {
+                _renderer.transform.localScale = Vector3.one;
+            }
+
+            var mark = new GameObject(PlayedMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            var markRenderer = mark.GetComponent<SpriteRenderer>();
+            markRenderer.sprite = CampusWorldSprites.Circle;
+            var glow = _accent;
+            glow.a = 0.6f;
+            markRenderer.color = glow;
+            markRenderer.sortingOrder = (_renderer != null ? _renderer.sortingOrder : ToyInteractionKit.ZoneSortingOrder) + 5;
+        }
+    }
+
+    /// <summary>
+    /// Verb diversity (PourToLine): a tap-to-fill cup. Each tap raises the fill;
+    /// when it lands in the green band the pour submits through the station drop
+    /// seam and locks. Overfill wraps back to empty (no harsh fail). The pointer
+    /// handler wraps <see cref="Tap"/>, the seam the tests drive.
+    /// </summary>
+    public class StationPourCup : MonoBehaviour, IPointerClickHandler
+    {
+        public const string FillName = "PourFill";
+        public const string DoneMarkName = "PourDoneMark";
+        public const int FillStep = 20;
+
+        private string _objectId;
+        private Color _accent;
+        private Func<DropSubmitResult> _submit;
+        private Transform _fillBar;
+        private int _fill;
+        private bool _poured;
+
+        public string ObjectId => _objectId;
+        public int Fill => _fill;
+        public bool Poured => _poured;
+
+        public void Configure(string objectId, Color accent, Transform fillBar, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _fillBar = fillBar;
+            _submit = submit;
+            RefreshFill();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE pour seam (pointer + tests share it). True unless the cup is locked.</summary>
+        public bool Tap()
+        {
+            if (_submit == null || _poured)
+            {
+                return false;
+            }
+
+            _fill += FillStep;
+            if (_fill > ToyPatternRules.MeterMax)
+            {
+                _fill = 0; // overfill wraps, never a fail
+            }
+
+            RefreshFill();
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+
+            if (_fill >= ToyPatternRules.MeterGreenMin && _fill <= ToyPatternRules.MeterGreenMax)
+            {
+                var result = _submit();
+                if (result == DropSubmitResult.Accepted || result == DropSubmitResult.Pending)
+                {
+                    _poured = true;
+                    MarkPoured();
+                }
+            }
+
+            return true;
+        }
+
+        private void RefreshFill()
+        {
+            if (_fillBar == null)
+            {
+                return;
+            }
+
+            var f = Mathf.Clamp01(_fill / (float)ToyPatternRules.MeterMax);
+            var scale = _fillBar.localScale;
+            _fillBar.localScale = new Vector3(scale.x, Mathf.Max(0.001f, f * 1.5f), 1f);
+        }
+
+        private void MarkPoured()
+        {
+            var mark = new GameObject(DoneMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            var r = mark.GetComponent<SpriteRenderer>();
+            r.sprite = CampusWorldSprites.Circle;
+            var glow = _accent;
+            glow.a = 0.6f;
+            r.color = glow;
+            r.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 6;
+        }
+    }
+
+    /// <summary>
+    /// Verb diversity (WireUp): coordinates tap-to-connect across the wire nodes.
+    /// Holds the currently armed node; when its partner is tapped it connects the
+    /// pair (submitting both). A non-partner tap just re-arms.
+    /// </summary>
+    public class StationWireBoard : MonoBehaviour
+    {
+        private StationWireNode _armed;
+
+        public StationWireNode Armed => _armed;
+
+        public void NodeTapped(StationWireNode node)
+        {
+            if (node == null || node.Connected)
+            {
+                return;
+            }
+
+            if (_armed == null || _armed.Connected)
+            {
+                SetArmed(node);
+                return;
+            }
+
+            if (_armed == node)
+            {
+                SetArmed(null);
+                return;
+            }
+
+            if (ArePartners(_armed, node))
+            {
+                _armed.Connect();
+                node.Connect();
+                SetArmed(null);
+            }
+            else
+            {
+                SetArmed(node);
+            }
+        }
+
+        private static bool ArePartners(StationWireNode a, StationWireNode b)
+        {
+            return a.PartnerId == b.ObjectId && b.PartnerId == a.ObjectId;
+        }
+
+        private void SetArmed(StationWireNode node)
+        {
+            if (_armed != null)
+            {
+                _armed.SetArmed(false);
+            }
+
+            _armed = node;
+            if (_armed != null)
+            {
+                _armed.SetArmed(true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Verb diversity (WireUp): one tap-to-connect node. Tapping routes to the
+    /// shared <see cref="StationWireBoard"/>; when paired, <see cref="Connect"/>
+    /// submits this node through the station drop seam. The pointer handler wraps
+    /// <see cref="Tap"/>, the seam the tests drive.
+    /// </summary>
+    public class StationWireNode : MonoBehaviour, IPointerClickHandler
+    {
+        public const string ArmRingName = "WireArmRing";
+        public const string LinkedMarkName = "WireLinkedMark";
+
+        private string _objectId;
+        private string _partnerId;
+        private Color _accent;
+        private StationWireBoard _board;
+        private Func<DropSubmitResult> _submit;
+        private bool _connected;
+        private SpriteRenderer _armRing;
+
+        public string ObjectId => _objectId;
+        public string PartnerId => _partnerId;
+        public bool Connected => _connected;
+
+        public void Configure(string objectId, string partnerId, Color accent, StationWireBoard board, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _partnerId = partnerId;
+            _accent = accent;
+            _board = board;
+            _submit = submit;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE node seam (pointer + tests share it): routes the tap to the board.</summary>
+        public void Tap()
+        {
+            if (_board != null)
+            {
+                _board.NodeTapped(this);
+            }
+        }
+
+        /// <summary>Submits this node through the drop seam. True when the rules accepted it.</summary>
+        public bool Connect()
+        {
+            if (_submit == null || _connected)
+            {
+                return false;
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                return false;
+            }
+
+            _connected = true;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            SetArmed(false);
+            MarkLinked();
+            return true;
+        }
+
+        public void SetArmed(bool armed)
+        {
+            if (armed)
+            {
+                if (_armRing == null)
+                {
+                    var ring = new GameObject(ArmRingName, typeof(SpriteRenderer));
+                    ring.transform.SetParent(transform, false);
+                    ring.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
+                    _armRing = ring.GetComponent<SpriteRenderer>();
+                    _armRing.sprite = CampusWorldSprites.Circle;
+                    var c = _accent;
+                    c.a = 0.4f;
+                    _armRing.color = c;
+                    _armRing.sortingOrder = ToyInteractionKit.ZoneSortingOrder - 1;
+                }
+
+                _armRing.enabled = true;
+            }
+            else if (_armRing != null)
+            {
+                _armRing.enabled = false;
+            }
+        }
+
+        private void MarkLinked()
+        {
+            var mark = new GameObject(LinkedMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            var r = mark.GetComponent<SpriteRenderer>();
+            r.sprite = CampusWorldSprites.Circle;
+            var glow = _accent;
+            glow.a = 0.6f;
+            r.color = glow;
+            r.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 6;
+        }
+    }
+
+    /// <summary>
+    /// Verb diversity (ScanReveal): one hidden clue under a cover. The first tap
+    /// scans/reveals it (removes the cover); the second tap confirms it onto its
+    /// reveal zone through the station drop seam. The pointer handler wraps
+    /// <see cref="Tap"/>, the seam the tests drive.
+    /// </summary>
+    public class StationScanItem : MonoBehaviour, IPointerClickHandler
+    {
+        public const string CoverName = "ScanCover";
+        public const string FoundMarkName = "ScanFoundMark";
+
+        private string _objectId;
+        private Color _accent;
+        private Func<DropSubmitResult> _submit;
+        private GameObject _cover;
+        private bool _revealed;
+        private bool _confirmed;
+
+        public string ObjectId => _objectId;
+        public bool Revealed => _revealed;
+        public bool Confirmed => _confirmed;
+
+        public void Configure(string objectId, Color accent, GameObject cover, Func<DropSubmitResult> submit)
+        {
+            _objectId = objectId;
+            _accent = accent;
+            _cover = cover;
+            _submit = submit;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            Tap();
+        }
+
+        /// <summary>THE scan seam (pointer + tests share it): first tap reveals, second confirms.</summary>
+        public bool Tap()
+        {
+            if (_submit == null || _confirmed)
+            {
+                return false;
+            }
+
+            if (!_revealed)
+            {
+                _revealed = true;
+                if (_cover != null)
+                {
+                    _cover.SetActive(false);
+                }
+
+                AudioCueCatalog.TryPlay(AudioCueIds.DragPickup);
+                return true;
+            }
+
+            var result = _submit();
+            if (result != DropSubmitResult.Accepted && result != DropSubmitResult.Pending)
+            {
+                return false;
+            }
+
+            _confirmed = true;
+            AudioCueCatalog.TryPlay(AudioCueIds.ToyBell);
+            MarkFound();
+            return true;
+        }
+
+        private void MarkFound()
+        {
+            var mark = new GameObject(FoundMarkName, typeof(SpriteRenderer));
+            mark.transform.SetParent(transform, false);
+            mark.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+            var r = mark.GetComponent<SpriteRenderer>();
+            r.sprite = CampusWorldSprites.Circle;
+            var glow = _accent;
+            glow.a = 0.6f;
+            r.color = glow;
+            r.sortingOrder = ToyInteractionKit.ZoneSortingOrder + 6;
         }
     }
 }

@@ -804,6 +804,50 @@ namespace CareerQuest
                     candidateId => TrySubmitDrop(candidateId, ToyPatternRules.CrossTargetPrefix + candidateId, 0));
             }
 
+            // Verb diversity (RhythmTap): tap the beat pads on the rhythm bar over
+            // the SAME drop seam (beats not dragged); the tempo meter dial gates
+            // completion via its own widget.
+            if (rules.Pattern == ToyPatternId.RhythmTap)
+            {
+                PartyStationRenderer.MountRhythmBoard(
+                    _kit,
+                    rules,
+                    _accent,
+                    beatId => TrySubmitDrop(beatId, ToyPatternRules.BeatTargetId, 0));
+            }
+
+            // Verb diversity (PourToLine): tap-to-fill cups over the SAME drop seam.
+            if (rules.Pattern == ToyPatternId.PourToLine)
+            {
+                PartyStationRenderer.MountPourLine(
+                    _kit,
+                    rules,
+                    _accent,
+                    pourId => TrySubmitDrop(pourId, ToyPatternRules.PourTargetId, 0));
+            }
+
+            // Verb diversity (WireUp): tap-to-connect node pairs over the SAME drop
+            // seam (each node submits onto its partner's wire zone).
+            if (rules.Pattern == ToyPatternId.WireUp)
+            {
+                PartyStationRenderer.MountWireBoard(
+                    _kit,
+                    rules,
+                    _accent,
+                    nodeId => TrySubmitDrop(nodeId, rules.ExpectedTargetFor(nodeId), 0));
+            }
+
+            // Verb diversity (ScanReveal): scan-then-tap hidden clues over the SAME
+            // drop seam (each item confirms onto its own reveal zone).
+            if (rules.Pattern == ToyPatternId.ScanReveal)
+            {
+                PartyStationRenderer.MountScanBoard(
+                    _kit,
+                    rules,
+                    _accent,
+                    itemId => TrySubmitDrop(itemId, rules.ExpectedTargetFor(itemId), 0));
+            }
+
             // Design-review (2026-06-16): draw the scene subject the seed copy
             // names (the dragon, the sleepy robot, the guest) above the toys, so
             // "help the dragon" actually shows a dragon. Top-center for the

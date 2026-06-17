@@ -153,17 +153,14 @@ namespace CareerQuest.Tests
             app.ShowPartyStation(CareerQuestCatalog.MusicStudioId);
             yield return MountFrames();
 
-            // Pointer path one: drag every sound layer onto the mix spot
-            // through the drag shell's programmatic seam (the exact code path
-            // the pointer handlers wrap).
-            var composeZone = controller.ZoneFor(ToyPatternRules.BeatTargetId);
-            Assert.That(composeZone, Is.Not.Null);
+            // Pointer path one: tap each beat pad on the rhythm bar (RhythmTap
+            // hides the tray pieces; the beats are tapped, not dragged).
+            var beatPads = Object.FindObjectsByType<StationBeatPad>(FindObjectsSortMode.None);
             foreach (var layerId in new[] { "drum_cloud", "rain_shaker", "horn_burst" })
             {
-                var piece = controller.PieceFor(layerId);
-                Assert.That(piece.BeginDragProgrammatic(), Is.True, layerId);
-                piece.DragTo(composeZone.transform.position);
-                piece.EndDragAt(composeZone.transform.position);
+                var pad = System.Array.Find(beatPads, candidate => candidate.ObjectId == layerId);
+                Assert.That(pad, Is.Not.Null, layerId);
+                Assert.That(pad.Tap(), Is.True, layerId);
                 Assert.That(controller.IsToyAccepted(layerId), Is.True, layerId);
             }
 
