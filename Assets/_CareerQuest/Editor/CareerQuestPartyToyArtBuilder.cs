@@ -47,7 +47,7 @@ namespace CareerQuest.Editor
         private static readonly (string[] Keywords, string GlyphFile)[] GlyphMap =
         {
             (new[] { "battery", "fuel", "power", "solar", "energy", "charge", "flashlight", "light" }, "power.png"),
-            (new[] { "music", "beat", "horn", "drum", "sound", "tempo", "remix", "note", "melody", "sax" }, "musicOn.png"),
+            (new[] { "music", "beat", "horn", "drum", "sound", "tempo", "remix", "note", "melody", "sax", "shaker", "cymbal" }, "musicOn.png"),
             (new[] { "route", "cone", "navigate", "path", "orbit", "launch", "rocket", "probe", "satellite", "map", "goal", "rescue", "flag", "aim", "checklist" }, "target.png"),
             (new[] { "wheel", "gear", "robot", "bolt", "sensor", "antenna", "cart", "machine", "drain", "bridge", "block", "tile", "straw", "moon" }, "gear.png"),
             (new[] { "storm", "rain", "weather", "forecast", "cloud", "umbrella", "shelter", "radar", "gauge", "radio", "warning", "alert" }, "warning.png"),
