@@ -75,7 +75,7 @@ namespace CareerQuest
                 "sky-blue",
                 "Plans big builds and spots patterns in places.",
                 "npc.builder_partner",
-                0.86f),
+                0.688f),
             new(
                 "care_captain",
                 "Care Captain",
@@ -86,7 +86,7 @@ namespace CareerQuest
                 "care-teal",
                 "Notices how people feel and chooses kind tools.",
                 "npc.patient",
-                0.83f),
+                0.664f),
             new(
                 "logic_spark",
                 "Logic Spark",
@@ -97,7 +97,7 @@ namespace CareerQuest
                 "logic-gold",
                 "Finds clues, checks facts, and explains ideas clearly.",
                 "npc.judge",
-                0.84f),
+                0.672f),
             new(
                 "art_inventor",
                 "Art Inventor",
@@ -108,7 +108,7 @@ namespace CareerQuest
                 "inventor-lilac",
                 "Mixes imagination with experiments to make new things.",
                 "npc.campus_guide",
-                0.82f)
+                0.656f)
         };
 
         public static AvatarDefinition DefaultAvatar => GetAvatar(DefaultAvatarId);

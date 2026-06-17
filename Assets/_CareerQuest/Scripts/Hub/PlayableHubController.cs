@@ -135,7 +135,7 @@ namespace CareerQuest
             // Door label is world-space TMP (DoorSign pattern) — the hub
             // TextMesh labels died in U4 per plan.
             var sign = entranceObject.AddComponent<DoorSign>();
-            sign.Configure(anchor.Label, anchor.AccentColor, -0.62f, 330);
+            sign.Configure(anchor.Label, anchor.AccentColor, -0.62f, 318);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace CareerQuest
                 var headerObject = new GameObject($"District_{district.Replace(' ', '_')}");
                 headerObject.transform.SetParent(transform, false);
                 headerObject.transform.position = new Vector3(center.x, topY + 0.95f, 0f);
-                headerObject.AddComponent<DoorSign>().Configure(district, accent, 0f, 332);
+                headerObject.AddComponent<DoorSign>().Configure(district, accent, 0f, 319);
             }
         }
 

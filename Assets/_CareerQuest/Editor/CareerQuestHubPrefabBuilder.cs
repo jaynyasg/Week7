@@ -636,12 +636,12 @@ namespace CareerQuest.Editor
             // Design-review (2026-06-16): trimmed from 2.45x2.14 to 2.1x1.85 so the
             // three flagship buildings clear each other at the +-2.2 door spacing.
             // Still the largest buildings on campus (small buildings are 1.45x1.3).
-            AddSprite(parent, name, Campus(assetId), position, new Vector2(2.1f, 1.85f), 240);
+            AddSprite(parent, name, Campus(assetId), position, new Vector2(1.89f, 1.665f), 240);
         }
 
         private static void AddSmallBuilding(Transform parent, string name, string assetId, Vector2 position)
         {
-            AddSprite(parent, name, Campus(assetId), position, new Vector2(1.45f, 1.3f), 238);
+            AddSprite(parent, name, Campus(assetId), position, new Vector2(1.305f, 1.17f), 238);
         }
 
         /// <summary>

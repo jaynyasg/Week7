@@ -47,17 +47,20 @@ namespace CareerQuest.Tests
         /// U11 base-avatar polish pass (R1 / Character Visual Acceptance Bar):
         /// the cast carries a visibly cleaner proportion vs. the pre-U11 set.
         /// Pixel quality is owner-judged, so this is a STRUCTURAL assertion — the
-        /// config produces a per-avatar RenderScale strictly above the single
-        /// legacy 0.75 every avatar used before, within a sane gameplay range.
+        /// config produces a per-avatar RenderScale deliberately BELOW the single
+        /// legacy 0.75 baseline (2026-06-17 owner call: ~20% smaller campus
+        /// character so the hub reads less condensed), still a believable size.
         /// </summary>
         [Test]
-        public void EveryAvatarShowsAPolishPassProportionAboveTheLegacyBaseline()
+        public void EveryAvatarUsesACompactCampusProportion()
         {
             foreach (var avatar in AvatarConfig.Avatars)
             {
-                Assert.That(avatar.RenderScale, Is.GreaterThan(AvatarConfig.LegacyRenderScale), avatar.Id);
-                // Stays a believable on-campus character size (never a giant).
-                Assert.That(avatar.RenderScale, Is.InRange(AvatarConfig.LegacyRenderScale, 1.1f), avatar.Id);
+                // 2026-06-17 owner call: the campus character is ~20% smaller than
+                // the old polish baseline, so each avatar now sits below 0.75 while
+                // staying a believable, readable size (never tiny).
+                Assert.That(avatar.RenderScale, Is.LessThan(AvatarConfig.LegacyRenderScale), avatar.Id);
+                Assert.That(avatar.RenderScale, Is.InRange(0.55f, 0.75f), avatar.Id);
             }
         }
 
