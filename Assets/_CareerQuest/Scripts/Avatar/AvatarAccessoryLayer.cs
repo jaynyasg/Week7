@@ -26,6 +26,16 @@ namespace CareerQuest
         /// <summary>Placeholder token height in avatar-local units (U11 retunes per accessory).</summary>
         public const float TokenLocalHeight = 0.55f;
 
+        /// <summary>
+        /// Celebrate jump-sync: the curated celebrate frames bake an airborne
+        /// pose (the character is drawn jumped UP inside the frame, unlike the
+        /// in-place walk frames), so gear anchored to the static body would stay
+        /// grounded while the body leaps. While the host shows the airborne
+        /// celebrate frame, lift the gear by this fraction of the body half-height
+        /// so it jumps with the body. Tunable to match the art.
+        /// </summary>
+        public const float CelebrateLiftFraction = 0.22f;
+
         private readonly Dictionary<string, SpriteRenderer> _layers = new();
         private readonly Dictionary<string, AccessoryDefinition> _applied = new();
 
@@ -33,6 +43,9 @@ namespace CareerQuest
         private GameSession _boundSession;
         private bool _ceremonyContext;
         private bool _renderedFlip;
+        private float _renderedLift = float.MinValue;
+        private SpriteFrameAnimator _animator;
+        private bool _animatorChecked;
 
         public bool IsCeremonyContext => _ceremonyContext;
         public int VisibleCount => _layers.Count;
@@ -193,12 +206,14 @@ namespace CareerQuest
             }
 
             var flipped = host.flipX;
-            if (!force && flipped == _renderedFlip)
+            var lift = CurrentCelebrateLift();
+            if (!force && flipped == _renderedFlip && Mathf.Approximately(lift, _renderedLift))
             {
                 return;
             }
 
             _renderedFlip = flipped;
+            _renderedLift = lift;
             foreach (var pair in _layers)
             {
                 var renderer = pair.Value;
@@ -212,7 +227,7 @@ namespace CareerQuest
                 renderer.sortingOrder = host.sortingOrder + accessory.SortingOffset;
 
                 var anchor = AnchorFor(accessory);
-                renderer.transform.localPosition = new Vector3(flipped ? -anchor.x : anchor.x, anchor.y, 0f);
+                renderer.transform.localPosition = new Vector3(flipped ? -anchor.x : anchor.x, anchor.y + lift, 0f);
             }
         }
 
@@ -224,6 +239,36 @@ namespace CareerQuest
             }
 
             return _hostRenderer;
+        }
+
+        private SpriteFrameAnimator EnsureAnimator()
+        {
+            if (!_animatorChecked)
+            {
+                _animator = GetComponent<SpriteFrameAnimator>();
+                _animatorChecked = true;
+            }
+
+            return _animator;
+        }
+
+        /// <summary>
+        /// The vertical gear lift for the current host frame: while celebrating,
+        /// the airborne celebrate frame(s) (index > 0; frame 0 is the grounded
+        /// cheer) lift the gear so it jumps with the body. Zero in every other
+        /// state (walk/idle frames animate in place, so gear stays anchored).
+        /// </summary>
+        private float CurrentCelebrateLift()
+        {
+            var animator = EnsureAnimator();
+            if (animator == null || !animator.IsCelebrating || animator.CurrentFrameIndex <= 0)
+            {
+                return 0f;
+            }
+
+            var host = EnsureHostRenderer();
+            var extentsY = host != null && host.sprite != null ? host.sprite.bounds.extents.y : 1.2f;
+            return extentsY * CelebrateLiftFraction;
         }
 
         private void LateUpdate()
