@@ -39,8 +39,8 @@ namespace CareerQuest.Tests
         private static readonly (string StationId, ToyPatternId Pattern)[] Wave2Stations =
         {
             (CareerQuestCatalog.WeatherLabId, ToyPatternId.TracePath),
-            (CareerQuestCatalog.SpaceportId, ToyPatternId.TracePath),
-            (CareerQuestCatalog.NewsroomId, ToyPatternId.DeduceAnswer),
+            (CareerQuestCatalog.SpaceportId, ToyPatternId.WireUp),
+            (CareerQuestCatalog.NewsroomId, ToyPatternId.ScanReveal),
             (CareerQuestCatalog.GreenCityId, ToyPatternId.BalanceMeters)
         };
 
@@ -183,14 +183,12 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// Spaceport Pilot proves TracePath (design-review #3): launch, orbit,
-        /// deliver, and land are traced as ordered waypoints along the flight
-        /// path through the real drop seam — each waypoint has its OWN zone (vs
-        /// SequenceCards' single shared target), a step out of turn bounces
-        /// gently, and the next step is named.
+        /// Spaceport Connect proves WireUp: each cable connects to its matching
+        /// port (wire.{partnerId}) through the real drop seam, in any order, and
+        /// completing every pair finishes the mission.
         /// </summary>
         [UnityTest]
-        public IEnumerator SpaceportPilotProvesTracePathNavigation()
+        public IEnumerator SpaceportConnectProvesWireUpPairs()
         {
             var appObject = new GameObject("wave2-spaceport-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -202,22 +200,20 @@ namespace CareerQuest.Tests
 
             var rules = controller.Pattern.Rules;
 
-            // The traced route is launch_checklist -> fuel_bead -> snack_crate ->
-            // orbit_arrow, each onto its own positioned waypoint zone.
-            Assert.That(rules.NextExpectedObjectId, Is.EqualTo("launch_checklist"));
+            // Each node wires to its partner zone (wire.{partnerId}).
+            Assert.That(rules.ExpectedTargetFor("moon_rover"),
+                Is.EqualTo(ToyPatternRules.WireTargetPrefix + "rover_dock"));
 
-            // Right waypoint, wrong time -> gentle bounce (out-of-order maps to
-            // the same RejectedWrongSlot outcome through the drop seam).
-            Assert.That(controller.TrySubmitDrop("orbit_arrow", rules.ExpectedTargetFor("orbit_arrow")),
+            // Wrong partner zone -> gentle bounce through the drop seam.
+            Assert.That(controller.TrySubmitDrop("moon_rover", ToyPatternRules.WireTargetPrefix + "dish_array"),
                 Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
-            Assert.That(controller.IsToyAccepted("orbit_arrow"), Is.False);
+            Assert.That(controller.IsToyAccepted("moon_rover"), Is.False);
 
-            // Trace the route in order — each waypoint accepts as it comes up.
-            foreach (var stepId in new[] { "launch_checklist", "fuel_bead", "snack_crate", "orbit_arrow" })
+            // Connect every pair in any order - each accepts through the seam.
+            foreach (var nodeId in new[] { "dish_array", "moon_rover", "signal_beam", "rover_dock" })
             {
-                Assert.That(rules.NextExpectedObjectId, Is.EqualTo(stepId), $"next step is {stepId}");
-                Assert.That(controller.TrySubmitDrop(stepId, rules.ExpectedTargetFor(stepId)),
-                    Is.EqualTo(DropSubmitResult.Accepted), stepId);
+                Assert.That(controller.TrySubmitDrop(nodeId, rules.ExpectedTargetFor(nodeId)),
+                    Is.EqualTo(DropSubmitResult.Accepted), nodeId);
             }
 
             var result = app.Session.GetBestResult(CareerQuestCatalog.SpaceportId);
@@ -228,14 +224,12 @@ namespace CareerQuest.Tests
         }
 
         /// <summary>
-        /// Newsroom Story Sprint proves DeduceAnswer (design-review #3): the false
-        /// rumors are crossed out by tapping their cross target (any order); the
-        /// checked fact is the Clue answer with no cross zone, so tapping it
-        /// bounces gently ("that one's true, keep it!"). Crossing out every rumor
-        /// completes the story through the real drop seam, with source-safe copy.
+        /// Newsroom Story Scan proves ScanReveal: each hidden clue confirms onto
+        /// its own reveal zone (reveal.{objectId}) through the real drop seam, in
+        /// any order, and revealing them all files the story with source-safe copy.
         /// </summary>
         [UnityTest]
-        public IEnumerator NewsroomStorySprintProvesDeduceElimination()
+        public IEnumerator NewsroomStoryScanProvesRevealConfirmation()
         {
             var appObject = new GameObject("wave2-newsroom-test");
             var app = appObject.AddComponent<CareerQuestApp>();
@@ -248,34 +242,26 @@ namespace CareerQuest.Tests
             var definition = PartyStationDefinitions.GetById(CareerQuestCatalog.NewsroomId);
             var rules = controller.Pattern.Rules;
 
-            // Each rumor crosses out onto its OWN cross zone; the checked fact
-            // (the Clue answer) has none — it is not in the eliminate-chain.
-            foreach (var rumorId in new[] { "robot_rumor", "alien_rumor", "wind_rumor" })
+            // Each hidden clue confirms onto its own reveal zone.
+            foreach (var itemId in new[] { "smudged_print", "torn_note", "faint_footprint", "hidden_label" })
             {
-                Assert.That(rules.ExpectedTargetFor(rumorId),
-                    Is.EqualTo(ToyPatternRules.CrossTargetPrefix + rumorId), rumorId);
+                Assert.That(rules.ExpectedTargetFor(itemId),
+                    Is.EqualTo(ToyPatternRules.RevealTargetPrefix + itemId), itemId);
             }
-            Assert.That(rules.ExpectedTargetFor("art_club_fact"), Is.Null);
 
-            // Crossing out the true answer bounces gently (wrong target), never
-            // advances progress — the player keeps the checked fact.
-            Assert.That(controller.TrySubmitDrop("art_club_fact", ToyPatternRules.CrossTargetPrefix + "art_club_fact"),
-                Is.EqualTo(DropSubmitResult.RejectedWrongSlot));
-            Assert.That(controller.IsToyAccepted("art_club_fact"), Is.False);
-
-            // Cross out rumors in ANY order — a deduction, not a fixed line.
-            Assert.That(controller.TrySubmitDrop("wind_rumor", rules.ExpectedTargetFor("wind_rumor")),
+            // Reveal items in ANY order through the real drop seam.
+            Assert.That(controller.TrySubmitDrop("hidden_label", rules.ExpectedTargetFor("hidden_label")),
                 Is.EqualTo(DropSubmitResult.Accepted));
-            Assert.That(controller.TrySubmitDrop("robot_rumor", rules.ExpectedTargetFor("robot_rumor")),
+            Assert.That(controller.TrySubmitDrop("smudged_print", rules.ExpectedTargetFor("smudged_print")),
                 Is.EqualTo(DropSubmitResult.Accepted));
 
             // The headline stamp is a reaction toy: it pokes, never progresses.
-            Assert.That(controller.TrySubmitDrop("headline_stamp", ToyPatternRules.CrossTargetPrefix + "headline_stamp"),
+            Assert.That(controller.TrySubmitDrop("headline_stamp", ToyPatternRules.RevealTargetPrefix + "headline_stamp"),
                 Is.EqualTo(DropSubmitResult.Accepted));
             Assert.That(controller.IsToyAccepted("headline_stamp"), Is.False,
-                "The headline stamp reacts but is not part of the eliminate-chain.");
+                "The headline stamp reacts but is not part of the reveal chain.");
 
-            // Cross out the last rumor -> one safe headline result.
+            // Reveal the rest -> one safe headline result.
             Assert.That(controller.TryCompleteWithGoldenSequence(), Is.True);
             var result = app.Session.GetBestResult(CareerQuestCatalog.NewsroomId);
             Assert.That(result, Is.Not.Null);

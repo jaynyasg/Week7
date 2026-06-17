@@ -93,6 +93,10 @@ namespace CareerQuest
                 ToyPatternId.SortToBin => "Sort each piece",
                 ToyPatternId.SequenceCards => "Put the steps in order",
                 ToyPatternId.DragToSlot => "Drag each piece into place",
+                ToyPatternId.RhythmTap => "Tap on the beat",
+                ToyPatternId.PourToLine => "Fill to the line",
+                ToyPatternId.WireUp => "Connect the pairs",
+                ToyPatternId.ScanReveal => "Scan, then tap what you find",
                 _ => "Play"
             };
         }

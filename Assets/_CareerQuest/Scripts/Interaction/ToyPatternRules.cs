@@ -62,6 +62,10 @@ namespace CareerQuest
         public const string MarkTargetPrefix = "mark.";
         public const string MeterTargetPrefix = "meter.";
         public const string WaypointTargetPrefix = "waypoint.";
+        public const string BeatTargetId = "target.beat";
+        public const string PourTargetId = "target.pour";
+        public const string WireTargetPrefix = "wire.";
+        public const string RevealTargetPrefix = "reveal.";
 
         private readonly List<PartyStationObjectDefinition> _objects = new();
         private readonly Dictionary<string, PartyStationObjectDefinition> _objectsById = new();
@@ -523,6 +527,22 @@ namespace CareerQuest
                     // of the eliminate-chain). Each crosses out onto its own zone;
                     // tapping the answer hits no cross zone -> WrongTarget bounce.
                     return CrossTargetPrefix + definition.ObjectId;
+                case ToyPatternId.RhythmTap:
+                    // Verb diversity: tap each beat token onto one shared beat
+                    // target, any order (timing lives in the input component).
+                    return BeatTargetId;
+                case ToyPatternId.PourToLine:
+                    // Pours are Meter cups (fill-to-green via the meter seam);
+                    // any non-meter chain toy lands on the shared pour target.
+                    return PourTargetId;
+                case ToyPatternId.WireUp:
+                    // Each node wires to its partner zone "wire.{partnerId}"
+                    // (the partner id is the object TargetId), any order.
+                    return WireTargetPrefix + definition.TargetId;
+                case ToyPatternId.ScanReveal:
+                    // Each hidden item confirms onto its own reveal zone, any
+                    // order (reveal-then-tap lives in the input component).
+                    return RevealTargetPrefix + definition.ObjectId;
                 case ToyPatternId.MatchAndCare:
                     return definition.Role == PartyStationObjectRole.Clue
                         && !string.IsNullOrEmpty(definition.TargetId)

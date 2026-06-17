@@ -196,21 +196,21 @@ namespace CareerQuest
             var id = CareerQuestCatalog.CommunityKitchenId;
             return new PartyStationDefinition(
                 id,
-                "Community Kitchen Match",
-                new[] { "match", "serve" },
-                ToyPatternId.PickMatchingTrio,
+                "Community Kitchen Pour",
+                new[] { "pour", "serve" },
+                ToyPatternId.PourToLine,
                 "Chef Sunny",
                 "warm service coach",
-                "Solve the soup clues and serve a bowl every guest can enjoy.",
+                "Pour each ingredient to the line, then serve a bowl every guest can enjoy.",
                 new[]
                 {
-                    Obj(id, "recipe_card", "Recipe Card", PartyStationObjectRole.Clue, "veggie_clue", "react.glow", "Reasoning"),
-                    Obj(id, "veggie_clue", "Veggie Clue", PartyStationObjectRole.CoreTask, "", "react.pop", "Helping"),
-                    Obj(id, "spice_jar", "Spice Jar", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Creativity"),
-                    Obj(id, "serving_bowl", "Serving Bowl", PartyStationObjectRole.CoreTask, "", "react.bounce", "Helping"),
-                    Obj(id, "kindness_swap", "Kindness Swap", PartyStationObjectRole.Helper, "serving_bowl", "react.cheer", "Collaboration")
+                    Obj(id, "water_pour", "Water Pour", PartyStationObjectRole.CoreTask, "", "react.pop", "Helping"),
+                    Obj(id, "broth_pour", "Broth Pour", PartyStationObjectRole.CoreTask, "", "react.bounce", "Helping"),
+                    Obj(id, "veggie_pour", "Veggie Pour", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Creativity"),
+                    Obj(id, "milk_pour", "Milk Pour", PartyStationObjectRole.CoreTask, "", "react.glow", "Helping"),
+                    Obj(id, "kindness_swap", "Kindness Swap", PartyStationObjectRole.Helper, "water_pour", "react.cheer", "Collaboration")
                 },
-                "Match the recipe clue to the right ingredients, then make one kindness swap.",
+                "Pour each ingredient to the line, then make one kindness swap.",
                 new[]
                 {
                     new TraitDelta("Helping", 5),
@@ -230,34 +230,34 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Match the recipe clue to the right ingredients, then make one kindness swap.",
-                        "Chef Sunny sniffs: this mystery soup is missing its matching pieces!",
-                        "Read the recipe card — it points to the right ingredients.",
-                        "The matching ingredient glows when the clue fits.",
+                        "Pour each ingredient to the line, then make one kindness swap.",
+                        "Chef Sunny smiles: this soup needs each cup poured just to the line!",
+                        "Hold a cup to pour it, and stop right at the line.",
+                        "Each cup glows when it reaches the line.",
                         "What a bowl! Every guest gets a soup they can enjoy.",
                         "Serve the soup to earn the Chef Hat!",
-                        "You solved the soup clues and served a guest-friendly bowl. You practiced Helping + Collaboration. New gear: Chef Hat.",
+                        "You poured every cup to the line and served a guest-friendly bowl. You practiced Helping plus Collaboration. New gear: Chef Hat.",
                         "A happy guest gives the soup two big thumbs up."),
                     new PartyStationSeedDefinition(
                         $"{id}.tiny_planet_picnic",
                         "Tiny Planet Picnic",
                         false,
-                        "Pack picnic trays so every tiny planet neighbor gets a tasty match.",
+                        "Pour each picnic drink to the line so every tiny planet neighbor gets a tasty cup.",
                         new[]
                         {
-                            Obj(id, "planet_lunchbox", "Planet Lunchbox", PartyStationObjectRole.CoreTask, "", "react.pop", "Helping"),
-                            Obj(id, "color_card", "Color Card", PartyStationObjectRole.Clue, "planet_lunchbox", "react.glow", "Reasoning"),
-                            Obj(id, "crunchy_veggie", "Crunchy Veggie", PartyStationObjectRole.CoreTask, "", "react.bounce", "Helping"),
-                            Obj(id, "warm_snack", "Warm Snack", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Creativity"),
-                            Obj(id, "thank_you_stamp", "Thank-You Stamp", PartyStationObjectRole.Reaction, "planet_lunchbox", "react.cheer")
+                            Obj(id, "juice_pour", "Juice Pour", PartyStationObjectRole.CoreTask, "", "react.pop", "Helping"),
+                            Obj(id, "soup_pour", "Soup Pour", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Creativity"),
+                            Obj(id, "snack_pour", "Snack Pour", PartyStationObjectRole.CoreTask, "", "react.bounce", "Helping"),
+                            Obj(id, "cocoa_pour", "Cocoa Pour", PartyStationObjectRole.CoreTask, "", "react.glow", "Helping"),
+                            Obj(id, "thank_you_stamp", "Thank-You Stamp", PartyStationObjectRole.Reaction, "juice_pour", "react.cheer")
                         },
-                        "Match each picnic request to the best food trio, then stamp the tray.",
+                        "Pour each picnic drink to the line, then stamp the tray.",
                         "Chef Sunny giggles: tiny planet neighbors ordered a picnic!",
-                        "The color card shows which foods belong together.",
-                        "Hold a food near a tray — the right tray glows.",
-                        "Every tray matched! The picnic is a tiny planet party.",
+                        "Hold a cup to pour, and stop at the line.",
+                        "Each cup glows when it fills to the line.",
+                        "Every cup poured! The picnic is a tiny planet party.",
                         "Pack the picnic to earn the Chef Hat!",
-                        "You packed the tiny planet picnic and matched each tray with care. You practiced Helping + Creativity. New gear: Chef Hat.",
+                        "You poured the tiny planet picnic cups to the line with care. You practiced Helping plus Creativity. New gear: Chef Hat.",
                         "The neighbors stamp a thank-you on every tray.")
                 });
         }
@@ -268,8 +268,8 @@ namespace CareerQuest
             return new PartyStationDefinition(
                 id,
                 "Music Remix",
-                new[] { "remix", "compose" },
-                ToyPatternId.ComposeSet,
+                new[] { "remix", "beat" },
+                ToyPatternId.RhythmTap,
                 "DJ Tempo",
                 "rhythmic creative coach",
                 "Layer the storm sounds into a parade beat and keep the tempo steady.",
@@ -551,21 +551,21 @@ namespace CareerQuest
             var id = CareerQuestCatalog.SpaceportId;
             return new PartyStationDefinition(
                 id,
-                "Spaceport Pilot",
-                new[] { "trace", "navigate" },
-                ToyPatternId.TracePath,
+                "Spaceport Connect",
+                new[] { "wire", "connect" },
+                ToyPatternId.WireUp,
                 "Commander Orbit",
                 "focused mission guide",
-                "Trace the flight path: launch, orbit, deliver, then land the snack probe.",
+                "Connect each cable to its matching port to power up the snack probe.",
                 new[]
                 {
-                    Obj(id, "launch_checklist", "Launch Checklist", PartyStationObjectRole.Clue, "fuel_bead", "react.glow", "Focus"),
-                    Obj(id, "fuel_bead", "Fuel Bead", PartyStationObjectRole.CoreTask, "", "react.pop", "Focus"),
-                    Obj(id, "snack_crate", "Snack Crate", PartyStationObjectRole.CoreTask, "", "react.bounce", "Spatial Thinking"),
-                    Obj(id, "orbit_arrow", "Orbit Arrow", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Spatial Thinking"),
-                    Obj(id, "landing_pad", "Landing Pad", PartyStationObjectRole.Reaction, "orbit_arrow", "react.cheer")
+                    Obj(id, "moon_rover", "Moon Rover", PartyStationObjectRole.CoreTask, "rover_dock", "react.pop", "Spatial Thinking"),
+                    Obj(id, "rover_dock", "Rover Dock", PartyStationObjectRole.CoreTask, "moon_rover", "react.bounce", "Focus"),
+                    Obj(id, "signal_beam", "Signal Beam", PartyStationObjectRole.CoreTask, "dish_array", "react.sparkle", "Spatial Thinking"),
+                    Obj(id, "dish_array", "Dish Array", PartyStationObjectRole.CoreTask, "signal_beam", "react.glow", "Focus"),
+                    Obj(id, "launch_lamp", "Launch Lamp", PartyStationObjectRole.Reaction, "moon_rover", "react.cheer")
                 },
-                "Trace launch, orbit, delivery, and landing in the correct order along the flight path.",
+                "Connect each cable to its matching port, in any order.",
                 new[]
                 {
                     new TraitDelta("Focus", 5),
@@ -585,34 +585,34 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Sequence launch, orbit, delivery, and landing in the correct order.",
-                        "Commander Orbit salutes: the snack probe is fueled and ready!",
-                        "Follow the launch checklist from the top.",
-                        "The next mission step glows on the checklist.",
-                        "Touchdown! The snack probe landed right on the pad.",
-                        "Land the probe to earn the Mission Patch!",
-                        "You launched the snack probe and landed it on the right pad. You practiced Focus + Spatial Thinking. New gear: Mission Patch.",
-                        "Mission control claps as the probe doors pop open."),
+                        "Connect each cable to its matching port to power up the probe.",
+                        "Commander Orbit salutes: connect the probe cables to power it up!",
+                        "Draw a wire from a cable to its matching port.",
+                        "Matching ports glow when you hold a cable near them.",
+                        "Power on! Every cable found its matching port.",
+                        "Power the probe to earn the Mission Patch!",
+                        "You connected every cable to its matching port. You practiced Focus plus Spatial Thinking. New gear: Mission Patch.",
+                        "Mission control claps as the probe lights blink on."),
                     new PartyStationSeedDefinition(
                         $"{id}.moon_mail",
                         "Moon Mail Delivery",
                         false,
-                        "Sequence the mail route and repair the blocked step before docking.",
+                        "Connect each mail line to its matching slot before the drop.",
                         new[]
                         {
-                            Obj(id, "mail_capsule", "Mail Capsule", PartyStationObjectRole.CoreTask, "", "react.pop", "Focus"),
-                            Obj(id, "route_cards", "Route Cards", PartyStationObjectRole.Clue, "booster_tile", "react.glow", "Spatial Thinking"),
-                            Obj(id, "booster_tile", "Booster Tile", PartyStationObjectRole.CoreTask, "", "react.bounce", "Spatial Thinking"),
-                            Obj(id, "dock_beacon", "Dock Beacon", PartyStationObjectRole.Reaction, "mail_capsule", "react.sparkle"),
-                            Obj(id, "repair_wrench", "Repair Wrench", PartyStationObjectRole.CoreTask, "", "react.cheer", "Building")
+                            Obj(id, "mail_pod", "Mail Pod", PartyStationObjectRole.CoreTask, "pod_slot", "react.pop", "Focus"),
+                            Obj(id, "pod_slot", "Pod Slot", PartyStationObjectRole.CoreTask, "mail_pod", "react.bounce", "Focus"),
+                            Obj(id, "relay_wire", "Relay Wire", PartyStationObjectRole.CoreTask, "relay_hub", "react.sparkle", "Spatial Thinking"),
+                            Obj(id, "relay_hub", "Relay Hub", PartyStationObjectRole.CoreTask, "relay_wire", "react.glow", "Spatial Thinking"),
+                            Obj(id, "ready_beacon", "Ready Beacon", PartyStationObjectRole.Reaction, "mail_pod", "react.cheer")
                         },
-                        "Sequence the delivery route and repair one blocked step before docking.",
-                        "Commander Orbit waves: moon mail is due — chart the route!",
-                        "Lay the route cards in flight order.",
-                        "A blocked step blinks — use the repair wrench there.",
-                        "Mail delivered! The dock beacon glows a proud gold.",
+                        "Connect each mail line to its matching slot, in any order.",
+                        "Commander Orbit waves: moon mail is due - link the relays!",
+                        "Draw a wire from each line to its matching slot.",
+                        "The matching slot glows when you hold a line near it.",
+                        "Linked! Every mail line reached its slot.",
                         "Deliver the mail to earn the Mission Patch!",
-                        "You delivered moon mail and solved a blocked docking step. You practiced Focus + Leadership. New gear: Mission Patch.",
+                        "You linked every mail line to its slot. You practiced Focus plus Leadership. New gear: Mission Patch.",
                         "A moon mailbox flips its flag up with a happy click.")
                 });
         }
@@ -622,25 +622,21 @@ namespace CareerQuest
             var id = CareerQuestCatalog.NewsroomId;
             return new PartyStationDefinition(
                 id,
-                "Newsroom Story Sprint",
-                new[] { "investigate", "deduce" },
-                ToyPatternId.DeduceAnswer,
+                "Newsroom Story Scan",
+                new[] { "scan", "investigate" },
+                ToyPatternId.ScanReveal,
                 "Scoop Rivera",
                 "fact-checking reporter",
-                "Read the clue, then cross out the rumors that can't be true.",
+                "Scan the scene to reveal each clue, then tap what you find.",
                 new[]
                 {
-                    // DeduceAnswer: the rumors are the false candidates (CoreTask)
-                    // crossed out by elimination; the checked fact is the Clue
-                    // answer that survives. Clue: the mural maker had paint on
-                    // their hands -> only the art club fits.
-                    Obj(id, "robot_rumor", "Robot Rumor", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
-                    Obj(id, "alien_rumor", "Alien Rumor", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
-                    Obj(id, "wind_rumor", "Wind Rumor", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
-                    Obj(id, "art_club_fact", "Art Club Fact", PartyStationObjectRole.Clue, "", "react.glow", "Communication"),
-                    Obj(id, "headline_stamp", "Headline Stamp", PartyStationObjectRole.Reaction, "art_club_fact", "react.cheer")
+                    Obj(id, "smudged_print", "Smudged Print", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                    Obj(id, "torn_note", "Torn Note", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
+                    Obj(id, "faint_footprint", "Faint Footprint", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                    Obj(id, "hidden_label", "Hidden Label", PartyStationObjectRole.CoreTask, "", "react.glow", "Communication"),
+                    Obj(id, "headline_stamp", "Headline Stamp", PartyStationObjectRole.Reaction, "smudged_print", "react.cheer")
                 },
-                "Cross out the rumors that break the clue until the checked fact survives.",
+                "Scan the scene to reveal every clue, then tap each one for the story.",
                 new[]
                 {
                     new TraitDelta("Communication", 5),
@@ -660,37 +656,35 @@ namespace CareerQuest
                         true,
                         "",
                         null,
-                        "Cross out the rumors that break the clue until the checked fact survives.",
-                        "Scoop Rivera gasps: the mural maker had paint on their hands — who is it?",
-                        "Cross out a rumor that can't be true.",
-                        "Robots and wind can't hold a paintbrush — rule those out.",
-                        "Headline stamped! The art club made the mural — checked and true.",
+                        "Scan the scene to reveal every clue, then tap each one for the story.",
+                        "Scoop Rivera grins: the mural has hidden clues - scan to find them!",
+                        "Slide the magnifier over the scene to reveal a clue.",
+                        "Clues sparkle when the magnifier passes over them.",
+                        "Headline ready! You found every clue for a clear story.",
                         "Print the story to earn the Press Badge!",
-                        "You crossed out the rumors and kept the checked fact for a clear headline. You practiced Communication + Reasoning. New gear: Press Badge.",
+                        "You scanned the scene and revealed every clue for a clear headline. You practiced Communication plus Reasoning. New gear: Press Badge.",
                         "The art club waves proudly from the front page."),
                     new PartyStationSeedDefinition(
                         $"{id}.invention_scoop",
                         "Playground Invention Scoop",
                         false,
-                        "Read the source clue, then cross out the scoops that aren't checked.",
+                        "Scan the workshop to reveal each clue, then tap what you find.",
                         new[]
                         {
-                            // Cross out the unsourced scoops; the checked scoop
-                            // (the Clue answer) is the only one with a real source.
-                            Obj(id, "anon_tip", "Anon Tip", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
-                            Obj(id, "blurry_photo", "Blurry Photo", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
-                            Obj(id, "old_date_clip", "Old Date Clip", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
-                            Obj(id, "checked_scoop", "Checked Scoop", PartyStationObjectRole.Clue, "", "react.glow", "Communication"),
-                            Obj(id, "publish_button", "Publish Button", PartyStationObjectRole.Reaction, "checked_scoop", "react.cheer")
+                            Obj(id, "blurry_photo", "Blurry Photo", PartyStationObjectRole.CoreTask, "", "react.pop", "Reasoning"),
+                            Obj(id, "secret_memo", "Secret Memo", PartyStationObjectRole.CoreTask, "", "react.sparkle", "Reasoning"),
+                            Obj(id, "buried_clip", "Buried Clip", PartyStationObjectRole.CoreTask, "", "react.bounce", "Reasoning"),
+                            Obj(id, "faded_quote", "Faded Quote", PartyStationObjectRole.CoreTask, "", "react.glow", "Communication"),
+                            Obj(id, "publish_button", "Publish Button", PartyStationObjectRole.Reaction, "blurry_photo", "react.cheer")
                         },
-                        "Cross out the scoops with no source until the checked scoop survives.",
-                        "Scoop Rivera grins: a bouncy seesaw scoop! Only one has a real source.",
-                        "Cross out a scoop that has no source.",
-                        "No source, no story — rule those scoops out.",
-                        "Published! The checked scoop had a real source all along.",
+                        "Scan the workshop to reveal every clue, then tap each one.",
+                        "Scoop Rivera beams: a bouncy seesaw scoop with clues to uncover!",
+                        "Slide the magnifier over the workshop to reveal a clue.",
+                        "Each clue sparkles when the magnifier finds it.",
+                        "Published! You uncovered every clue for the scoop.",
                         "Publish the scoop to earn the Press Badge!",
-                        "You crossed out the unsourced scoops and published the checked one. You practiced Communication + Creativity. New gear: Press Badge.",
-                        "The inventor pins your checked story to the playground board.")
+                        "You scanned the workshop and revealed every clue to publish. You practiced Communication plus Creativity. New gear: Press Badge.",
+                        "The inventor pins your finished story to the playground board.")
                 });
         }
 

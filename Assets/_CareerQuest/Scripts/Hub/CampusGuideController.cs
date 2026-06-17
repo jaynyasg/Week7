@@ -27,7 +27,7 @@ namespace CareerQuest
 
             if (Bubble == null)
             {
-                Bubble = SpeechBubble.Attach(transform, new Vector3(0.55f, 1.6f, 0f));
+                Bubble = SpeechBubble.Attach(transform, new Vector3(0.55f, 0.85f, 0f));
             }
 
             Bubble.Show(_defaultPrompt);
@@ -38,7 +38,7 @@ namespace CareerQuest
         {
             if (Bubble == null)
             {
-                Bubble = SpeechBubble.Attach(transform, new Vector3(0.55f, 1.6f, 0f));
+                Bubble = SpeechBubble.Attach(transform, new Vector3(0.55f, 0.85f, 0f));
             }
 
             Bubble.Show(line, durationSeconds);

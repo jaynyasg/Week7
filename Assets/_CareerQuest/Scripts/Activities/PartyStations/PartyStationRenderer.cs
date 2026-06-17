@@ -623,6 +623,16 @@ namespace CareerQuest
                 return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.CrossTargetPrefix.Length));
             }
 
+            if (targetId.StartsWith(ToyPatternRules.WireTargetPrefix, System.StringComparison.Ordinal))
+            {
+                return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.WireTargetPrefix.Length));
+            }
+
+            if (targetId.StartsWith(ToyPatternRules.RevealTargetPrefix, System.StringComparison.Ordinal))
+            {
+                return ObjectDisplayName(rules, targetId.Substring(ToyPatternRules.RevealTargetPrefix.Length));
+            }
+
             if (targetId.StartsWith(ToyPatternRules.BinTargetPrefix, System.StringComparison.Ordinal))
             {
                 var group = targetId.Substring(ToyPatternRules.BinTargetPrefix.Length).Replace('_', ' ');
@@ -643,6 +653,10 @@ namespace CareerQuest
                     return "Build Spot";
                 case ToyPatternRules.GoalTargetId:
                     return "Rescue Spot";
+                case ToyPatternRules.BeatTargetId:
+                    return "Beat";
+                case ToyPatternRules.PourTargetId:
+                    return "Pour Line";
                 default:
                     return "Drop Spot";
             }

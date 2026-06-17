@@ -48,7 +48,39 @@ namespace CareerQuest
         /// equals-required machinery (required = the false set), routed through
         /// the same host-validated action seam.
         /// </summary>
-        DeduceAnswer
+        DeduceAnswer,
+
+        /// <summary>
+        /// Verb diversity pass (2026-06-16): tap each beat token on-tempo onto
+        /// the shared beat target. Any order (like ShootTarget/ComposeSet); the
+        /// on-beat timing skill lives in the input component, the rules just
+        /// validate the tap onto the shared beat zone.
+        /// </summary>
+        RhythmTap,
+
+        /// <summary>
+        /// Verb diversity pass (2026-06-16): fill each cup meter to the green
+        /// "line" by pouring. Reuses the shared Meter machinery (fill-to-green-
+        /// band, re-adjustable, never a fail state); completion gates on every
+        /// pour meter sitting in [MeterGreenMin..MeterGreenMax].
+        /// </summary>
+        PourToLine,
+
+        /// <summary>
+        /// Verb diversity pass (2026-06-16): connect each node to its matching
+        /// partner. Each chain toy lands on "wire.{partnerId}" (its TargetId),
+        /// any order; the draw-a-wire input lives in the component, the rules
+        /// validate the pairing onto the partner target.
+        /// </summary>
+        WireUp,
+
+        /// <summary>
+        /// Verb diversity pass (2026-06-16): scan to reveal each hidden item,
+        /// then confirm it onto its own "reveal.{objectId}" zone. Any order;
+        /// the reveal-then-tap input lives in the component, the rules validate
+        /// the confirmed item onto its reveal zone.
+        /// </summary>
+        ScanReveal
     }
 
     /// <summary>

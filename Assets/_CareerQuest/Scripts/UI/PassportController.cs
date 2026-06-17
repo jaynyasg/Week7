@@ -205,13 +205,13 @@ namespace CareerQuest
 
             if (earned)
             {
-                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", careerColor, 0f, 26f, 76f, 76f);
-                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", QuestStageUi.Paper, 0f, 26f, 62f, 62f);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", careerColor, 0f, 32f, 66f, 66f);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", QuestStageUi.Paper, 0f, 32f, 54f, 54f);
 
                 var sprite = AssetCatalog.SpriteFor(entry.BadgeArtKey);
                 if (sprite != null)
                 {
-                    AddIcon(group, $"{entry.Id}BadgeIcon", sprite, 0f, 26f, 48f);
+                    AddIcon(group, $"{entry.Id}BadgeIcon", sprite, 0f, 32f, 42f);
                 }
 
                 var label = UiBuilder.Text(group, $"{entry.Id}BadgeLabel", entry.BadgeName, 12, TextAnchor.MiddleCenter, QuestStageUi.Ink);
@@ -227,10 +227,10 @@ namespace CareerQuest
             {
                 // Locked slot: dimmed, no badge name, and explicitly NO seed
                 // choice (a kid cannot peek at remixes for an unplayed station).
-                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", QuestStageUi.LockedRing, 0f, 26f, 76f, 76f);
-                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", QuestStageUi.LockedFace, 0f, 26f, 62f, 62f);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeRing", QuestStageUi.LockedRing, 0f, 32f, 66f, 66f);
+                UiBuilder.Circle(group, $"{entry.Id}BadgeFace", QuestStageUi.LockedFace, 0f, 32f, 54f, 54f);
                 var hint = UiBuilder.Text(group, $"{entry.Id}BadgeLockHint", "?", 28, TextAnchor.MiddleCenter, QuestStageUi.LockedInk, TypeRole.Display, TypeWeight.SemiBold);
-                UiBuilder.Place(hint.rectTransform, 0f, 26f, 40f, 40f);
+                UiBuilder.Place(hint.rectTransform, 0f, 32f, 40f, 40f);
 
                 var label = UiBuilder.Text(group, $"{entry.Id}BadgeLabel", "Locked", 12, TextAnchor.MiddleCenter, QuestStageUi.LockedInk);
                 UiBuilder.Place(label.rectTransform, 0f, -18f, 156f, 24f);
@@ -285,24 +285,24 @@ namespace CareerQuest
             var chipColor = AssetCatalog.TryGetDefinition(accessory.SpriteAssetId, out var definition)
                 ? definition.PrimaryColor
                 : QuestStageUi.PathGold;
-            UiBuilder.Circle(group, $"{accessory.Id}GearChip", Color.Lerp(chipColor, QuestStageUi.Paper, 0.55f), 0f, 26f, 70f, 70f);
+            UiBuilder.Circle(group, $"{accessory.Id}GearChip", Color.Lerp(chipColor, QuestStageUi.Paper, 0.55f), 0f, 32f, 62f, 62f);
 
             // Final-art-only (DESIGN: no fallback art on a player surface) — the
             // identity chip alone stands in until the art pass has run.
             var sprite = AssetCatalog.SpriteFor(accessory.SpriteAssetId);
             if (sprite != null && AssetCatalog.IsFinalArtSprite(sprite))
             {
-                AddIcon(group, $"{accessory.Id}GearIcon", sprite, 0f, 26f, 54f);
+                AddIcon(group, $"{accessory.Id}GearIcon", sprite, 0f, 32f, 46f);
             }
 
             var name = UiBuilder.Text(group, $"{accessory.Id}GearName", accessory.DisplayName, 13, TextAnchor.MiddleCenter, QuestStageUi.Ink, TypeRole.Body, TypeWeight.SemiBold);
-            UiBuilder.Place(name.rectTransform, 0f, -16f, 158f, 24f);
+            UiBuilder.Place(name.rectTransform, 0f, -20f, 158f, 24f);
 
             var tag = accessory.CeremonyOnly
                 ? "Reveal only"
                 : campusVisible ? "Worn now" : "In your bag";
             var tagLabel = UiBuilder.Text(group, $"{accessory.Id}GearTag", tag, 11, TextAnchor.MiddleCenter, new Color(0.27f, 0.36f, 0.4f));
-            UiBuilder.Place(tagLabel.rectTransform, 0f, -40f, 158f, 22f);
+            UiBuilder.Place(tagLabel.rectTransform, 0f, -44f, 158f, 22f);
         }
 
         // ------------------------------------------------------------------
@@ -368,10 +368,10 @@ namespace CareerQuest
 
                 var stationName = StationDisplayName(rewardEvent.StationId);
                 var name = UiBuilder.Text(row, $"PassportResultName{i}", stationName, 16, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
-                UiBuilder.Place(name.rectTransform, -344f, 10f, 420f, 24f);
+                UiBuilder.Place(name.rectTransform, -150f, 10f, 420f, 24f);
 
                 var practiced = UiBuilder.Text(row, $"PassportResultPracticed{i}", rewardEvent.PracticedLine(), 12, TextAnchor.MiddleLeft, new Color(0.27f, 0.36f, 0.4f));
-                UiBuilder.Place(practiced.rectTransform, -344f, -12f, 520f, 22f);
+                UiBuilder.Place(practiced.rectTransform, -150f, -12f, 480f, 22f);
                 practiced.enableAutoSizing = true;
                 practiced.fontSizeMin = 10;
                 practiced.fontSizeMax = 12;

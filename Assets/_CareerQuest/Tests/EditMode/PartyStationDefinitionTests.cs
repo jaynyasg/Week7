@@ -139,7 +139,11 @@ namespace CareerQuest.Tests
                 ToyPatternId.BalanceMeters,
                 ToyPatternId.TracePath,
                 ToyPatternId.ShootTarget,
-                ToyPatternId.DeduceAnswer
+                ToyPatternId.DeduceAnswer,
+                ToyPatternId.RhythmTap,
+                ToyPatternId.PourToLine,
+                ToyPatternId.WireUp,
+                ToyPatternId.ScanReveal
             };
 
             foreach (var station in PartyStationDefinitions.All)

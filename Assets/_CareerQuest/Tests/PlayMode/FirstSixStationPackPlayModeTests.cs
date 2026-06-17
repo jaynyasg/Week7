@@ -24,8 +24,8 @@ namespace CareerQuest.Tests
         {
             (CareerQuestCatalog.RoboticsGarageId, ToyPatternId.ShootTarget),
             (CareerQuestCatalog.AiLabId, ToyPatternId.DeduceAnswer),
-            (CareerQuestCatalog.CommunityKitchenId, ToyPatternId.PickMatchingTrio),
-            (CareerQuestCatalog.MusicStudioId, ToyPatternId.ComposeSet),
+            (CareerQuestCatalog.CommunityKitchenId, ToyPatternId.PourToLine),
+            (CareerQuestCatalog.MusicStudioId, ToyPatternId.RhythmTap),
             (CareerQuestCatalog.VetClinicId, ToyPatternId.MatchAndCare),
             (CareerQuestCatalog.GameStudioId, ToyPatternId.ComposeSet)
         };
@@ -156,7 +156,7 @@ namespace CareerQuest.Tests
             // Pointer path one: drag every sound layer onto the mix spot
             // through the drag shell's programmatic seam (the exact code path
             // the pointer handlers wrap).
-            var composeZone = controller.ZoneFor(ToyPatternRules.ComposeTargetId);
+            var composeZone = controller.ZoneFor(ToyPatternRules.BeatTargetId);
             Assert.That(composeZone, Is.Not.Null);
             foreach (var layerId in new[] { "drum_cloud", "rain_shaker", "horn_burst" })
             {
@@ -225,8 +225,8 @@ namespace CareerQuest.Tests
 
             // Only the serving toy stays live behind the completion lock.
             Assert.That(controller.CanBeginDrag("kindness_swap"), Is.True);
-            Assert.That(controller.CanBeginDrag("veggie_clue"), Is.False);
-            Assert.That(controller.TrySubmitDrop("veggie_clue", ToyPatternRules.TrioTrayTargetId),
+            Assert.That(controller.CanBeginDrag("broth_pour"), Is.False);
+            Assert.That(controller.TrySubmitDrop("broth_pour", ToyPatternRules.PourTargetId),
                 Is.EqualTo(DropSubmitResult.RejectedLocked));
 
             // Serving the kindness swap releases the one normal result.

@@ -303,7 +303,7 @@ namespace CareerQuest.Tests
 
             var kitchen = PartyStationDefinitions.GetById(CareerQuestCatalog.CommunityKitchenId);
             var kitchenRules = ToyPatternRules.ForSeed(kitchen, kitchen.DefaultSeed);
-            Assert.That(PartyStationRenderer.TargetLabelFor(kitchenRules, ToyPatternRules.TrioTrayTargetId), Is.Not.Empty);
+            Assert.That(PartyStationRenderer.TargetLabelFor(kitchenRules, ToyPatternRules.PourTargetId), Is.Not.Empty);
 
             var greenCity = PartyStationDefinitions.GetById(CareerQuestCatalog.GreenCityId);
             var greenRules = ToyPatternRules.ForSeed(greenCity, greenCity.DefaultSeed);

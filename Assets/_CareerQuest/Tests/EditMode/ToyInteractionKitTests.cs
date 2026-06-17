@@ -229,8 +229,8 @@ namespace CareerQuest.Tests
             var controller = ControllerFor(CareerQuestCatalog.SpaceportId);
 
             // A client mirrors host-accepted progress even out of sequence order.
-            controller.ApplyAuthoritativeAccept("orbit_arrow");
-            Assert.That(controller.Rules.IsAccepted("orbit_arrow"), Is.True);
+            controller.ApplyAuthoritativeAccept("moon_rover");
+            Assert.That(controller.Rules.IsAccepted("moon_rover"), Is.True);
             Assert.That(controller.Complete, Is.False, "Clients never complete locally on their own.");
 
             controller.ApplyAuthoritativeHint(2);

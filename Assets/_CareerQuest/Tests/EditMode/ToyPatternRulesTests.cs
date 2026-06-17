@@ -105,33 +105,29 @@ namespace CareerQuest.Tests
         [Test]
         public void DeduceAnswerCrossesOutFalseCandidatesAndProtectsTheAnswer()
         {
-            // Newsroom is the DeduceAnswer proof (design-review #3): the rumors
+            // AI Lab is now the DeduceAnswer proof: the wrong sort rules
             // (CoreTask) are the eliminate-chain crossed out by tapping; the one
-            // checked fact (Clue) is OUT of the chain — tapping it bounces.
-            var rules = RulesFor(CareerQuestCatalog.NewsroomId);
+            // right rule (Clue) is OUT of the chain - tapping it bounces.
+            var rules = RulesFor(CareerQuestCatalog.AiLabId);
 
-            // Only the false rumors are required; the answer is not in the chain.
             Assert.That(rules.DraggableObjectIds,
-                Is.EquivalentTo(new[] { "robot_rumor", "alien_rumor", "wind_rumor" }));
-            Assert.That(rules.ExpectedTargetFor("robot_rumor"),
-                Is.EqualTo(ToyPatternRules.CrossTargetPrefix + "robot_rumor"));
-            Assert.That(rules.ExpectedTargetFor("art_club_fact"), Is.Null,
-                "The checked fact (Clue answer) has no cross zone — it survives.");
+                Is.EquivalentTo(new[] { "size_rule", "loud_rule", "random_rule" }));
+            Assert.That(rules.ExpectedTargetFor("size_rule"),
+                Is.EqualTo(ToyPatternRules.CrossTargetPrefix + "size_rule"));
+            Assert.That(rules.ExpectedTargetFor("color_rule"), Is.Null,
+                "The right rule (Clue answer) has no cross zone - it survives.");
 
-            // Crossing out the true answer bounces gently (wrong target).
-            var protectAnswer = rules.Submit(new ToyAction("art_club_fact", ToyPatternRules.CrossTargetPrefix + "art_club_fact"));
+            var protectAnswer = rules.Submit(new ToyAction("color_rule", ToyPatternRules.CrossTargetPrefix + "color_rule"));
             Assert.That(protectAnswer.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
-            Assert.That(rules.IsAccepted("art_club_fact"), Is.False);
+            Assert.That(rules.IsAccepted("color_rule"), Is.False);
 
-            // Cross out the rumors in any order — completes on the last one.
-            Assert.That(rules.Submit(new ToyAction("wind_rumor", rules.ExpectedTargetFor("wind_rumor"))).IsAccepted, Is.True);
-            Assert.That(rules.Submit(new ToyAction("robot_rumor", rules.ExpectedTargetFor("robot_rumor"))).IsAccepted, Is.True);
-            Assert.That(rules.Complete, Is.False, "One rumor still stands.");
-            Assert.That(rules.Submit(new ToyAction("alien_rumor", rules.ExpectedTargetFor("alien_rumor"))).StationCompleted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("random_rule", rules.ExpectedTargetFor("random_rule"))).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("size_rule", rules.ExpectedTargetFor("size_rule"))).IsAccepted, Is.True);
+            Assert.That(rules.Complete, Is.False, "One wrong rule still stands.");
+            Assert.That(rules.Submit(new ToyAction("loud_rule", rules.ExpectedTargetFor("loud_rule"))).StationCompleted, Is.True);
 
-            // The headline stamp is a reaction poke — acknowledges, never advances.
-            var fresh = RulesFor(CareerQuestCatalog.NewsroomId);
-            Assert.That(fresh.Submit(new ToyAction("headline_stamp", ToyPatternRules.CrossTargetPrefix + "headline_stamp")).Kind,
+            var fresh = RulesFor(CareerQuestCatalog.AiLabId);
+            Assert.That(fresh.Submit(new ToyAction("test_button", ToyPatternRules.CrossTargetPrefix + "test_button")).Kind,
                 Is.EqualTo(ToySubmissionKind.ReactionOnly));
         }
 
@@ -182,7 +178,16 @@ namespace CareerQuest.Tests
         [Test]
         public void PickMatchingTrioReadsCluesBeforeTheCoreTrio()
         {
-            var rules = RulesFor(CareerQuestCatalog.CommunityKitchenId);
+            // Community Kitchen moved to PourToLine, so this drives a synthetic
+            // PickMatchingTrio seed directly to keep the clue-first trio logic
+            // covered (no shipped station uses PickMatchingTrio now).
+            var rules = new ToyPatternRules(ToyPatternId.PickMatchingTrio, new[]
+            {
+                new PartyStationObjectDefinition("recipe_card", "Recipe Card", PartyStationObjectRole.Clue, "", "", "react.glow", "Reasoning"),
+                new PartyStationObjectDefinition("veggie_clue", "Veggie Clue", PartyStationObjectRole.CoreTask, "", "", "react.pop", "Helping"),
+                new PartyStationObjectDefinition("spice_jar", "Spice Jar", PartyStationObjectRole.CoreTask, "", "", "react.sparkle", "Creativity"),
+                new PartyStationObjectDefinition("serving_bowl", "Serving Bowl", PartyStationObjectRole.CoreTask, "", "", "react.bounce", "Helping")
+            });
 
             // Core toy before the recipe clue is read -> gentle out-of-order bounce.
             var early = rules.Submit(new ToyAction("veggie_clue", ToyPatternRules.TrioTrayTargetId));
@@ -202,41 +207,38 @@ namespace CareerQuest.Tests
         [Test]
         public void TracePathTracesWaypointsInOrder()
         {
-            // Spaceport is the TracePath proof (design-review #3): the chain is
-            // traced in strict order, but each waypoint has its OWN positioned
-            // zone (waypoint.{id}) rather than SequenceCards' single shared target.
-            var rules = RulesFor(CareerQuestCatalog.SpaceportId);
+            // Weather Lab is now the TracePath proof: the chain is traced in
+            // strict order, each waypoint on its OWN positioned zone.
+            var rules = RulesFor(CareerQuestCatalog.WeatherLabId);
 
-            Assert.That(rules.NextExpectedObjectId, Is.EqualTo("launch_checklist"));
-            Assert.That(rules.ExpectedTargetFor("fuel_bead"),
-                Is.EqualTo(ToyPatternRules.WaypointTargetPrefix + "fuel_bead"));
+            Assert.That(rules.NextExpectedObjectId, Is.EqualTo("forecast_tiles"));
+            Assert.That(rules.ExpectedTargetFor("umbrella_sign"),
+                Is.EqualTo(ToyPatternRules.WaypointTargetPrefix + "umbrella_sign"));
 
-            // Right waypoint, wrong time -> out of order, never harsh.
-            var early = rules.Submit(new ToyAction("fuel_bead", rules.ExpectedTargetFor("fuel_bead")));
+            var early = rules.Submit(new ToyAction("umbrella_sign", rules.ExpectedTargetFor("umbrella_sign")));
             Assert.That(early.RejectReason, Is.EqualTo(ToyRejectReason.OutOfOrder));
 
-            // Wrong target (a waypoint can't land on another waypoint's zone).
-            var wrongZone = rules.Submit(new ToyAction("launch_checklist", rules.ExpectedTargetFor("fuel_bead")));
+            var wrongZone = rules.Submit(new ToyAction("forecast_tiles", rules.ExpectedTargetFor("umbrella_sign")));
             Assert.That(wrongZone.RejectReason, Is.EqualTo(ToyRejectReason.WrongTarget));
 
-            foreach (var stepId in new[] { "launch_checklist", "fuel_bead", "snack_crate" })
+            foreach (var stepId in new[] { "forecast_tiles", "umbrella_sign", "route_cones" })
             {
                 Assert.That(rules.NextExpectedObjectId, Is.EqualTo(stepId));
                 Assert.That(rules.Submit(new ToyAction(stepId, rules.ExpectedTargetFor(stepId))).IsAccepted, Is.True);
             }
 
-            Assert.That(rules.Submit(new ToyAction("orbit_arrow", rules.ExpectedTargetFor("orbit_arrow"))).StationCompleted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("shelter_flag", rules.ExpectedTargetFor("shelter_flag"))).StationCompleted, Is.True);
         }
 
         [Test]
-        public void ComposeSetAcceptsAnyOrderButGatesCompletionOnTheMeter()
+        public void RhythmTapAcceptsAnyOrderButGatesCompletionOnTheMeter()
         {
             var rules = RulesFor(CareerQuestCatalog.MusicStudioId);
 
-            // Layers land in any order.
-            Assert.That(rules.Submit(new ToyAction("horn_burst", ToyPatternRules.ComposeTargetId)).IsAccepted, Is.True);
-            Assert.That(rules.Submit(new ToyAction("drum_cloud", ToyPatternRules.ComposeTargetId)).IsAccepted, Is.True);
-            Assert.That(rules.Submit(new ToyAction("rain_shaker", ToyPatternRules.ComposeTargetId)).IsAccepted, Is.True);
+            // Beats land on the shared beat target in any order.
+            Assert.That(rules.Submit(new ToyAction("horn_burst", ToyPatternRules.BeatTargetId)).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("drum_cloud", ToyPatternRules.BeatTargetId)).IsAccepted, Is.True);
+            Assert.That(rules.Submit(new ToyAction("rain_shaker", ToyPatternRules.BeatTargetId)).IsAccepted, Is.True);
 
             // The tempo dial starts outside the green band and gates completion.
             Assert.That(rules.Complete, Is.False);
@@ -248,6 +250,26 @@ namespace CareerQuest.Tests
                 ToyPatternRules.MeterGreenTarget));
             Assert.That(lockTempo.IsAccepted, Is.True);
             Assert.That(lockTempo.StationCompleted, Is.True);
+        }
+
+        [Test]
+        public void ComposeSetAcceptsChainInAnyOrder()
+        {
+            // Game Studio is now the ComposeSet proof: every chain toy lands on
+            // the shared compose target in any order.
+            var rules = RulesFor(CareerQuestCatalog.GameStudioId);
+
+            foreach (var objectId in rules.DraggableObjectIds)
+            {
+                Assert.That(rules.ExpectedTargetFor(objectId), Is.EqualTo(ToyPatternRules.ComposeTargetId), objectId);
+            }
+
+            for (var i = rules.DraggableObjectIds.Count - 1; i >= 0; i--)
+            {
+                var objectId = rules.DraggableObjectIds[i];
+                Assert.That(rules.Submit(new ToyAction(objectId, ToyPatternRules.ComposeTargetId)).IsAccepted, Is.True, objectId);
+            }
+            Assert.That(rules.Complete, Is.True);
         }
 
         [Test]
@@ -362,12 +384,76 @@ namespace CareerQuest.Tests
             var rules = RulesFor(CareerQuestCatalog.SpaceportId);
 
             // Clients mirror accepted shared state out of order without bouncing.
-            rules.ForceAccept("orbit_arrow");
-            Assert.That(rules.IsAccepted("orbit_arrow"), Is.True);
+            rules.ForceAccept("moon_rover");
+            Assert.That(rules.IsAccepted("moon_rover"), Is.True);
 
             // Unknown and meter ids are ignored safely.
             rules.ForceAccept("not_a_toy");
             Assert.That(rules.AcceptedCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void PourToLineCompletesWhenEveryPourReachesTheLine()
+        {
+            var rules = RulesFor(CareerQuestCatalog.CommunityKitchenId);
+
+            foreach (var pourId in rules.DraggableObjectIds)
+            {
+                Assert.That(rules.ExpectedTargetFor(pourId), Is.EqualTo(ToyPatternRules.PourTargetId), pourId);
+            }
+
+            for (var i = 0; i < rules.DraggableObjectIds.Count; i++)
+            {
+                var pourId = rules.DraggableObjectIds[i];
+                Assert.That(rules.Submit(new ToyAction(pourId, ToyPatternRules.PourTargetId)).IsAccepted, Is.True, pourId);
+            }
+            Assert.That(rules.Complete, Is.True);
+
+            var fresh = RulesFor(CareerQuestCatalog.CommunityKitchenId);
+            Assert.That(fresh.Submit(new ToyAction(fresh.DraggableObjectIds[0], "slot.nope")).RejectReason,
+                Is.EqualTo(ToyRejectReason.WrongTarget));
+        }
+
+        [Test]
+        public void WireUpConnectsEachNodeToItsPartnerInAnyOrder()
+        {
+            var rules = RulesFor(CareerQuestCatalog.SpaceportId);
+
+            Assert.That(rules.ExpectedTargetFor("moon_rover"),
+                Is.EqualTo(ToyPatternRules.WireTargetPrefix + "rover_dock"));
+            Assert.That(rules.ExpectedTargetFor("signal_beam"),
+                Is.EqualTo(ToyPatternRules.WireTargetPrefix + "dish_array"));
+
+            Assert.That(rules.Submit(new ToyAction("moon_rover", ToyPatternRules.WireTargetPrefix + "dish_array")).RejectReason,
+                Is.EqualTo(ToyRejectReason.WrongTarget));
+
+            foreach (var nodeId in new[] { "dish_array", "moon_rover", "signal_beam", "rover_dock" })
+            {
+                Assert.That(rules.Submit(new ToyAction(nodeId, rules.ExpectedTargetFor(nodeId))).IsAccepted, Is.True, nodeId);
+            }
+            Assert.That(rules.Complete, Is.True);
+        }
+
+        [Test]
+        public void ScanRevealConfirmsEachHiddenItemInAnyOrder()
+        {
+            var rules = RulesFor(CareerQuestCatalog.NewsroomId);
+
+            foreach (var itemId in rules.DraggableObjectIds)
+            {
+                Assert.That(rules.ExpectedTargetFor(itemId),
+                    Is.EqualTo(ToyPatternRules.RevealTargetPrefix + itemId), itemId);
+            }
+
+            foreach (var itemId in new[] { "hidden_label", "smudged_print", "faint_footprint", "torn_note" })
+            {
+                Assert.That(rules.Submit(new ToyAction(itemId, rules.ExpectedTargetFor(itemId))).IsAccepted, Is.True, itemId);
+            }
+            Assert.That(rules.Complete, Is.True);
+
+            var fresh = RulesFor(CareerQuestCatalog.NewsroomId);
+            Assert.That(fresh.Submit(new ToyAction("headline_stamp", ToyPatternRules.RevealTargetPrefix + "headline_stamp")).Kind,
+                Is.EqualTo(ToySubmissionKind.ReactionOnly));
         }
 
         private static void DriveGoldenRemainder(ToyPatternRules rules)
