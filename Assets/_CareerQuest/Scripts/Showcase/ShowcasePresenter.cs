@@ -11,6 +11,7 @@ namespace CareerQuest
         private CareerQuestApp _app;
         private GameSession _session;
         private Coroutine _running;
+        private ShowcaseStationsMontage _montage;
 
         public IReadOnlyList<ShowcaseStep> Steps => _steps;
         public ShowcaseStep CurrentStep { get; private set; }
@@ -35,6 +36,9 @@ namespace CareerQuest
             _steps.Clear();
             _steps.Add(new ShowcaseStep("connection", "Two-Client Proof", 1.25f));
             _steps.Add(new ShowcaseStep("campus", "Free Campus + Future Labels", 1.25f));
+            // Stations survey beat: sells the breadth of the ten career stations
+            // and their distinct verbs before the cooperative build moment.
+            _steps.Add(new ShowcaseStep("stations", "Ten Career Stations", 1.6f));
             _steps.Add(new ShowcaseStep("build", "Future City Design Build", 1.25f));
             _steps.Add(new ShowcaseStep("gallery", "Achievement Gallery", 1.25f));
             _steps.Add(new ShowcaseStep("reveal", "Career Reveal", 1.25f));
@@ -56,6 +60,11 @@ namespace CareerQuest
             {
                 StopCoroutine(_running);
                 _running = null;
+            }
+
+            if (_montage != null)
+            {
+                _montage.Hide();
             }
         }
 
@@ -84,6 +93,11 @@ namespace CareerQuest
                 return;
             }
 
+            // The stations montage is a standalone overlay (its own canvas
+            // subtree). Clear it before every beat renders, then re-show it only
+            // for the stations survey — so it never lingers over another beat.
+            Montage().Hide();
+
             switch (step.Id)
             {
                 case "connection":
@@ -91,6 +105,9 @@ namespace CareerQuest
                     break;
                 case "campus":
                     _app.ShowCampus();
+                    break;
+                case "stations":
+                    Montage().Show(ShowcaseSeedConfig.MontageStations());
                     break;
                 case "build":
                     _app.ShowDesignBuild(showcaseAutoComplete: true);
@@ -102,6 +119,17 @@ namespace CareerQuest
                     _app.ShowReveal();
                     break;
             }
+        }
+
+        private ShowcaseStationsMontage Montage()
+        {
+            if (_montage == null)
+            {
+                _montage = GetComponent<ShowcaseStationsMontage>()
+                    ?? gameObject.AddComponent<ShowcaseStationsMontage>();
+            }
+
+            return _montage;
         }
     }
 }
