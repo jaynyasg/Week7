@@ -828,7 +828,7 @@ namespace CareerQuest
             var boardObject = new GameObject(WireBoardName);
             boardObject.transform.SetParent(kit.Root, false);
             var board = boardObject.AddComponent<StationWireBoard>();
-            AddWorldLabel(boardObject.transform, WireBannerName, "Connect each pair!", new Vector3(0f, 2.0f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
+            AddWorldLabel(boardObject.transform, WireBannerName, "Connect each pair!", new Vector3(0f, 1.62f, 0f), 2.1f, ToyInteractionKit.ZoneSortingOrder + 44);
 
             var nodeSize = new Vector2(1.2f, 1.2f);
             for (var i = 0; i < count; i++)

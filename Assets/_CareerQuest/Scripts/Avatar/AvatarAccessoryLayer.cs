@@ -34,7 +34,7 @@ namespace CareerQuest
         /// celebrate frame, lift the gear by this fraction of the body half-height
         /// so it jumps with the body. Tunable to match the art.
         /// </summary>
-        public const float CelebrateLiftFraction = 0.22f;
+        public const float CelebrateLiftFraction = 0.12f;
 
         private readonly Dictionary<string, SpriteRenderer> _layers = new();
         private readonly Dictionary<string, AccessoryDefinition> _applied = new();
@@ -185,7 +185,7 @@ namespace CareerQuest
                 AccessorySlot.Torso => new Vector2(0f, -extents.y * 0.03f),
                 AccessorySlot.Back => new Vector2(0f, -extents.y * 0.05f),
                 AccessorySlot.Hand => new Vector2(extents.x * 0.54f, -extents.y * 0.32f),
-                _ => new Vector2(0f, -extents.y * 0.05f) // Sash
+                _ => new Vector2(0f, -extents.y * 0.12f) // Sash
             };
 
             anchor += accessory.LocalOffset;

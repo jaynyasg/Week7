@@ -113,10 +113,9 @@ namespace CareerQuest
         // clearly into the left-center plaza, away from the Care Corner plate.
         public static readonly Vector2 FallbackPlayerSpawn = new(-1.35f, -0.55f);
 
-        // The guide robot sits above the Weather Lab roofline instead of on top
-        // of the building art, while still staying close enough to the player
-        // for the speech bubble to read as guidance.
-        public static readonly Vector2 FallbackGuideSpawn = new(0.9f, -0.25f);
+        // The guide robot sits left of the Care Corner / Logic Court label stack
+        // so the speech bubble and body do not cover building names.
+        public static readonly Vector2 FallbackGuideSpawn = new(0.2f, -0.25f);
 
         private static string _prefabResourcePathOverride;
         private static WorldAnchors _assetAnchors;

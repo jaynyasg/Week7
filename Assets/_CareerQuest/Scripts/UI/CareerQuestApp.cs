@@ -934,7 +934,7 @@ namespace CareerQuest
         private void MountCampusHud()
         {
             var hud = UiBuilder.Panel(_root, "CampusHud", QuestStageUi.Paper);
-            UiBuilder.Place(hud, 0f, 288f, 1000f, 74f);
+            UiBuilder.Place(hud, -70f, 288f, 1000f, 74f);
 
             // Path Gold base stripe grounds the card (DESIGN quest-card stripe).
             UiBuilder.Shape(hud, "CampusHudStripe", QuestStageUi.PathGold, 0f, -33f, 1000f, 4f);
@@ -974,8 +974,8 @@ namespace CareerQuest
             UiBuilder.Place(badgeLabel.rectTransform, 130f, 2f, 130f, 26f);
 
             // --- ONE short controls hint (right); details live in the pause menu/strip ---
-            var controls = UiBuilder.Text(hud, "CampusControlsHint", "Move: WASD · Walk into a door", 15, TextAnchor.MiddleRight, new Color(0.27f, 0.36f, 0.4f));
-            UiBuilder.Place(controls.rectTransform, 332f, 0f, 300f, 26f);
+            var controls = UiBuilder.Text(hud, "CampusControlsHint", "WASD to move · Enter doors", 15, TextAnchor.MiddleRight, new Color(0.27f, 0.36f, 0.4f));
+            UiBuilder.Place(controls.rectTransform, 322f, 0f, 280f, 26f);
         }
 
         /// <summary>
@@ -1346,7 +1346,7 @@ namespace CareerQuest
         private void MountPassportButton()
         {
             var passport = UiBuilder.SmallButton(_root, "CampusPassportButton", "Passport", ShowPassport);
-            UiBuilder.Place(passport.GetComponent<RectTransform>(), 535f, 268f, 150f, 42f);
+            UiBuilder.Place(passport.GetComponent<RectTransform>(), 535f, 226f, 150f, 42f);
             QuestStageUi.StyleSecondaryButton(passport);
         }
 

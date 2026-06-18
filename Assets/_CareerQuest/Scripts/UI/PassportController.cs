@@ -49,6 +49,8 @@ namespace CareerQuest
         };
 
         private const float BadgeGearGridStartY = 116f;
+        private const float PassportGridStepX = 170f;
+        private const float PassportGridStepY = -132f;
 
         // U11 (Gate B simplify Finding 4): locked-slot colors moved to the shared
         // QuestStageUi tokens (they were identical here and in the gallery).
@@ -178,18 +180,14 @@ namespace CareerQuest
         {
             var entries = CareerQuestCatalog.AllWithPartyStations.ToList();
             var columns = 5;
-            var startX = -340f;
             var startY = BadgeGearGridStartY;
-            var stepX = 170f;
-            var stepY = -132f;
 
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                var column = i % columns;
                 var row = i / columns;
-                var x = startX + column * stepX;
-                var y = startY + row * stepY;
+                var x = GridX(i, entries.Count, columns, PassportGridStepX);
+                var y = startY + row * PassportGridStepY;
                 MountBadgeEntry(entry, x, y);
             }
         }
@@ -262,17 +260,13 @@ namespace CareerQuest
             var distinct = AccessoryResolver.DistinctEarned(_session, newestFirst: false);
 
             var columns = 5;
-            var startX = -340f;
             var startY = BadgeGearGridStartY;
-            var stepX = 170f;
-            var stepY = -132f;
             for (var i = 0; i < distinct.Count; i++)
             {
                 var accessory = distinct[i];
-                var column = i % columns;
                 var row = i / columns;
-                var x = startX + column * stepX;
-                var y = startY + row * stepY;
+                var x = GridX(i, distinct.Count, columns, PassportGridStepX);
+                var y = startY + row * PassportGridStepY;
                 MountGearEntry(accessory, campusVisibleIds.Contains(accessory.Id), x, y);
             }
         }
@@ -339,10 +333,10 @@ namespace CareerQuest
                 UiBuilder.Circle(row, $"PassportComboSpark{i}", sparked ? QuestStageUi.PathGold : QuestStageUi.LockedRing, -344f, 0f, 30f, 30f);
 
                 var name = UiBuilder.Text(row, $"PassportComboName{i}", combo.DisplayName, 17, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
-                UiBuilder.Place(name.rectTransform, -150f, 10f, 420f, 24f);
+                UiBuilder.Place(name.rectTransform, -50f, 10f, 500f, 24f);
 
                 var blurb = UiBuilder.Text(row, $"PassportComboBlurb{i}", sparked ? "Sparked! See it at the reveal." : "Ready to spark at the reveal.", 12, TextAnchor.MiddleLeft, new Color(0.27f, 0.36f, 0.4f));
-                UiBuilder.Place(blurb.rectTransform, -150f, -12f, 480f, 22f);
+                UiBuilder.Place(blurb.rectTransform, -50f, -12f, 500f, 22f);
             }
         }
 
@@ -370,16 +364,16 @@ namespace CareerQuest
 
                 var stationName = StationDisplayName(rewardEvent.StationId);
                 var name = UiBuilder.Text(row, $"PassportResultName{i}", stationName, 16, TextAnchor.MiddleLeft, QuestStageUi.Ink, TypeRole.Display, TypeWeight.SemiBold);
-                UiBuilder.Place(name.rectTransform, -150f, 10f, 420f, 24f);
+                UiBuilder.Place(name.rectTransform, -90f, 10f, 520f, 24f);
 
                 var practiced = UiBuilder.Text(row, $"PassportResultPracticed{i}", rewardEvent.PracticedLine(), 12, TextAnchor.MiddleLeft, new Color(0.27f, 0.36f, 0.4f));
-                UiBuilder.Place(practiced.rectTransform, -150f, -12f, 480f, 22f);
+                UiBuilder.Place(practiced.rectTransform, -90f, -12f, 520f, 22f);
                 practiced.enableAutoSizing = true;
                 practiced.fontSizeMin = 10;
                 practiced.fontSizeMax = 12;
 
                 var tier = UiBuilder.Text(row, $"PassportResultTier{i}", rewardEvent.Tier == CompletionTier.Degree ? "Quest done" : "Practiced", 12, TextAnchor.MiddleRight, rewardEvent.Tier == CompletionTier.Degree ? QuestStageUi.PathGold : new Color(0.27f, 0.36f, 0.4f), TypeRole.Body, TypeWeight.SemiBold);
-                UiBuilder.Place(tier.rectTransform, 320f, 0f, 120f, 24f);
+                UiBuilder.Place(tier.rectTransform, 280f, 0f, 110f, 24f);
             }
         }
 
@@ -429,6 +423,14 @@ namespace CareerQuest
             return group;
         }
 
+        private static float GridX(int index, int total, int columns, float stepX)
+        {
+            var rowStart = (index / columns) * columns;
+            var countInRow = Mathf.Min(columns, total - rowStart);
+            var column = index % columns;
+            return -(countInRow - 1) * stepX * 0.5f + column * stepX;
+        }
+
         private void MountEmpty(string name, string message)
         {
             var empty = UiBuilder.Text(_pageRoot, name, message, 18, TextAnchor.MiddleCenter, QuestStageUi.Ink);
@@ -448,13 +450,13 @@ namespace CareerQuest
 
         private static string StationDisplayName(string stationId)
         {
-            if (!string.IsNullOrEmpty(stationId) && CareerQuestCatalog.TryGetById(stationId, out var entry))
+            if (PartyStationDefinitions.TryGetById(stationId, out var definition))
             {
-                return entry.DisplayName;
+                return definition.DisplayName;
             }
 
-            return PartyStationDefinitions.TryGetById(stationId, out var definition)
-                ? definition.DisplayName
+            return !string.IsNullOrEmpty(stationId) && CareerQuestCatalog.TryGetById(stationId, out var entry)
+                ? entry.DisplayName
                 : "Quest";
         }
 

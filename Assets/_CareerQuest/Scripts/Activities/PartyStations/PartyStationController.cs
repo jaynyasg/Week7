@@ -877,6 +877,10 @@ namespace CareerQuest
                 {
                     subjectPosition = new Vector3(-2.9f, 2f, 0f);
                 }
+                else if (rules.Pattern == ToyPatternId.WireUp)
+                {
+                    subjectPosition = new Vector3(-3.1f, 1.95f, 0f);
+                }
                 else
                 {
                     subjectPosition = new Vector3(0f, 1.95f, 0f);
