@@ -34,6 +34,7 @@ namespace CareerQuest
             _app = app;
             gameObject.SetActive(true);
             Clear();
+            SetAllNetworkAvatarCampusVisuals(session != null && session.ConnectionMode.IsNetworked());
 
             // Entrances come from the authored prefab's WorldAnchors export
             // (live instance, then prefab asset, then hard fallback constants),
@@ -277,6 +278,7 @@ namespace CareerQuest
         {
             _cameraRig?.ClearFollow();
             _networkPlayer?.ClearCampusEntrances();
+            SetAllNetworkAvatarCampusVisuals(false);
             _entrances.Clear();
             _player = null;
             _networkPlayer = null;
@@ -300,6 +302,10 @@ namespace CareerQuest
 
             return null;
         }
+
+        private static void SetAllNetworkAvatarCampusVisuals(bool visible)
+        {
+            PlayerAvatarNetwork.SetCampusVisualsVisibleForAll(visible);
+        }
     }
 }
-

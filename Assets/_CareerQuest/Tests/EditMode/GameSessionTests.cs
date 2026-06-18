@@ -209,6 +209,32 @@ namespace CareerQuest.Tests
             Assert.That(session.UniqueCompletedGames, Is.EqualTo(0));
         }
 
+        [Test]
+        public void PartyRunStartKeepsOneEntryPerStation()
+        {
+            var run = new PartyRunState();
+
+            var started = run.Start(
+                new[]
+                {
+                    CareerQuestCatalog.RoboticsGarageId,
+                    CareerQuestCatalog.AiLabId,
+                    CareerQuestCatalog.RoboticsGarageId,
+                    CareerQuestCatalog.MusicStudioId
+                },
+                new[] { "robotics-default", "ai-default", "robotics-remix", "music-default" });
+
+            Assert.That(started, Is.True);
+            Assert.That(run.StationIds, Is.EqualTo(new[]
+            {
+                CareerQuestCatalog.RoboticsGarageId,
+                CareerQuestCatalog.AiLabId,
+                CareerQuestCatalog.MusicStudioId
+            }));
+            Assert.That(run.SeedIds, Is.EqualTo(new[] { "robotics-default", "ai-default", "music-default" }));
+            Assert.That(run.ProgressStrip.Count, Is.EqualTo(3), "The mini-game strip must not render duplicate rounds.");
+        }
+
         private static MiniGameResult Result(CompletionTier tier, float timeRemaining, float accuracy)
         {
             return new MiniGameResult(

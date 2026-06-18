@@ -96,7 +96,7 @@ namespace CareerQuest
             //       localOffset (avatar-local units, added to the slot anchor)
             //       localScale (× the normalized token height) / sortingOffset
             Station("accessory.tool_belt", "Tool Belt", AccessorySlot.Torso, CareerQuestCatalog.RoboticsGarageId,
-                new Vector2(0f, -0.22f), 1.05f, 2),
+                new Vector2(0f, -0.58f), 0.95f, 2),
             Station("accessory.lab_goggles", "Lab Goggles", AccessorySlot.Face, CareerQuestCatalog.AiLabId,
                 new Vector2(-0.04f, 0.06f), 0.82f, 3),
             Station("accessory.chef_hat", "Chef Hat", AccessorySlot.Head, CareerQuestCatalog.CommunityKitchenId,

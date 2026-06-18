@@ -74,16 +74,31 @@ namespace CareerQuest
                 return false;
             }
 
+            var nextStationIds = new List<string>(stationIds.Count);
+            var nextSeedIds = new List<string>(stationIds.Count);
+            var seenStationIds = new HashSet<string>();
+            for (var i = 0; i < stationIds.Count; i++)
+            {
+                var stationId = stationIds[i];
+                if (string.IsNullOrWhiteSpace(stationId) || !seenStationIds.Add(stationId))
+                {
+                    continue;
+                }
+
+                nextStationIds.Add(stationId);
+                nextSeedIds.Add(seedIds != null && i < seedIds.Count ? seedIds[i] : null);
+            }
+
+            if (nextStationIds.Count == 0)
+            {
+                return false;
+            }
+
             _stationIds.Clear();
             _seedIds.Clear();
             _completedStationIds.Clear();
-
-            for (var i = 0; i < stationIds.Count; i++)
-            {
-                _stationIds.Add(stationIds[i]);
-                _seedIds.Add(seedIds != null && i < seedIds.Count ? seedIds[i] : null);
-            }
-
+            _stationIds.AddRange(nextStationIds);
+            _seedIds.AddRange(nextSeedIds);
             IsActive = true;
             IsComplete = false;
             CurrentRound = 0;

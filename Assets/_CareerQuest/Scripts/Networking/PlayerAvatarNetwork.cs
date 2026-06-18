@@ -8,6 +8,8 @@ namespace CareerQuest
     [RequireComponent(typeof(PlayerInputRouter))]
     public class PlayerAvatarNetwork : NetworkBehaviour
     {
+        private static readonly HashSet<PlayerAvatarNetwork> Instances = new();
+
         [SerializeField] private float moveSpeed = 4f;
         [SerializeField] private PlayerInputRouter inputRouter;
         [SerializeField] private string avatarId = AvatarConfig.DefaultAvatarId;
@@ -30,6 +32,7 @@ namespace CareerQuest
         private float _dwellElapsed;
         private float _graceRemaining;
         private bool _entryLatched;
+        private bool _campusVisualsVisible = true;
         // Remote avatars derive walk/idle from observed position deltas with a
         // deadzone + hysteresis (the network lerp produces residual motion that
         // would flicker the walk state — U5 plan callout).
@@ -37,13 +40,20 @@ namespace CareerQuest
 
         public string AvatarId => avatarId;
         public AvatarNameTag NameTag => _nameTag;
+        public bool CampusVisualsVisible => _campusVisualsVisible;
 
         private void Awake()
         {
+            Instances.Add(this);
             inputRouter = inputRouter != null ? inputRouter : GetComponent<PlayerInputRouter>();
             _spriteRenderer = GetComponent<SpriteRenderer>() ?? gameObject.AddComponent<SpriteRenderer>();
             _avatarView = GetComponent<AvatarRuntimeView>() ?? gameObject.AddComponent<AvatarRuntimeView>();
             EnsureVisibleAvatar();
+        }
+
+        private void OnDestroy()
+        {
+            Instances.Remove(this);
         }
 
         public override void OnNetworkSpawn()
@@ -60,6 +70,7 @@ namespace CareerQuest
             ApplyAvatar(AvatarConfig.GetAvatarAt(_networkAvatarIndex.Value).Id);
             _remoteLocomotion.Reset(transform.position);
             RefreshNameTag();
+            ApplyCampusVisualVisibility();
         }
 
         public override void OnNetworkDespawn()
@@ -156,6 +167,44 @@ namespace CareerQuest
             _entryLatched = false;
         }
 
+        /// <summary>
+        /// Network avatars persist for the whole session, but the player sprite
+        /// and name tag are campus-only presentation. Rooms keep the object alive
+        /// for shared state and emote ownership without drawing duplicate
+        /// playable avatars over the mini-game.
+        /// </summary>
+        public void SetCampusVisualsVisible(bool visible)
+        {
+            if (_campusVisualsVisible == visible)
+            {
+                ApplyCampusVisualVisibility();
+                return;
+            }
+
+            _campusVisualsVisible = visible;
+            ApplyCampusVisualVisibility();
+        }
+
+        public static void SetCampusVisualsVisibleForAll(bool visible)
+        {
+            Instances.RemoveWhere(avatar => avatar == null);
+            foreach (var avatar in Instances)
+            {
+                avatar.SetCampusVisualsVisible(visible);
+            }
+
+            foreach (var avatar in FindObjectsByType<PlayerAvatarNetwork>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (avatar == null || Instances.Contains(avatar))
+                {
+                    continue;
+                }
+
+                Instances.Add(avatar);
+                avatar.SetCampusVisualsVisible(visible);
+            }
+        }
+
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void SubmitMoveRpc(Vector2 move, float deltaTime)
         {
@@ -236,6 +285,29 @@ namespace CareerQuest
             }
 
             _nameTag.Configure(AvatarNameTag.IdentityTextFor(OwnerClientId, AvatarConfig.GetAvatar(avatarId)));
+            _nameTag.SetVisible(_campusVisualsVisible);
+        }
+
+        private void ApplyCampusVisualVisibility()
+        {
+            foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer == null || renderer.GetComponentInParent<EmoteBubble>() != null)
+                {
+                    continue;
+                }
+
+                renderer.enabled = _campusVisualsVisible;
+            }
+
+            if (_nameTag != null)
+            {
+                _nameTag.SetVisible(_campusVisualsVisible);
+            }
+
+            var accessoryLayer = _avatarView != null ? _avatarView.AccessoryLayer : null;
+            accessoryLayer ??= GetComponent<AvatarAccessoryLayer>();
+            accessoryLayer?.SetLayersVisible(_campusVisualsVisible);
         }
 
         private void TickCampusDoorEntry(float deltaSeconds)

@@ -61,6 +61,7 @@ namespace CareerQuest
         private PartyRunPresenter _partyRunPresenter;
         private FacilitatorControlsController _facilitatorControls;
         private CeremonySubPhase _lastCeremonySubPhase;
+        private bool _syncingNetworkRoute;
         // P19: session-scoped memory of which city pieces already played their
         // arrival fanfare — one fanfare per piece per app session.
         private readonly HashSet<string> _cityPieceFanfares = new();
@@ -413,13 +414,19 @@ namespace CareerQuest
 
         public void ShowEntry()
         {
-            _hub.Hide();
+            HidePlayableHub();
             _showcasePresenter.Stop();
             _router.ShowEntry(_session);
             _world.ShowEntry(_session);
             ResetRoot();
             _entry.Render(_root, this);
             AttachDebug();
+        }
+
+        private void HidePlayableHub()
+        {
+            _hub?.Hide();
+            PlayerAvatarNetwork.SetCampusVisualsVisibleForAll(false);
         }
 
         public void BeginPlay()
@@ -553,7 +560,7 @@ namespace CareerQuest
 
         public void ShowShowcaseDisclaimer()
         {
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowShowcaseDisclaimer(_session);
             _world.ShowEntry(_session);
             ResetRoot();
@@ -569,7 +576,7 @@ namespace CareerQuest
 
         public void ShowConnection()
         {
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowConnection(_session);
             _world.ShowConnection(_session);
             ResetRoot();
@@ -659,7 +666,7 @@ namespace CareerQuest
             _pendingConnectionPlayerSlot = playerSlot;
             _pendingConnectionStartNetwork = startNetwork;
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowAvatarSelection(_session, AppMode.Play);
             _world.ShowEntry(_session);
             ResetRoot();
@@ -833,13 +840,88 @@ namespace CareerQuest
 
         private void HandleCampusSessionChanged()
         {
-            CampusSessionState.Instance?.ApplyToGameSession(_session);
+            var state = CampusSessionState.Instance;
+            state?.ApplyToGameSession(_session);
             RefreshInstructionStrip();
+            SyncSharedNetworkRoute(state);
         }
 
         private void HandleSessionChanged()
         {
             RefreshInstructionStrip();
+        }
+
+        private void SyncSharedNetworkRoute(CampusSessionState state)
+        {
+            if (_syncingNetworkRoute
+                || state == null
+                || networkManager == null
+                || networkManager.IsServer
+                || !networkManager.IsConnectedClient
+                || _ceremonyActive)
+            {
+                return;
+            }
+
+            switch (state.CurrentRoute)
+            {
+                case ActivityRoute.Campus:
+                    if (_router.CurrentRoute != ActivityRoute.Campus)
+                    {
+                        RunNetworkRouteSync(ShowCampus);
+                    }
+
+                    break;
+                case ActivityRoute.DesignBuild:
+                    if (_router.CurrentRoute != ActivityRoute.DesignBuild)
+                    {
+                        RunNetworkRouteSync(() => ShowDesignBuild(false));
+                    }
+
+                    break;
+                case ActivityRoute.HealthHero:
+                    if (_router.CurrentRoute != ActivityRoute.HealthHero)
+                    {
+                        RunNetworkRouteSync(ShowHealthHero);
+                    }
+
+                    break;
+                case ActivityRoute.LogicCourt:
+                    if (_router.CurrentRoute != ActivityRoute.LogicCourt)
+                    {
+                        RunNetworkRouteSync(ShowLogicCourt);
+                    }
+
+                    break;
+                case ActivityRoute.PartyStation:
+                    var stationId = state.StationProgress != null ? state.StationProgress.StationId : null;
+                    if (CareerQuestCatalog.IsPartyStationId(stationId)
+                        && (_router.CurrentRoute != ActivityRoute.PartyStation
+                            || _router.CurrentStationId != stationId))
+                    {
+                        RunNetworkRouteSync(() => ShowPartyStation(stationId));
+                    }
+
+                    break;
+            }
+        }
+
+        private void RunNetworkRouteSync(Action routeAction)
+        {
+            if (routeAction == null)
+            {
+                return;
+            }
+
+            _syncingNetworkRoute = true;
+            try
+            {
+                routeAction();
+            }
+            finally
+            {
+                _syncingNetworkRoute = false;
+            }
         }
 
         private void HandleClientConnectionLost()
@@ -1024,7 +1106,7 @@ namespace CareerQuest
 
         public void ShowShowcaseProofBeat()
         {
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowShowcaseProof(_session);
             _world.ShowProof(_session);
             ResetRoot();
@@ -1053,7 +1135,7 @@ namespace CareerQuest
                 return;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowActivity(_session, ActivityRoute.DesignBuild);
             _world.ShowDesignBuild(_session);
             ResetRoot();
@@ -1081,7 +1163,7 @@ namespace CareerQuest
                 return;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowActivity(_session, ActivityRoute.HealthHero);
             _world.ShowClinic(_session);
             ResetRoot();
@@ -1098,7 +1180,7 @@ namespace CareerQuest
                 return;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowActivity(_session, ActivityRoute.LogicCourt);
             _world.ShowCourt(_session);
             ResetRoot();
@@ -1154,7 +1236,7 @@ namespace CareerQuest
                 return false;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowPartyStation(_session, stationId);
             _world.ShowPartyStation(_session, entry);
             ResetRoot();
@@ -1258,7 +1340,7 @@ namespace CareerQuest
                 return;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowGallery(_session);
             _world.ShowGallery(_session);
             ResetRoot();
@@ -1274,7 +1356,7 @@ namespace CareerQuest
                 return;
             }
 
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowReveal(_session);
             _world.ShowReveal(_session);
             ResetRoot();
@@ -1448,7 +1530,7 @@ namespace CareerQuest
 
         private void ShowAvatarSelection(AppMode target)
         {
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowAvatarSelection(_session, target);
             _world.ShowEntry(_session);
             ResetRoot();
@@ -1656,7 +1738,7 @@ namespace CareerQuest
 
         private void ShowGalleryInternal()
         {
-            _hub.Hide();
+            HidePlayableHub();
             _router.ShowGallery(_session);
             _world.ShowGallery(_session);
             ResetRoot();

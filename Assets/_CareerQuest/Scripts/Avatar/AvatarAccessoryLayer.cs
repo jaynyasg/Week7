@@ -46,6 +46,7 @@ namespace CareerQuest
         private float _renderedLift = float.MinValue;
         private SpriteFrameAnimator _animator;
         private bool _animatorChecked;
+        private bool _layersVisible = true;
 
         public bool IsCeremonyContext => _ceremonyContext;
         public int VisibleCount => _layers.Count;
@@ -99,6 +100,23 @@ namespace CareerQuest
             }
         }
 
+        public void SetLayersVisible(bool visible)
+        {
+            if (_layersVisible == visible)
+            {
+                return;
+            }
+
+            _layersVisible = visible;
+            foreach (var renderer in _layers.Values)
+            {
+                if (renderer != null)
+                {
+                    renderer.enabled = visible;
+                }
+            }
+        }
+
         /// <summary>
         /// Applies an explicit accessory set (the resolver's visible list, or a
         /// direct list in tests/preview surfaces). Slot and ceremony rules are
@@ -148,6 +166,7 @@ namespace CareerQuest
 
             var renderer = layerObject.GetComponent<SpriteRenderer>();
             renderer.sprite = AssetCatalog.SpriteFor(accessory.SpriteAssetId);
+            renderer.enabled = _layersVisible;
 
             // Normalize the placeholder token to a small fixed local height so
             // 128px prop art and future final art both sit on the avatar.

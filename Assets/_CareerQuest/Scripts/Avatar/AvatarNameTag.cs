@@ -41,6 +41,19 @@ namespace CareerQuest
             ResizePlate();
         }
 
+        public void SetVisible(bool visible)
+        {
+            if (_label != null)
+            {
+                _label.gameObject.SetActive(visible);
+            }
+
+            if (_plate != null)
+            {
+                _plate.gameObject.SetActive(visible);
+            }
+        }
+
         private void EnsureBuilt()
         {
             if (_label != null)

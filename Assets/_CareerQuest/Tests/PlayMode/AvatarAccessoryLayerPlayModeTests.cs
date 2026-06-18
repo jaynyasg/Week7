@@ -143,6 +143,27 @@ namespace CareerQuest.Tests
             Object.Destroy(avatarObject);
         }
 
+        [UnityTest]
+        public IEnumerator RoboticsToolBeltSitsBelowTheFaceOnTheWaist()
+        {
+            var (avatarObject, view, host) = MakeAvatar("accessory-toolbelt-waist");
+            var session = new GameSession();
+            RecordStation(session, CareerQuestCatalog.RoboticsGarageId);
+
+            view.BindAccessories(session, ceremonyContext: false);
+            yield return null;
+            yield return null;
+
+            var renderer = view.AccessoryLayer.RendererFor("accessory.tool_belt");
+            Assert.That(renderer, Is.Not.Null);
+
+            var hostExtentsY = host.sprite != null ? host.sprite.bounds.extents.y : 1.2f;
+            Assert.That(renderer.transform.localPosition.y, Is.LessThan(-hostExtentsY * 0.4f),
+                "The Robotics tool belt is waist gear and must not sit on the avatar's face.");
+
+            Object.Destroy(avatarObject);
+        }
+
         // ------------------------------------------------------------------
         // U11 accessory-fit geometric checks (R12 / Character Visual Acceptance
         // Bar). For 4 representative avatars each wearing 3+ accessories, assert
