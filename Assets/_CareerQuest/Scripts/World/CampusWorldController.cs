@@ -10,6 +10,9 @@ namespace CareerQuest
         private HubBootController _hubBoot;
         private RoomVeilController _roomVeil;
 
+        public static readonly CameraShot EntryTitleShot =
+            new(new Vector3(0f, 0.7f, -10f), CameraShot.Default.OrthographicSize);
+
         public bool IsHubBootComplete => _hubBoot != null && _hubBoot.IsBootComplete;
         public bool IsHubDecorLoaded => _hubBoot != null && _hubBoot.IsDecorLoaded;
         public bool IsRoomVeilActive => _roomVeil != null && _roomVeil.IsVeilActive;
@@ -51,6 +54,7 @@ namespace CareerQuest
         public void ShowEntry(GameSession session)
         {
             BeginHub("Entry");
+            _cameraDirector.SetRouteShot(EntryTitleShot);
             _builder.AddHeroCharacters(session, session?.PlayerCount > 1);
         }
 

@@ -11,6 +11,7 @@ namespace CareerQuest
     public class CampusGuideController : MonoBehaviour
     {
         public const string GuideSpriteAssetId = "npc.campus_guide";
+        public const float GuideRenderScale = AvatarConfig.LegacyRenderScale * 0.8f;
 
         private string _defaultPrompt = string.Empty;
         private DoorSign _pointedDoor;
@@ -22,6 +23,7 @@ namespace CareerQuest
         {
             var view = gameObject.GetComponent<AvatarRuntimeView>() ?? gameObject.AddComponent<AvatarRuntimeView>();
             view.ApplySpriteAsset(GuideSpriteAssetId);
+            view.SetRenderScale(GuideRenderScale);
 
             _defaultPrompt = prompt ?? string.Empty;
 

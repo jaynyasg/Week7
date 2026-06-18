@@ -28,6 +28,7 @@ namespace CareerQuest
         public AvatarDefinition Definition => AvatarConfig.GetAvatar(avatarId);
         public SpriteFrameAnimator Animator => EnsureAnimator();
         public string SpriteAssetId => _spriteAssetId;
+        public Vector3 BaseRenderScale => _baseScale;
 
         /// <summary>U6 test/QA seam: the avatar's accessory layer once bound, or null.</summary>
         public AvatarAccessoryLayer AccessoryLayer => _accessoryLayer;
@@ -75,6 +76,13 @@ namespace CareerQuest
 
             _spriteRenderer.color = Color.white;
             _spriteRenderer.sortingOrder = sortingOrder;
+        }
+
+        public void SetRenderScale(float renderScale)
+        {
+            var scale = renderScale > 0.01f ? renderScale : AvatarConfig.LegacyRenderScale;
+            _baseScale = new Vector3(scale, scale, 1f);
+            EnsureAnimator().SetBaseScale(_baseScale);
         }
 
         public void SetLocomotion(bool isMoving, float facingX)
