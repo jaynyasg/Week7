@@ -247,8 +247,8 @@ namespace CareerQuest.Tests
 
             // The pointed door is the nearest unplayed room and actually pulses.
             Assert.That(beat.PointedDoor, Is.Not.Null);
-            Assert.That(beat.PointedRoute, Is.EqualTo(ActivityRoute.HealthHero),
-                "From the player spawn, Health Hero is the nearest unplayed core room.");
+            Assert.That(beat.PointedRoute, Is.EqualTo(ActivityRoute.DesignBuild),
+                "From the left-center player spawn, Design Build is the nearest unplayed core room.");
             Assert.That(beat.PointedDoor.IsPulsing, Is.True);
 
             beat.PointedDoor.AutoTick = false;

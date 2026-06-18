@@ -110,9 +110,8 @@ namespace CareerQuest
 
         // Design-review (2026-06-17): start the player left of the central plaza
         // so the avatar does not cover the Care Corner district sign. Keep x
-        // just right of the Health Hero/Design Build nearest-door boundary so
-        // the first-run guide still points kids to Health Hero.
-        public static readonly Vector2 FallbackPlayerSpawn = new(-0.8f, -0.55f);
+        // clearly into the left-center plaza, away from the Care Corner plate.
+        public static readonly Vector2 FallbackPlayerSpawn = new(-1.35f, -0.55f);
 
         // The guide robot sits above the Weather Lab roofline instead of on top
         // of the building art, while still staying close enough to the player

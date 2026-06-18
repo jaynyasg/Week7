@@ -1865,7 +1865,7 @@ MonoBehaviour:
     y: -3.3
     width: 14.6
     height: 5.6
-  playerSpawn: {x: -0.8, y: -0.55}
+  playerSpawn: {x: -1.35, y: -0.55}
   guideSpawn: {x: 0.9, y: -0.25}
 --- !u!1 &3583903209612420601
 GameObject:
